@@ -1,0 +1,149 @@
+Cabal-version: 2.2
+Name:          advent-of-code
+Version:       0.1.0.0
+Synopsis:      My solutions to Advent of Code
+Description:   My solutions to Advent of Code
+License:       BSD-3-Clause
+License-file:  LICENSE
+Author:        Jasper Van der Jeugt <m@jaspervdj.be>
+Maintainer:    Jasper Van der Jeugt <m@jaspervdj.be>
+Copyright:     2017-2018 Jasper Van der Jeugt
+Category:      Data
+Build-type:    Simple
+
+Library
+  Hs-source-dirs:   lib
+  Default-language: Haskell2010
+  Ghc-options:      -Wall
+
+  Exposed-modules:
+    AdventOfCode.Y2017.KnotHash
+    AdventOfCode.Y2017.P01
+    AdventOfCode.Y2017.P02
+    AdventOfCode.Y2017.P03
+    AdventOfCode.Y2017.P04
+    AdventOfCode.Y2017.P07
+    AdventOfCode.Y2017.P08
+    AdventOfCode.Y2017.P09
+    AdventOfCode.Y2017.P10
+    AdventOfCode.Y2017.P11
+    AdventOfCode.Y2017.P12
+    AdventOfCode.Y2017.P13
+    AdventOfCode.Y2017.P14
+    AdventOfCode.Y2017.P15
+    AdventOfCode.Y2017.P16
+    AdventOfCode.Y2017.P17
+    AdventOfCode.Y2017.P18
+    AdventOfCode.Y2017.P19
+    AdventOfCode.Y2017.P20
+    AdventOfCode.Y2017.P21
+    AdventOfCode.Y2017.P22
+    AdventOfCode.Y2017.P23
+    AdventOfCode.Y2017.P24
+    AdventOfCode.Y2017.P25
+
+  Build-depends:
+    base                 >= 4.10 && < 4.13,
+    bytestring           >= 0.10 && < 0.11,
+    containers           >= 0.5  && < 0.6,
+    hashable             >= 1.2  && < 1.3,
+    unordered-containers >= 0.2  && < 0.3,
+    vector               >= 0.12 && < 0.13
+
+Common problem
+  Build-depends:    base, advent-of-code
+  Default-language: Haskell2010
+  Ghc-options:      -Wall
+  Hs-source-dirs:   src
+
+Executable aoc-2017-01
+  Import:  problem
+  Main-is: 2017/01.hs
+
+Executable aoc-2017-02
+  Import:  problem
+  Main-is: 2017/02.hs
+
+Executable aoc-2017-03
+  Import:  problem
+  Main-is: 2017/03.hs
+
+Executable aoc-2017-04
+  Import:  problem
+  Main-is: 2017/04.hs
+
+Executable aoc-2017-07
+  Import:  problem
+  Main-is: 2017/07.hs
+
+Executable aoc-2017-08
+  Import:  problem
+  Main-is: 2017/08.hs
+
+Executable aoc-2017-09
+  Import:  problem
+  Main-is: 2017/09.hs
+
+Executable aoc-2017-10
+  Import:  problem
+  Main-is: 2017/10.hs
+
+Executable aoc-2017-11
+  Import:  problem
+  Main-is: 2017/11.hs
+
+Executable aoc-2017-12
+  Import:  problem
+  Main-is: 2017/12.hs
+
+Executable aoc-2017-13
+  Import:  problem
+  Main-is: 2017/13.hs
+
+Executable aoc-2017-14
+  Import:  problem
+  Main-is: 2017/14.hs
+
+Executable aoc-2017-15
+  Import:  problem
+  Main-is: 2017/15.hs
+
+Executable aoc-2017-16
+  Import:  problem
+  Main-is: 2017/16.hs
+
+Executable aoc-2017-17
+  Import:  problem
+  Main-is: 2017/17.hs
+
+Executable aoc-2017-18
+  Import:  problem
+  Main-is: 2017/18.hs
+
+Executable aoc-2017-19
+  Import:  problem
+  Main-is: 2017/19.hs
+
+Executable aoc-2017-20
+  Import:  problem
+  Main-is: 2017/20.hs
+
+Executable aoc-2017-21
+  Import:  problem
+  Main-is: 2017/21.hs
+
+Executable aoc-2017-22
+  Import:  problem
+  Main-is: 2017/22.hs
+
+Executable aoc-2017-23
+  Import:  problem
+  Main-is: 2017/23.hs
+
+Executable aoc-2017-24
+  Import:  problem
+  Main-is: 2017/24.hs
+
+Executable aoc-2017-25
+  Import:  problem
+  Main-is: 2017/25.hs
