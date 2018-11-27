@@ -3,70 +3,34 @@
 import qualified Data.Map   as M
 import           Data.Maybe (fromMaybe)
 import qualified System.IO  as IO
-
-data Dir = U | R | D | L deriving (Bounded, Enum, Eq, Ord, Show)
-
-turnRight, turnLeft :: Dir -> Dir
-turnRight d = if d == maxBound then minBound else succ d
-turnLeft  d = if d == minBound then maxBound else pred d
-
-turnAround :: Dir -> Dir
-turnAround U = D
-turnAround R = L
-turnAround D = U
-turnAround L = R
-
-data Pos = Pos !Int !Int deriving (Eq, Ord, Show)
-
-move :: Dir -> Pos -> Pos
-move dir (Pos x y) = case dir of
-    U -> Pos x       (y - 1)
-    R -> Pos (x + 1) y
-    D -> Pos x       (y + 1)
-    L -> Pos (x - 1) y
-
-newtype Grid a = Grid (M.Map Pos a) deriving (Functor, Show)
-
-center :: Grid a -> Pos
-center (Grid grid) = case M.maxViewWithKey grid of
-    Nothing                -> error "center: Empty grid"
-    Just ((Pos x y, _), _) -> Pos (x `div` 2) (y `div` 2)
-
-readGrid :: IO.Handle -> IO (Grid Char)
-readGrid h = do
-    ls <- lines <$> IO.hGetContents h
-    return $ Grid $ M.fromList
-        [ (Pos x y, c)
-        | (y, l) <- zip [0 ..] ls
-        , (x, c) <- zip [0 ..] l
-        ]
+import qualified AdventOfCode.Grid as Grid
 
 data Node = Infected | Clean | Flagged | Weakened deriving (Eq, Ord, Show)
 
-getNode :: Pos -> Grid Node -> Node
-getNode pos (Grid grid) = fromMaybe Clean (M.lookup pos grid)
+getNode :: Grid.Pos -> Grid.Grid Node -> Node
+getNode pos grid = fromMaybe Clean (M.lookup pos grid)
 
-putNode :: Pos -> Node -> Grid Node -> Grid Node
-putNode pos node (Grid grid) = Grid (M.insert pos node grid)
+putNode :: Grid.Pos -> Node -> Grid.Grid Node -> Grid.Grid Node
+putNode pos node grid = M.insert pos node grid
 
 data Virus = Virus
-    { vPos             :: !Pos
-    , vDir             :: !Dir
-    , vGrid            :: !(Grid Node)
+    { vPos             :: !Grid.Pos
+    , vDir             :: !Grid.Dir
+    , vGrid            :: !(Grid.Grid Node)
     , vInfectedByBurst :: !Int
     }
 
-zero :: Grid Node -> Virus
+zero :: Grid.Grid Node -> Virus
 zero grid = Virus
-    { vPos             = center grid
-    , vDir             = U
+    { vPos             = Grid.center grid
+    , vDir             = Grid.U
     , vGrid            = grid
     , vInfectedByBurst = 0
     }
 
 burst :: (Node -> Node) -> Virus -> Virus
 burst f !v = v
-    { vPos             = move dir (vPos v)
+    { vPos             = Grid.move dir (vPos v)
     , vDir             = dir
     , vGrid            = putNode (vPos v) next (vGrid v)
     , vInfectedByBurst =
@@ -78,10 +42,10 @@ burst f !v = v
     !node = getNode (vPos v) (vGrid v)
     !next = f node
     !dir  = case node of
-        Clean    -> turnLeft (vDir v)
+        Clean    -> Grid.turnLeft (vDir v)
         Weakened -> vDir v
-        Infected -> turnRight (vDir v)
-        Flagged  -> turnAround (vDir v)
+        Infected -> Grid.turnRight (vDir v)
+        Flagged  -> Grid.turnAround (vDir v)
 
 bursts :: (Node -> Node) -> Int -> Virus -> Virus
 bursts f n v = if n <= 0 then v else bursts f (n - 1) (burst f v)
@@ -100,7 +64,7 @@ evolved n = case n of
 
 main :: IO ()
 main = do
-    cgrid <- readGrid IO.stdin
+    cgrid <- Grid.readGrid return IO.stdin
     let ngrid  = (\c -> case c of '#' -> Infected; _ -> Clean) <$> cgrid
 
     let virus0 = bursts basic 10000 (zero ngrid)
