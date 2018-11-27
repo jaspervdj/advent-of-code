@@ -13,8 +13,8 @@ import           Control.Monad               (foldM, forM_)
 import           Control.Monad.ST            (ST, runST)
 import           Data.Bits                   (xor)
 import           Data.Char                   (ord)
-import           Data.Monoid                 ((<>))
 import           Data.Proxy                  (Proxy (..))
+import           Data.Semigroup              (Semigroup (..))
 import qualified Data.Vector.Unboxed         as VU
 import qualified Data.Vector.Unboxed.Mutable as VUM
 import           Data.Word                   (Word8)
@@ -29,9 +29,12 @@ newtype RingIdx (n :: Nat) = RingIdx {fromRingIdx :: Int} deriving (Show)
 toRingIdx :: forall n. KnownNat n => Int -> RingIdx n
 toRingIdx x = RingIdx (x `mod` fromIntegral (natVal (Proxy :: Proxy n)))
 
+instance forall n. KnownNat n => Semigroup (RingIdx n) where
+    RingIdx x <> RingIdx y = toRingIdx (x + y)
+
 instance forall n. KnownNat n => Monoid (RingIdx n) where
-    mempty                          = RingIdx 0
-    mappend (RingIdx x) (RingIdx y) = toRingIdx (x + y)
+    mempty  = RingIdx 0
+    mappend = (<>)
 
 --------------------------------------------------------------------------------
 
