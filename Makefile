@@ -1,6 +1,7 @@
 C_SRCS  = $(wildcard 20??/*.c)
 HS_SRCS = $(wildcard 20??/*.hs)
-ML_SRCS = $(wildcard 20??/*.ml)
+# ML_SRCS = $(wildcard 20??/*.ml)
+ML_SRCS = 
 
 C_BINS  = $(C_SRCS:.c=.c.bin)
 HS_BINS = $(HS_SRCS:.hs=.hs.bin)
