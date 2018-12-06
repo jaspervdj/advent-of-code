@@ -9,6 +9,7 @@ module AdventOfCode.Grid
     , move
     , neighbours
     , diagonal
+    , manhattan
 
     , Grid
     , readGrid
@@ -46,6 +47,9 @@ diagonal (Pos x y) =
     , Pos (x + 1) (y - 1)
     , Pos (x + 1) (y + 1)
     ]
+
+manhattan :: Pos -> Pos -> Int
+manhattan (Pos lx ly) (Pos rx ry) = abs (lx - rx) + abs (ly - ry)
 
 move :: Dir -> Pos -> Pos
 move dir (Pos x y) = case dir of
