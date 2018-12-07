@@ -1,3 +1,5 @@
+import Data.List.Extended (select)
+
 type Spreadsheet = [[Int]]
 
 readSpreadsheet :: IO Spreadsheet
@@ -5,10 +7,6 @@ readSpreadsheet = map (map read . words) . lines <$> getContents
 
 checksum :: Spreadsheet -> Int
 checksum spreadsheet = sum [maximum row - minimum row | row <- spreadsheet]
-
-select :: [a] -> [(a, [a])]
-select [] = []
-select (x : xs) = (x, xs) : [(y, x : ys) | (y, ys) <- select xs]
 
 evenly :: Spreadsheet -> Int
 evenly spreadsheet = sum

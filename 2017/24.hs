@@ -1,10 +1,10 @@
 {-# LANGUAGE BangPatterns #-}
-import           Control.Arrow ((&&&))
-import           Data.Function (on)
-import           Data.List     (foldl')
-import           Data.Maybe    (maybeToList)
-import qualified System.IO     as IO
-import           Text.Read     (readMaybe)
+import           Control.Arrow      ((&&&))
+import           Data.Function      (on)
+import           Data.List.Extended (foldl', select)
+import           Data.Maybe         (maybeToList)
+import qualified System.IO          as IO
+import           Text.Read          (readMaybe)
 
 --------------------------------------------------------------------------------
 
@@ -36,10 +36,6 @@ connect (Component x y) (Bridge total len z)
     | x == z    = Just (Bridge (total + x + y) (len + 1) y)
     | y == z    = Just (Bridge (total + x + y) (len + 1) x)
     | otherwise = Nothing
-
-select :: [a] -> [(a, [a])]
-select []       = []
-select (x : xs) = (x, xs) : [(y, x : ys) | (y, ys) <- select xs]
 
 bridges :: [Component] -> [Bridge]
 bridges = go zero
