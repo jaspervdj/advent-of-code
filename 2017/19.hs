@@ -2,6 +2,7 @@
 {-# LANGUAGE RecordWildCards #-}
 
 import qualified AdventOfCode.Grid as Grid
+import           AdventOfCode.V2
 import           Control.Monad     (msum)
 import           Data.Char         (isAlpha)
 import qualified Data.Map          as M
@@ -12,12 +13,12 @@ data Cell = Horizontal | Vertical | Crossroads | Character !Char
     deriving (Eq, Ord, Show)
 
 parseCell :: Char -> IO (Maybe Cell)
-parseCell '-'           = return (Just Horizontal)
-parseCell '|'           = return (Just Vertical)
-parseCell '+'           = return (Just Crossroads)
-parseCell ' '           = return Nothing
-parseCell x | isAlpha x = return (Just (Character x))
-parseCell x             = fail $ "Unknown cell: " ++ show x
+parseCell '-' = return (Just Horizontal)
+parseCell '|' = return (Just Vertical)
+parseCell '+' = return (Just Crossroads)
+parseCell ' ' = return Nothing
+parseCell x   | isAlpha x = return (Just (Character x))
+parseCell x   = fail $ "Unknown cell: " ++ show x
 
 data Dude = Dude
     { dPos       :: !Grid.Pos
@@ -32,8 +33,8 @@ zeroDude g = case candidates of
     (p : _) -> Dude p Grid.D [] 1
   where
     candidates =
-        [ Grid.Pos x 0
-        | x <- [0 ..], _ <- maybeToList $ M.lookup (Grid.Pos x 0) g
+        [ V2 x 0
+        | x <- [0 ..], _ <- maybeToList $ M.lookup (V2 x 0) g
         ]
 
 stepDude :: Grid.Grid Cell -> Dude -> Maybe Dude

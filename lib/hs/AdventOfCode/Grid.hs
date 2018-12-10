@@ -5,7 +5,7 @@ module AdventOfCode.Grid
     , turnRight
     , turnAround
 
-    , Pos (..)
+    , Pos
     , move
     , neighbours
     , diagonal
@@ -13,12 +13,17 @@ module AdventOfCode.Grid
 
     , Grid
     , readGrid
+    , printGrid
     , center
     ) where
 
-import           Control.Monad (foldM)
-import qualified Data.Map      as M
-import qualified System.IO     as IO
+import           AdventOfCode.V2
+import qualified AdventOfCode.V2.Box as Box
+import           Control.Monad       (foldM, forM_)
+import qualified Data.List           as L
+import qualified Data.Map            as M
+import           Data.Maybe          (fromMaybe)
+import qualified System.IO           as IO
 
 data Dir = U | R | D | L deriving (Bounded, Enum, Eq, Ord, Show)
 
@@ -30,10 +35,7 @@ turnAround R = L
 turnAround D = U
 turnAround L = R
 
-data Pos = Pos
-    { pX :: {-# UNPACK #-} !Int
-    , pY :: {-# UNPACK #-} !Int
-    } deriving (Eq, Ord, Show)
+type Pos = V2 Int
 
 -- | Up, down, left and right neighbours
 neighbours :: Pos -> [Pos]
@@ -41,22 +43,22 @@ neighbours p = [move d p | d <- [minBound .. maxBound]]
 
 -- | Diagonal neighbours
 diagonal :: Pos -> [Pos]
-diagonal (Pos x y) =
-    [ Pos (x - 1) (y - 1)
-    , Pos (x - 1) (y + 1)
-    , Pos (x + 1) (y - 1)
-    , Pos (x + 1) (y + 1)
+diagonal (V2 x y) =
+    [ V2 (x - 1) (y - 1)
+    , V2 (x - 1) (y + 1)
+    , V2 (x + 1) (y - 1)
+    , V2 (x + 1) (y + 1)
     ]
 
 manhattan :: Pos -> Pos -> Int
-manhattan (Pos lx ly) (Pos rx ry) = abs (lx - rx) + abs (ly - ry)
+manhattan (V2 lx ly) (V2 rx ry) = abs (lx - rx) + abs (ly - ry)
 
 move :: Dir -> Pos -> Pos
-move dir (Pos x y) = case dir of
-    U -> Pos x       (y - 1)
-    L -> Pos (x - 1) y
-    D -> Pos x       (y + 1)
-    R -> Pos (x + 1) y
+move dir (V2 x y) = case dir of
+    U -> V2 x       (y - 1)
+    L -> V2 (x - 1) y
+    D -> V2 x       (y + 1)
+    R -> V2 (x + 1) y
 
 type Grid a = M.Map Pos a
 
@@ -67,13 +69,22 @@ readGrid f h = do
         (\acc (y, l) -> foldM
             (\m (x, c) -> do
                 v <- f c
-                return $ M.insert (Pos x y) v m)
+                return $ M.insert (V2 x y) v m)
             acc
             (zip [0 ..] l))
         M.empty
         (zip [0 ..] ls)
 
+printGrid :: IO.Handle -> Grid Char -> IO ()
+printGrid h grid
+    | M.null grid = IO.hPutStrLn h "<empty grid>"
+    | otherwise   = forM_ [minY .. maxY] $ \y -> IO.hPutStrLn h
+        [fromMaybe ' ' (M.lookup (V2 x y) grid)  | x <- [minX .. maxX]]
+  where
+    ~(Box.Box (V2 minX minY) (V2 maxX maxY)) =
+        L.foldl1' (<>) $ map Box.fromV2 $ M.keys grid
+
 center :: Grid a -> Pos
 center grid = case M.maxViewWithKey grid of
-    Nothing                -> error "center: Empty grid"
-    Just ((Pos x y, _), _) -> Pos (x `div` 2) (y `div` 2)
+    Nothing               -> error "center: Empty grid"
+    Just ((V2 x y, _), _) -> V2 (x `div` 2) (y `div` 2)

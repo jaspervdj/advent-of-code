@@ -1,9 +1,10 @@
 import qualified AdventOfCode.Grid as G
+import           AdventOfCode.V2
 import           Data.Char         (isDigit)
-import qualified Data.Set as S
 import qualified Data.List         as L
 import qualified Data.Map          as M
 import           Data.Maybe        (mapMaybe)
+import qualified Data.Set          as S
 import qualified System.IO         as IO
 import           Text.Read         (readMaybe)
 
@@ -14,7 +15,7 @@ data Claim = Claim Elf G.Pos G.Pos deriving (Show)
 parseClaim :: String -> IO Claim
 parseClaim input = case mapMaybe readMaybe (words (map space input)) of
     [i, l, t, w, h] -> return $
-        Claim i (G.Pos l t) (G.Pos (l + w - 1) (t + h - 1))
+        Claim i (V2 l t) (V2 (l + w - 1) (t + h - 1))
     _ -> fail $ "Could not parse claim: " ++ input
   where
     space c = if isDigit c then c else ' '
@@ -25,12 +26,12 @@ parseClaims h = IO.hGetContents h >>= mapM parseClaim . lines
 type Fabric = G.Grid [Elf]
 
 claim :: Claim -> Fabric -> Fabric
-claim (Claim elf (G.Pos l t) (G.Pos r b)) fabric = L.foldl'
+claim (Claim elf (V2 l t) (V2 r b)) fabric = L.foldl'
     (\acc pos -> M.insertWith (++) pos [elf] acc)
     fabric
     positions
   where
-    positions = [G.Pos x y | x <- [l .. r], y <- [t .. b]]
+    positions = [V2 x y | x <- [l .. r], y <- [t .. b]]
 
 contested :: Fabric -> [(G.Pos, [Elf])]
 contested fabric = [(pos, elfs) | (pos, elfs@(_ : _ : _)) <- M.toList fabric]

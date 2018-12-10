@@ -1,4 +1,5 @@
 import qualified AdventOfCode.Grid as G
+import           AdventOfCode.V2
 import           Control.Monad     (forM, guard)
 import           Data.Char         (isDigit)
 import qualified Data.List         as L
@@ -18,18 +19,18 @@ parseCoordinates h = do
     ls <- lines <$> IO.hGetContents h
     forM (zip [0 ..] ls) $ \(ident, line) ->
         case mapMaybe readMaybe (words (map space line)) of
-            [x, y] -> return $ Coordinate ident (G.Pos x y)
+            [x, y] -> return $ Coordinate ident (V2 x y)
             _      -> fail $ "Could not parse line: " ++ line
   where
     space c = if isDigit c then c else ' '
 
 bounds :: Int -> [Coordinate a] -> (G.Pos, G.Pos)
-bounds margin coordinates = (G.Pos minX minY, G.Pos maxX maxY)
+bounds margin coordinates = (V2 minX minY, V2 maxX maxY)
   where
-    minX = minimum [x | Coordinate _ (G.Pos x _) <- coordinates] - margin
-    maxX = maximum [x | Coordinate _ (G.Pos x _) <- coordinates] + margin
-    minY = minimum [y | Coordinate _ (G.Pos _ y) <- coordinates] - margin
-    maxY = maximum [y | Coordinate _ (G.Pos _ y) <- coordinates] + margin
+    minX = minimum [x | Coordinate _ (V2 x _) <- coordinates] - margin
+    maxX = maximum [x | Coordinate _ (V2 x _) <- coordinates] + margin
+    minY = minimum [y | Coordinate _ (V2 _ y) <- coordinates] - margin
+    maxY = maximum [y | Coordinate _ (V2 _ y) <- coordinates] + margin
 
 -- | A better `minimumBy`.
 minimaBy :: (Ord a, Foldable t) => (a -> a -> Ordering) -> t a -> [a]
@@ -43,8 +44,8 @@ minimaBy f = L.foldl' step []
 
 -- | Assign positions witin the bounds to the closest coordinates.
 assign :: Ord a => (G.Pos, G.Pos) -> [Coordinate a] -> [(G.Pos, a)]
-assign (G.Pos minX minY, G.Pos maxX maxY) coordinates = do
-    pos <- G.Pos <$> [minX .. maxX] <*> [minY .. maxY]
+assign (V2 minX minY, V2 maxX maxY) coordinates = do
+    pos <- V2 <$> [minX .. maxX] <*> [minY .. maxY]
     let closest = minimaBy (comparing (G.manhattan pos . coordPos)) coordinates
     case closest of
         [Coordinate val _] -> return (pos, val)
@@ -62,8 +63,8 @@ consistent l = M.mapMaybeWithKey $ \k x -> case M.lookup k l of
 
 -- | Find safe positions.
 safe :: (G.Pos, G.Pos) -> [Coordinate a] -> Int -> [G.Pos]
-safe (G.Pos minX minY, G.Pos maxX maxY) coordinates maxTotal = do
-    pos <- G.Pos <$> [minX .. maxX] <*> [minY .. maxY]
+safe (V2 minX minY, V2 maxX maxY) coordinates maxTotal = do
+    pos <- V2 <$> [minX .. maxX] <*> [minY .. maxY]
     let total = sum [G.manhattan pos coord | Coordinate _ coord <- coordinates]
     guard $ total < maxTotal
     return pos
