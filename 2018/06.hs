@@ -1,13 +1,13 @@
-import qualified AdventOfCode.Grid as G
+import qualified AdventOfCode.Grid  as G
 import           AdventOfCode.V2
-import           Control.Monad     (forM, guard)
-import           Data.Char         (isDigit)
-import qualified Data.List         as L
-import qualified Data.Map          as M
-import           Data.Maybe        (mapMaybe)
-import           Data.Ord          (comparing)
-import qualified System.IO         as IO
-import           Text.Read         (readMaybe)
+import           Control.Monad      (forM, guard)
+import           Data.Char          (isDigit)
+import qualified Data.List.Extended as L
+import qualified Data.Map           as M
+import           Data.Maybe         (mapMaybe)
+import           Data.Ord           (comparing)
+import qualified System.IO          as IO
+import           Text.Read          (readMaybe)
 
 data Coordinate a = Coordinate
     { coordValue :: a
@@ -32,22 +32,12 @@ bounds margin coordinates = (V2 minX minY, V2 maxX maxY)
     minY = minimum [y | Coordinate _ (V2 _ y) <- coordinates] - margin
     maxY = maximum [y | Coordinate _ (V2 _ y) <- coordinates] + margin
 
--- | A better `minimumBy`.
-minimaBy :: (Ord a, Foldable t) => (a -> a -> Ordering) -> t a -> [a]
-minimaBy f = L.foldl' step []
-  where
-    step []       x = [x]
-    step (y : ys) x = case f x y of
-        EQ -> x : y : ys
-        LT -> [x]
-        GT -> y : ys
-
 -- | Assign positions witin the bounds to the closest coordinates.
 assign :: Ord a => (G.Pos, G.Pos) -> [Coordinate a] -> [(G.Pos, a)]
 assign (V2 minX minY, V2 maxX maxY) coordinates = do
     pos <- V2 <$> [minX .. maxX] <*> [minY .. maxY]
-    let closest = minimaBy (comparing (G.manhattan pos . coordPos)) coordinates
-    case closest of
+    let close = L.minimaBy (comparing (G.manhattan pos . coordPos)) coordinates
+    case close of
         [Coordinate val _] -> return (pos, val)
         _                  -> []
 
