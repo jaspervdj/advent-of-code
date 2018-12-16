@@ -1,13 +1,11 @@
-import qualified AdventOfCode.Grid  as G
+import qualified AdventOfCode.Grid    as G
+import qualified AdventOfCode.Parsing as Parsing
 import           AdventOfCode.V2
-import           Control.Monad      (forM, guard)
-import           Data.Char          (isDigit)
-import qualified Data.List.Extended as L
-import qualified Data.Map           as M
-import           Data.Maybe         (mapMaybe)
-import           Data.Ord           (comparing)
-import qualified System.IO          as IO
-import           Text.Read          (readMaybe)
+import           Control.Monad        (forM, guard)
+import qualified Data.List.Extended   as L
+import qualified Data.Map             as M
+import           Data.Ord             (comparing)
+import qualified System.IO            as IO
 
 data Coordinate a = Coordinate
     { coordValue :: a
@@ -18,11 +16,9 @@ parseCoordinates :: IO.Handle -> IO [Coordinate Int]
 parseCoordinates h = do
     ls <- lines <$> IO.hGetContents h
     forM (zip [0 ..] ls) $ \(ident, line) ->
-        case mapMaybe readMaybe (words (map space line)) of
+        case Parsing.ints line of
             [x, y] -> return $ Coordinate ident (V2 x y)
             _      -> fail $ "Could not parse line: " ++ line
-  where
-    space c = if isDigit c then c else ' '
 
 bounds :: Int -> [Coordinate a] -> (G.Pos, G.Pos)
 bounds margin coordinates = (V2 minX minY, V2 maxX maxY)

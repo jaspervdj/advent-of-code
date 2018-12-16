@@ -1,24 +1,20 @@
-import qualified AdventOfCode.Grid as G
+import qualified AdventOfCode.Grid    as G
+import qualified AdventOfCode.Parsing as Parsing
 import           AdventOfCode.V2
-import           Data.Char         (isDigit)
-import qualified Data.List         as L
-import qualified Data.Map          as M
-import           Data.Maybe        (mapMaybe)
-import qualified Data.Set          as S
-import qualified System.IO         as IO
-import           Text.Read         (readMaybe)
+import qualified Data.List            as L
+import qualified Data.Map             as M
+import qualified Data.Set             as S
+import qualified System.IO            as IO
 
 type Elf = Int
 
 data Claim = Claim Elf G.Pos G.Pos deriving (Show)
 
 parseClaim :: String -> IO Claim
-parseClaim input = case mapMaybe readMaybe (words (map space input)) of
+parseClaim input = case Parsing.ints input of
     [i, l, t, w, h] -> return $
         Claim i (V2 l t) (V2 (l + w - 1) (t + h - 1))
     _ -> fail $ "Could not parse claim: " ++ input
-  where
-    space c = if isDigit c then c else ' '
 
 parseClaims :: IO.Handle -> IO [Claim]
 parseClaims h = IO.hGetContents h >>= mapM parseClaim . lines

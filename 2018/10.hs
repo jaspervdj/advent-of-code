@@ -1,13 +1,13 @@
 {-# LANGUAGE BangPatterns #-}
 
-import qualified AdventOfCode.Grid   as G
+import qualified AdventOfCode.Grid    as G
+import qualified AdventOfCode.Parsing as Parsing
 import           AdventOfCode.V2
-import qualified AdventOfCode.V2.Box as Box
-import           Data.Char           (isDigit)
-import qualified Data.List           as L
-import qualified Data.Map            as M
-import           Data.Semigroup      ((<>))
-import qualified System.IO           as IO
+import qualified AdventOfCode.V2.Box  as Box
+import qualified Data.List            as L
+import qualified Data.Map             as M
+import           Data.Semigroup       ((<>))
+import qualified System.IO            as IO
 
 data Light = Light
     { lPos :: !(V2 Int)
@@ -21,11 +21,9 @@ parseLights :: IO.Handle -> IO [Light]
 parseLights h =
     IO.hGetContents h >>= mapM parseLight . lines
   where
-    parseLight line = case map read (words (map space line)) of
+    parseLight line = case Parsing.ints line of
         [px, py, vx, vy] -> return $ Light (V2 px py) (V2 vx vy)
         _                -> fail $ "Could not parse line: " ++ show line
-
-    space c = if isDigit c || c == '-' then c else ' '
 
 smallest :: [Light] -> (Int, [Light])
 smallest =
