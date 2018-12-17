@@ -15,6 +15,7 @@ module AdventOfCode.Grid
     , readGrid
     , printGrid
     , center
+    , box
     ) where
 
 import           AdventOfCode.V2
@@ -76,15 +77,18 @@ readGrid f h = do
         (zip [0 ..] ls)
 
 printGrid :: IO.Handle -> Grid Char -> IO ()
-printGrid h grid
-    | M.null grid = IO.hPutStrLn h "<empty grid>"
-    | otherwise   = forM_ [minY .. maxY] $ \y -> IO.hPutStrLn h
-        [fromMaybe ' ' (M.lookup (V2 x y) grid)  | x <- [minX .. maxX]]
-  where
-    ~(Box.Box (V2 minX minY) (V2 maxX maxY)) =
-        L.foldl1' (<>) $ map Box.fromV2 $ M.keys grid
+printGrid h grid = case box grid of
+    Nothing -> IO.hPutStrLn h "<empty grid>"
+    Just (Box.Box (V2 minX minY) (V2 maxX maxY)) ->
+        forM_ [minY .. maxY] $ \y -> IO.hPutStrLn h
+            [fromMaybe ' ' (M.lookup (V2 x y) grid)  | x <- [minX .. maxX]]
 
 center :: Grid a -> Pos
 center grid = case M.maxViewWithKey grid of
     Nothing               -> error "center: Empty grid"
     Just ((V2 x y, _), _) -> V2 (x `div` 2) (y `div` 2)
+
+box :: Grid a -> Maybe (Box.Box Int)
+box grid
+    | M.null grid = Nothing
+    | otherwise   = Just $ L.foldl1' (<>) $ map Box.fromV2 $ M.keys grid
