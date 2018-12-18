@@ -1,9 +1,10 @@
 {-# LANGUAGE BangPatterns #-}
 
-import qualified Data.Map   as M
-import           Data.Maybe (fromMaybe)
-import qualified Data.Set   as S
-import qualified System.IO  as IO
+import qualified AdventOfCode.Loop as Loop
+import qualified Data.Map          as M
+import           Data.Maybe        (fromMaybe)
+import qualified Data.Set          as S
+import qualified System.IO         as IO
 
 type Pots = S.Set Int
 type Rules = M.Map [Bool] Bool
@@ -51,32 +52,21 @@ generation rules pots = S.fromList
     get      = (`S.member` pots)
     (lo, hi) = range pots
 
-data Loop = Loop
-    { pStart  :: !Int
-    , pLength :: !Int
-    , pShift  :: !Int
-    } deriving (Show)
-
-findLoop :: [Pots] -> Maybe Loop
-findLoop = go M.empty 0
-  where
-    go _ _ [] = Nothing
-    go memory !i (pots : potss) = case M.lookup (showPots pots) memory of
-        Just (iteration, lo') -> Just $ Loop iteration (i - iteration) (lo - lo')
-        Nothing -> go
-            (M.insert (showPots pots) (i, lo) memory) (i + 1) potss
-      where
-        (lo, _) = range pots
-
 main :: IO ()
 main = do
     (initial, rules) <- parseInput IO.stdin
     let generations = iterate (generation rules) initial
     print $ sum $ generations !! 20
 
-    let Just loop = findLoop generations
-    -- It turns out that `pLength = 1`, which makes things a lot simpler.  We
+    let Just loop = Loop.findLoop showPots (generation rules) initial
+
+    -- It turns out that `lLength = 1`, which makes things a lot simpler.  We
     -- assume this is the case for all inputs.
-    --
-    let shift = pShift loop * (50000000000 - pStart loop)
-    print $ sum $ map (+ shift) $ S.toList $ generations !! pStart loop
+    let shift =
+            let (lo1, _) = range (Loop.lFirst loop)
+                (lo2, _) = range (Loop.lSecond loop) in
+            lo2 - lo1
+
+        totalShift = shift * (50000000000 - Loop.lStart loop)
+    print $ sum $ map (+ totalShift) $
+        S.toList $ generations !! Loop.lStart loop
