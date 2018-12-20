@@ -1,3 +1,4 @@
+-- | Dirty parsing module
 module AdventOfCode.Parsing
     ( ints
     ) where

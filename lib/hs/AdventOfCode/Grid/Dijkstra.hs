@@ -28,10 +28,10 @@ pop queue0 = case M.minViewWithKey queue0 of
 
 dijkstra
     :: forall a. Ord a
-    => (G.Pos -> a -> Bool)  -- ^ Is this cell accessible?
-    -> [G.Pos]               -- ^ Starting positions, assumed accessible.
-    -> G.Grid a              -- ^ Cells
-    -> G.Grid Int            -- ^ Distances
+    => ((G.Pos, a) -> G.Dir -> (G.Pos, a) -> Bool)  -- ^ May we take this edge?
+    -> [G.Pos]                                      -- ^ Starting positions
+    -> G.Grid a                                     -- ^ Cells
+    -> G.Grid Int                                   -- ^ Distances
 dijkstra accessible starting grid0 = do
     go (L.foldl' (\acc p -> push 0 p acc) empty starting) M.empty
   where
@@ -39,17 +39,19 @@ dijkstra accessible starting grid0 = do
     go queue0 distances0 = case pop queue0 of
         -- Queue empty, we're done
         Nothing -> distances0
-        Just (dist, pos , queue1)
+        Just (dist, px, queue1)
             -- Already visited
-            | pos `M.member` distances0 -> go queue1 distances0
+            | px `M.member` distances0 -> go queue1 distances0
             -- New visit
             | otherwise ->
-                let distances1 = M.insert pos dist distances0
+                let distances1 = M.insert px dist distances0
                     neighbours = do
-                        p <- G.neighbours pos
-                        x <- maybeToList (M.lookup p grid0)
-                        guard (accessible p x)
-                        return p
+                        x   <- maybeToList (M.lookup px grid0)
+                        dir <- [minBound .. maxBound]
+                        let py = G.move dir px
+                        y <- maybeToList (M.lookup py grid0)
+                        guard (accessible (px, x) dir (py, y))
+                        return py
                     queue2 = L.foldl'
                         (\acc p -> push (dist + 1) p acc)
                         queue1

@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveFunctor #-}
 module AdventOfCode.V2
     ( V2 (..)
+    , zero
     , (.+.)
     , (.-.)
     , (.*)
@@ -8,6 +9,9 @@ module AdventOfCode.V2
 
 data V2 a = V2 {vX :: !a, vY :: !a}
     deriving (Eq, Functor, Ord, Show)
+
+zero :: Num a => V2 a
+zero = V2 0 0
 
 (.+.) :: Num a => V2 a -> V2 a -> V2 a
 V2 x1 y1 .+. V2 x2 y2 = V2 (x1 + x2) (y1 + y2)

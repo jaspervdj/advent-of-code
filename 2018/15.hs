@@ -127,7 +127,7 @@ move (pos, combatant) battle
     -- Nowhere to move.
     | otherwise = ((pos, combatant), battle)
   where
-    accessible p terrain =
+    accessible _ _ (p, terrain) =
         terrain == Cavern && not (p `M.member` (bCombatants battle))
 
     distToMe = Dijkstra.dijkstra accessible [pos] (bTerrain battle)
