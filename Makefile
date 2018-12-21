@@ -38,3 +38,7 @@ include $(HS_SRCS:.hs=.hs.depends)
 
 %.ml.bin: %.ml
 	ocamlopt -w A-24-4 -o $@ $<
+
+.PHONY: %.clj.run
+%.clj.run: %.clj
+	java -cp lib/clj:$(shell clj -Spath) clojure.main $<
