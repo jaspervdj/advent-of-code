@@ -42,3 +42,7 @@ include $(HS_SRCS:.hs=.hs.depends)
 .PHONY: %.clj.run
 %.clj.run: %.clj
 	java -cp lib/clj:$(shell clj -Spath) clojure.main $<
+
+.PHONY: clj
+clj:
+	rlwrap java -cp lib/clj:$(shell clj -Spath) clojure.main
