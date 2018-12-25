@@ -1,18 +1,5 @@
+(use 'advent-of-code.grid)
 (require 'advent-of-code.list)
-
-(defrecord Pos [x y])
-
-(defn abs [{x :x y :y}] (+ (Math/abs x) (Math/abs y)))
-
-(defn move [pos dir] (case dir
-                      :u (update pos :y dec)
-                      :r (update pos :x inc)
-                      :d (update pos :y inc)
-                      :l (update pos :x dec)))
-
-(defn turn-left [dir] (dir {:u :l :r :u :d :r :l :d}))
-(defn turn-right [dir] (dir {:u :r :r :d :d :l :l :u}))
-(defn turn [dir lr] (if (= lr :l) (turn-left dir) (turn-right dir)))
 
 (defn follow-directions
   "Follow the directions.
@@ -39,9 +26,9 @@
   []
   (let [directions (parse-directions (slurp *in*))]
     ;; Part 1
-    (println (abs (last (follow-directions (Pos. 0 0) :u directions))))
+    (println (abs (last (follow-directions (->Pos 0 0) :u directions))))
     ;; Part 2
     (println (abs (advent-of-code.list/twice
-                   (follow-directions (Pos. 0 0) :u directions))))))
+                   (follow-directions (->Pos 0 0) :u directions))))))
 
 (main)
