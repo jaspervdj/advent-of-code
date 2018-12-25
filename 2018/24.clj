@@ -1,9 +1,10 @@
+(require 'advent-of-code.list)
+(use 'advent-of-code.list)
+
 (defrecord Group
   [units hit-points attack-damage attack-type initiative weak immune])
 
 (defn effective-power [group] (* (:units group) (:attack-damage group)))
-
-(defn in? "true if coll contains x" [coll x] (some #(= x %) coll))
 
 (defn damage
   [attack defend]
@@ -44,17 +45,6 @@
   (let [lines (clojure.string/split-lines input)
         [xs ys] (split-with #(not (empty? %)) lines)]
     (into {} (concat (parse-team xs) (parse-team (rest ys))))))
-
-(defn max-by
-  "Like max-key but uses compare rather than a numeric key."
-  [keyfn coll]
-  (when-not (empty? coll)
-   (first
-    (reduce
-     (fn [[x xk] y]
-       (let [yk (keyfn y)] (if (> (compare xk yk) 0) [x xk] [y yk])))
-     [(first coll) (keyfn (first coll))]
-     (rest coll)))))
 
 (defn attackers
   "Groups that have at least one unit"
