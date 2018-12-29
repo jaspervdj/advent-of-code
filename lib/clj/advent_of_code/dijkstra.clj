@@ -11,11 +11,11 @@
 
 ;; Returns a map of nodes to distances.
 (defn dijkstra
-  ;; By default, don't use an `is-goal`.
+  ;; By default, don't use a `goal?`.
   ([start neighbours]
-    (dijkstra start neighbours (fn [goal] false)))
+    (dijkstra start neighbours (fn [_] false)))
 
-  ([start neighbours is-goal]
+  ([start neighbours goal?]
     ;; We are using some mutable data structures here.
     (let [queue (java.util.PriorityQueue. [(Visit. 0 start)])]
       ;; Loop with a map of places we have visited already.
@@ -37,6 +37,6 @@
                 ;; If this place was the goal, we are done, otherwise we
                 ;; continue.
                 (if
-                  (is-goal (:place visit))
+                  (goal? (:place visit))
                   (persistent! ndists)
                   (recur ndists))))))))))
