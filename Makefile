@@ -10,6 +10,9 @@ ML_BINS = $(ML_SRCS:.ml=.ml.bin)
 GHC 	  = stack exec ghc --
 GHC_FLAGS = -Wall -ilib/hs -O2
 
+CLOJURE_PATH = lib/clj:/usr/share/java/clojure-1.8.jar
+# CLOJURE_PATH = lib/clj:$(shell clj -Spath)
+
 .PHONY: all clean
 .PRECIOUS: %.hs.depends
 
@@ -41,8 +44,8 @@ include $(HS_SRCS:.hs=.hs.depends)
 
 .PHONY: %.clj.run
 %.clj.run: %.clj
-	java -cp lib/clj:$(shell clj -Spath) clojure.main $<
+	java -cp $(CLOJURE_PATH) clojure.main $<
 
 .PHONY: clj
 clj:
-	rlwrap java -cp lib/clj:$(shell clj -Spath) clojure.main
+	rlwrap java -cp $(CLOJURE_PATH) clojure.main
