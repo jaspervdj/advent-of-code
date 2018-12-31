@@ -19,18 +19,18 @@
     ;; We are using some mutable data structures here.
     (let [queue (java.util.PriorityQueue. [(Visit. 0 start)])]
       ;; Loop with a map of places we have visited already.
-      (loop [dists (transient (hash-map))]
+      (loop [dists {}]
         (let [visit (.poll queue)]
           (if
             ;; If the queue is empty, return the distances.
             (nil? visit)
-            (persistent! dists)
+            dists
             (if
               ;; If we have already visited this place, continue.
               (contains? dists (:place visit))
               (recur dists)
               ;; If not, we visit this place and its neighbours to the queue.
-              (let [ndists (assoc! dists (:place visit) (:distance visit))]
+              (let [ndists (assoc dists (:place visit) (:distance visit))]
                 (doseq [[dist nb] (neighbours (:place visit))]
                   (when-not (contains? dists nb)
                     (.add queue (Visit. (+ (:distance visit) dist) nb))))
@@ -38,5 +38,5 @@
                 ;; continue.
                 (if
                   (goal? (:place visit))
-                  (persistent! ndists)
+                  ndists
                   (recur ndists))))))))))
