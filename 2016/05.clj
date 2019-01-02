@@ -1,16 +1,9 @@
-(import 'java.security.MessageDigest
-        'java.math.BigInteger)
-
-(defn md5
-  [^String s]
-  (let [algorithm (MessageDigest/getInstance "MD5")
-        raw (.digest algorithm (.getBytes s))]
-    (format "%032x" (BigInteger. 1 raw))))
+(require 'advent-of-code.md5)
 
 (defn interesting-hashes
   [door-id]
   (filter #(clojure.string/starts-with? % "00000")
-   (map #(md5 (str door-id %)) (iterate inc 0))))
+   (map #(advent-of-code.md5/md5 (str door-id %)) (iterate inc 0))))
 
 (defn part-1-password
   [door-id]
