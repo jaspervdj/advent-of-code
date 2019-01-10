@@ -23,3 +23,12 @@
     (fn [[_ s] x] (if (contains? s x) (reduced [x s]) [nil (conj s x)]))
     [nil #{}]
     coll)))
+
+(defn permutations
+  [s]
+  (lazy-seq
+   (if
+    (seq (rest s))
+    (apply concat (for [x s]
+                    (map #(cons x %) (permutations (remove #{x} s)))))
+    [s])))

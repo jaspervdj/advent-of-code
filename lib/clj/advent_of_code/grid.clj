@@ -34,3 +34,11 @@
        stream
        (apply str (for [x (range min-x (+ max-x 1))]
                     (or (get grid (Pos. x y)) \space)))))))
+
+(defn parse-grid
+  [input]
+  (into {} (for [[y line] (map-indexed
+                   (fn [idx line] [idx line])
+                   (clojure.string/split-lines input))
+                 [x c] (map-indexed (fn [idx c] [idx c]) line)]
+             [(->Pos x y) c])))

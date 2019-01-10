@@ -1,3 +1,5 @@
+(require 'advent-of-code.list)
+
 (defn swap-pos
   [x y]
   (let [l (min x y) r (max x y)] (fn [s] (str
@@ -70,22 +72,13 @@
   [input]
   (map parse-operation (clojure.string/split-lines input)))
 
-(defn permutations
-  [s]
-  (lazy-seq
-   (if
-    (seq (rest s))
-    (apply concat (for [x s]
-                    (map #(cons x %) (permutations (remove #{x} s)))))
-    [s])))
-
 (defn main
   []
   (let [operations (parse-operations (slurp *in*))
         do-operations (fn [in] (reduce (fn [s f] (f s)) in operations))]
     (println (do-operations "abcdefgh"))
     (println (first
-               (for [in (permutations (seq "fbgdceah"))
+               (for [in (advent-of-code.list/permutations (seq "fbgdceah"))
                      :let [out (do-operations (apply str in))]
                      :when (= out "fbgdceah")]
                  (apply str in))))))
