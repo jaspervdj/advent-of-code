@@ -2,6 +2,8 @@
 
 (defrecord Pos [x y])
 
+(def zero (Pos. 0 0))
+
 (defn abs [{x :x y :y}] (+ (Math/abs x) (Math/abs y)))
 
 (defn neighbours
