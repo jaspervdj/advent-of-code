@@ -1,4 +1,5 @@
 -- | Utilities for dealing with hexagonal grids.
+{-# LANGUAGE BangPatterns #-}
 module AdventOfCode.Hex
     ( Cubic (..)
     , zero
