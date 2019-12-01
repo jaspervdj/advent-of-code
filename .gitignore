@@ -5,3 +5,4 @@
 *.cmi
 *.depends
 *.bak
+*.gdb
