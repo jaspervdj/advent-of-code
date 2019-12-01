@@ -2,12 +2,15 @@
 module AdventOfCode.NanoParser
     ( Parser
     , anyChar
+    , satisfy
     , char
+    , many1
     , sepBy
     , runParser
     ) where
 
 import           Control.Applicative (Alternative (..))
+import           Control.Monad       (void)
 import           Data.List           (intercalate)
 
 data ParseResult t a
@@ -38,15 +41,19 @@ instance Alternative (Parser t) where
                 success@(ParseSuccess _ _ _) -> success
                 ParseError errs2             -> ParseError (errs1 ++ errs2))
 
+satisfy :: String -> (t -> Bool) -> Parser t t
+satisfy descr p = Parser (\i ts -> case ts of
+    (t : ts') | p t -> ParseSuccess t (i + 1) ts'
+    _               -> ParseError [(i, descr)])
+
 anyChar :: Parser t t
-anyChar = Parser (\i ts -> case ts of
-    []        -> ParseError [(i, "any character")]
-    (t : ts') -> ParseSuccess t (i + 1) ts')
+anyChar = satisfy "any character" (const True)
 
 char :: (Eq t, Show t) => t -> Parser t ()
-char c = Parser (\i ts -> case ts of
-    (t : ts') | t == c -> ParseSuccess () (i + 1) ts'
-    _                  -> ParseError [(i, show c)])
+char c = void $ satisfy (show c) (== c)
+
+many1 :: Parser t a -> Parser t [a]
+many1 p = (:) <$> p <*> many p
 
 sepBy :: Parser t a -> Parser t b -> Parser t [a]
 sepBy p s = ((:) <$> p <*> many (s *> p)) <|> pure []
