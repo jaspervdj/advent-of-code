@@ -1,17 +1,29 @@
 {-# LANGUAGE DeriveFunctor #-}
 module AdventOfCode.NanoParser
     ( Parser
+
     , anyChar
     , satisfy
     , char
+    , string
+
     , many1
     , sepBy
+
+    , alpha
+    , digit
+    , spaces
+    , decimal
+
     , runParser
+    , hRunParser
     ) where
 
 import           Control.Applicative (Alternative (..))
 import           Control.Monad       (void)
+import           Data.Char           (isAlpha, isDigit, isSpace)
 import           Data.List           (intercalate)
+import qualified System.IO           as IO
 
 data ParseResult t a
     = ParseSuccess !a !Int [t]
@@ -52,11 +64,27 @@ anyChar = satisfy "any character" (const True)
 char :: (Eq t, Show t) => t -> Parser t ()
 char c = void $ satisfy (show c) (== c)
 
+string :: (Eq t, Show t) => [t] -> Parser t ()
+string []       = pure ()
+string (x : xs) = char x *> string xs
+
 many1 :: Parser t a -> Parser t [a]
 many1 p = (:) <$> p <*> many p
 
 sepBy :: Parser t a -> Parser t b -> Parser t [a]
 sepBy p s = ((:) <$> p <*> many (s *> p)) <|> pure []
+
+alpha :: Parser Char Char
+alpha = satisfy "alpha" isAlpha
+
+digit :: Parser Char Char
+digit = satisfy "digit" isDigit
+
+spaces :: Parser Char ()
+spaces = void $ many $ satisfy "whitespace" isSpace
+
+decimal :: Parser Char Int
+decimal = read <$> many1 digit
 
 runParser :: Parser t a -> [t] -> Either String a
 runParser (Parser g) ts = case g 0 ts of
@@ -66,3 +94,5 @@ runParser (Parser g) ts = case g 0 ts of
         | (i, err) <- errs
         ]
 
+hRunParser :: IO.Handle -> Parser Char a -> IO a
+hRunParser h p = IO.hGetContents h >>= either fail pure . runParser p
