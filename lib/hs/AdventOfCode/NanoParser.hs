@@ -9,6 +9,7 @@ module AdventOfCode.NanoParser
 
     , many1
     , sepBy
+    , sepBy1
 
     , alpha
     , digit
@@ -72,7 +73,10 @@ many1 :: Parser t a -> Parser t [a]
 many1 p = (:) <$> p <*> many p
 
 sepBy :: Parser t a -> Parser t b -> Parser t [a]
-sepBy p s = ((:) <$> p <*> many (s *> p)) <|> pure []
+sepBy p s = sepBy1 p s <|> pure []
+
+sepBy1 :: Parser t a -> Parser t b -> Parser t [a]
+sepBy1 p s = (:) <$> p <*> many (s *> p)
 
 alpha :: Parser Char Char
 alpha = satisfy "alpha" isAlpha

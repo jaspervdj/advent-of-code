@@ -6,6 +6,7 @@ module AdventOfCode.Grid
     , turnAround
 
     , Pos
+    , origin
     , move
     , neighbours
     , diagonal
@@ -37,6 +38,9 @@ turnAround D = U
 turnAround L = R
 
 type Pos = V2 Int
+
+origin :: Pos
+origin = zero
 
 -- | Up, down, left and right neighbours
 neighbours :: Pos -> [Pos]
