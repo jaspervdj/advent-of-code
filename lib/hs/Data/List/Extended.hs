@@ -4,6 +4,7 @@ module Data.List.Extended
     , (!!?)
     , minimaBy
     , maximaBy
+    , lexicographicSuccessor
     ) where
 
 import           Control.Monad (guard)
@@ -34,3 +35,13 @@ maximaBy f = minimaBy (\x y -> down (f x y))
     down LT = GT
     down EQ = EQ
     down GT = LT
+
+lexicographicSuccessor :: (Bounded a, Enum a, Eq a) => [a] -> [a]
+lexicographicSuccessor =
+    \xs -> let (ys, carry) = go xs in if carry then minBound : ys else ys
+  where
+    go [] = ([], True)
+    go (x : xs) =
+        let (ys, carry) = go xs
+            y           = if x == maxBound then minBound else succ x in
+        if carry then (y : ys, x == maxBound) else (x : ys, False)
