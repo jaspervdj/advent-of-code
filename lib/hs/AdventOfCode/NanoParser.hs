@@ -15,15 +15,18 @@ module AdventOfCode.NanoParser
     , digit
     , spaces
     , decimal
+    , signedDecimal
 
     , runParser
     , hRunParser
     ) where
 
-import           Control.Applicative (Alternative (..))
+import           Control.Applicative (Alternative (..), optional)
 import           Control.Monad       (void)
 import           Data.Char           (isAlpha, isDigit, isSpace)
+import           Data.Functor        (($>))
 import           Data.List           (intercalate)
+import           Data.Maybe          (fromMaybe)
 import qualified System.IO           as IO
 
 data ParseResult t a
@@ -89,6 +92,9 @@ spaces = void $ many $ satisfy "whitespace" isSpace
 
 decimal :: Parser Char Int
 decimal = read <$> many1 digit
+
+signedDecimal :: Parser Char Int
+signedDecimal = fmap (fromMaybe id) (optional (char '-' $> negate)) <*> decimal
 
 runParser :: Parser t a -> [t] -> Either String a
 runParser (Parser g) ts = case g 0 ts of
