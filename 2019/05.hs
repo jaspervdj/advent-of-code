@@ -10,6 +10,6 @@ import qualified System.IO               as IO
 
 main :: IO ()
 main = do
-    mem <- NP.hRunParser IO.stdin parseMemory
-    print $ head $ machineOutputs $ fst $ runMachine $ Machine [1] [] 0 mem
-    print $ head $ machineOutputs $ fst $ runMachine $ Machine [5] [] 0 mem
+    prog <- NP.hRunParser IO.stdin parseProgram
+    print $ last $ evalMachine $ initMachine [1] prog
+    print $ last $ evalMachine $ initMachine [5] prog

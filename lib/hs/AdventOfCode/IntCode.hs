@@ -4,28 +4,36 @@
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE LambdaCase        #-}
 module AdventOfCode.IntCode
-    ( Memory (..)
-    , parseMemory
+    ( Program
+    , parseProgram
+    , makeProgram
 
     , Machine (..)
+    , initMachine
     , stepMachine
     , runMachine
+    , evalMachine
     ) where
 
 import qualified AdventOfCode.NanoParser as NP
 import           Data.Foldable           (toList)
+import           Data.Maybe              (maybeToList)
 import qualified Data.Sequence           as Seq
-import qualified System.IO               as IO
+
+newtype Program = Program (Seq.Seq Int) deriving (Show)
+
+parseProgram :: NP.Parser Char Program
+parseProgram =
+    Program . Seq.fromList <$> NP.sepBy1 (NP.signedDecimal) (NP.char ',')
+
+makeProgram :: [Int] -> Program
+makeProgram = Program . Seq.fromList
 
 newtype Memory = Memory (Seq.Seq Int)
 
 instance Show Memory where
     show (Memory s) = unwords $
         map (\(x, y) -> show x ++ ":" ++ show y) $ zip [0 :: Int ..] $ toList s
-
-parseMemory :: NP.Parser Char Memory
-parseMemory =
-    Memory . Seq.fromList <$> NP.sepBy1 (NP.signedDecimal) (NP.char ',')
 
 load :: Int -> Memory -> Either String Int
 load n (Memory mem) = maybe
@@ -99,38 +107,44 @@ loadInstr ip mem = fmap parseInstr (load ip mem) >>= \case
     parseBinop _ _ = Left $ "Missing parameter modes"
 
 data Machine = Machine
-    { machineInputs  :: [Int]
-    , machineOutputs :: [Int]
-    , machineIp      :: Int
-    , machineMemory  :: Memory
+    { machineInputs :: [Int]
+    , machineIp     :: Int
+    , machineMemory :: Memory
     } deriving (Show)
 
-stepMachine :: Machine -> Either String Machine
-stepMachine (Machine inputs outputs ip mem) = do
+initMachine :: [Int] -> Program -> Machine
+initMachine inputs (Program mem) = Machine inputs 0 (Memory mem)
+
+stepMachine :: Machine -> Either String (Machine, Maybe Int)
+stepMachine (Machine inputs ip mem) = do
     instr <- loadInstr ip mem >>= traverse loadParam
     let ip' = instrSize instr + ip
     case instr of
-        Add x y pos -> Machine inputs outputs ip' <$> store pos (x + y) mem
-        Multiply x y pos -> Machine inputs outputs ip' <$> store pos (x * y) mem
+        Add x y pos ->
+            noOutput . Machine inputs ip' <$> store pos (x + y) mem
+        Multiply x y pos ->
+            noOutput . Machine inputs ip' <$> store pos (x * y) mem
 
-        Output o -> pure $ Machine inputs (o : outputs) ip' mem
+        Output o -> do
+            pure (Machine inputs ip' mem, Just o)
 
         Input pos -> case inputs of
             []            -> Left $ "No input available"
-            (i : inputs') -> Machine inputs' outputs ip' <$> store pos i mem
+            (i : inputs') ->
+                noOutput . Machine inputs' ip' <$> store pos i mem
 
         JumpIfTrue x dst ->
-            pure $ Machine inputs outputs (if x /= 0 then dst else ip') mem
+            pure $ noOutput $ Machine inputs (if x /= 0 then dst else ip') mem
 
         JumpIfFalse x dst ->
-            pure $ Machine inputs outputs (if x == 0 then dst else ip') mem
+            pure $ noOutput $ Machine inputs (if x == 0 then dst else ip') mem
 
         LessThan x y pos ->
-            Machine inputs outputs ip' <$>
+            noOutput . Machine inputs ip' <$>
             store pos (if x < y then 1 else 0) mem
 
         Equals x y pos ->
-            Machine inputs outputs ip' <$>
+            noOutput . Machine inputs ip' <$>
             store pos (if x == y then 1 else 0) mem
 
         Halt -> Left $ "Machine halted normally"
@@ -138,5 +152,15 @@ stepMachine (Machine inputs outputs ip mem) = do
     loadParam (Immediate n) = pure n
     loadParam (Position p)  = load p mem
 
-runMachine :: Machine -> (Machine, String)
-runMachine machine = either ((,) machine) runMachine $ stepMachine machine
+    noOutput m = (m, Nothing)
+
+runMachine :: Machine -> ([Int], String)
+runMachine machine = case stepMachine machine of
+    Left err              -> ([], err)
+    Right (machine', out) ->
+        -- Set up recursion in a way that preserves laziness.
+        let (output, err) = runMachine machine' in
+        (maybeToList out ++ output, err)
+
+evalMachine :: Machine -> [Int]
+evalMachine = fst . runMachine
