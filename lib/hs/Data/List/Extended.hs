@@ -4,12 +4,15 @@ module Data.List.Extended
     , (!!?)
     , minimaBy
     , maximaBy
+    , minimumOn
+    , maximumOn
     , lexicographicSuccessor
     ) where
 
 import           Control.Monad (guard)
 import           Data.List
 import           Data.Maybe    (listToMaybe)
+import           Data.Ord      (comparing)
 
 select :: [a] -> [(a, [a])]
 select []       = []
@@ -35,6 +38,12 @@ maximaBy f = minimaBy (\x y -> down (f x y))
     down LT = GT
     down EQ = EQ
     down GT = LT
+
+minimumOn :: (Ord b, Foldable t) => (a -> b) -> t a -> a
+minimumOn = minimumBy . comparing
+
+maximumOn :: (Ord b, Foldable t) => (a -> b) -> t a -> a
+maximumOn = maximumBy . comparing
 
 lexicographicSuccessor :: (Bounded a, Enum a, Eq a) => [a] -> [a]
 lexicographicSuccessor =
