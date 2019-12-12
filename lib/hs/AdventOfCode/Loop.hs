@@ -8,6 +8,7 @@ module AdventOfCode.Loop
     ) where
 
 import qualified Data.Map as M
+import Debug.Trace (trace)
 
 -- | A detected loop.
 --
@@ -30,7 +31,8 @@ findLoop toKey f = go M.empty 0
   where
     go memory !i !x = case M.lookup xk memory of
         Just (j, y) -> Just $ Loop j y (i - j) x
-        Nothing     -> go (M.insert xk (i, x) memory) (i + 1) (f x)
+        Nothing     ->
+            go (M.insert xk (i, x) memory) (i + 1) (f x)
       where
         xk = toKey x
 
