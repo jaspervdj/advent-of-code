@@ -12,33 +12,39 @@ import qualified Data.Map             as Map
 import           Debug.Trace
 import qualified System.IO            as IO
 
-data Moon = Moon
-    { position :: V3 Int
-    , velocity :: V3 Int
-    } deriving (Eq, Ord, Show)
+data PosVel = PosVel !Int !Int deriving (Eq, Ord, Show)
 
-gravity :: [Moon] -> [V3 Int]
-gravity moons =
-    [V3.sum [single (position m) (position n) | n <- moons] | m <- moons]
+type Moon = PosVel
+
+gravity :: [Moon] -> Moon -> Int
+gravity moons (PosVel m _) =
+    L.sum [single m n | PosVel n _ <- moons]
   where
-    single = V3.zipWith $ \l r -> case compare l r of EQ -> 0; LT -> 1; GT -> -1
+    single = \l r -> case compare l r of EQ -> 0; LT -> 1; GT -> -1
 
-readMoons :: IO.Handle -> IO [Moon]
+readMoons :: IO.Handle -> IO [V3 Moon]
 readMoons h =
     IO.hGetContents h >>= mapM readMoon . lines
   where
     readMoon line = case Parsing.ints line of
-        [x, y, z] -> pure $ Moon (V3 x y z) zero
+        [x, y, z] -> pure $ V3 (PosVel x 0) (PosVel y 0) (PosVel z 0)
         _         -> fail $ "Could not parse line: " ++ line
 
-step :: [Moon] -> [Moon]
-step moons = L.zipWith
-    (\(Moon p v) g -> let v' = v .+. g in Moon (p .+. v') v')
-    moons (gravity moons)
+step :: [Moon] -> Moon -> Moon
+step moons moon@(PosVel p v) =
+    let g = gravity moons moon
+        v' = v + g in
+    PosVel (p + v') v'
 
-energy :: Moon -> Int
-energy (Moon p v) = let add (V3 x y z) = abs x + abs y + abs z in add p * add v
+stepAll :: [V3 Moon] -> [V3 Moon]
+stepAll moons =
+    map (\v3 -> V3.mapWithIndex (\idx -> step (map idx moons)) v3) moons
 
+energy :: V3 Moon -> Int
+energy (V3 (PosVel p1 v1) (PosVel p2 v2) (PosVel p3 v3)) =
+    (abs p1 + abs p2 + abs p3) * (abs v1 + abs v2 + abs v3)
+
+{-
 -- Quadratic equation form for a moon.
 data Curve a = Curve a a a deriving (Show)
 
@@ -103,14 +109,15 @@ simulate moons0 = go Map.empty 0 moons0
             (moons', d) ->
                 go (Map.insert moons i seen) (i + d) moons'
 
-main :: IO ()
-main = do
-    moons0 <- readMoons IO.stdin
-    let moons1000 = iterate step moons0 !! 1000
-    print . L.sum $ map energy moons1000
-    print $ simulate moons0
-
 test_moons =
     [ Moon (V3 1 2 1)             (V3 8 6 10)
     , Moon (V3 10000 10000 10000) (V3 0 0 0)
     ]
+-}
+
+main :: IO ()
+main = do
+    moons0 <- readMoons IO.stdin
+    let moons1000 = iterate stepAll moons0 !! 1000
+    print . L.sum $ map energy moons1000
+    -- print $ simulate moons0

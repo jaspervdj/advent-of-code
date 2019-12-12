@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DeriveFunctor  #-}
+{-# LANGUAGE Rank2Types  #-}
 module AdventOfCode.V3
     ( V3 (..)
     , zero
@@ -9,6 +10,7 @@ module AdventOfCode.V3
     , sum
     , zipWith
     , zipWith3
+    , mapWithIndex
     ) where
 
 import qualified Data.Foldable as F
@@ -43,3 +45,7 @@ zipWith3 :: (a -> b -> c -> d) -> V3 a -> V3 b -> V3 c -> V3 d
 zipWith3 f (V3 x1 y1 z1) (V3 x2 y2 z2) (V3 x3 y3 z3) =
     V3 (f x1 x2 x3) (f y1 y2 y3) (f z1 z2 z3)
 {-# INLINE zipWith3 #-}
+
+mapWithIndex :: ((forall e. V3 e -> e) -> a -> b) -> V3 a -> V3 b
+mapWithIndex f (V3 x y z) = V3 (f vX x) (f vY y) (f vZ z)
+{-# INLINE mapWithIndex #-}
