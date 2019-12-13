@@ -1,11 +1,14 @@
 -- | 2019's virtual machine, IntCode.
-{-# LANGUAGE DeriveFoldable    #-}
-{-# LANGUAGE DeriveFunctor     #-}
-{-# LANGUAGE DeriveTraversable #-}
-{-# LANGUAGE LambdaCase        #-}
-{-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE DeriveFoldable             #-}
+{-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE DeriveTraversable          #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE RecordWildCards            #-}
 module AdventOfCode.IntCode
-    ( Program
+    ( Interrupt (..)
+
+    , Program
     , parseProgram
     , makeProgram
 
@@ -22,8 +25,17 @@ import qualified AdventOfCode.NanoParser as NP
 import qualified AdventOfCode.NanoTest   as NT
 import qualified Data.IntMap             as IM
 import           Data.Maybe              (fromMaybe, maybeToList)
+import           Data.Semigroup          (Semigroup)
 
-newtype Program = Program (IM.IntMap Int) deriving (Show)
+data Interrupt
+    = HaltSuccess
+    | OutOfBounds String Int
+    | InsufficientInput
+    | UnknownOpcode Int
+    | IllegalParams String
+    deriving (Show)
+
+newtype Program = Program (IM.IntMap Int) deriving (Semigroup, Show)
 
 parseProgram :: NP.Parser Char Program
 parseProgram = makeProgram <$> NP.sepBy1 (NP.signedDecimal) (NP.char ',')
@@ -37,14 +49,14 @@ instance Show Memory where
     show (Memory s) = unwords $
         map (\(x, y) -> show x ++ ":" ++ show y) $ IM.toList s
 
-load :: Int -> Memory -> Either String Int
+load :: Int -> Memory -> Either Interrupt Int
 load n (Memory mem)
-    | n < 0     = Left $ "load: Out of bounds: " ++ show n
+    | n < 0     = Left $ OutOfBounds "load" n
     | otherwise = Right . fromMaybe 0 $ IM.lookup n mem
 
-store :: Int -> Int -> Memory -> Either String Memory
+store :: Int -> Int -> Memory -> Either Interrupt Memory
 store n x (Memory mem)
-    | n < 0     = Left $ "store: Out of bounds: " ++ show n
+    | n < 0     = Left $ OutOfBounds "store" n
     | otherwise = Right $ Memory $ IM.insert n x mem
 
 -- | Points to a memory location.
@@ -79,7 +91,7 @@ instrSize = \case
     RelativeBaseOffset _ -> 2
     Halt                 -> 1
 
-loadInstr :: Int -> Memory -> Either String (Instr Param)
+loadInstr :: Int -> Memory -> Either Interrupt (Instr Param)
 loadInstr ip mem = fmap parseInstr (load ip mem) >>= \case
     (1, pmodes)      -> parseBinop Add      pmodes
     (2, pmodes)      -> parseBinop Multiply pmodes
@@ -95,7 +107,7 @@ loadInstr ip mem = fmap parseInstr (load ip mem) >>= \case
         <*> parseParam p2 (ip + 2)
     (9, p1 : _)      -> RelativeBaseOffset <$> parseParam p1 (ip + 1)
     (99, _)          -> pure Halt
-    (op, _)          -> Left $ "Unknown opcode: " ++ show op
+    (op, _)          -> Left $ UnknownOpcode op
   where
     parseInstr encoded =
         let (leading, op) = encoded `divMod` 100
@@ -105,17 +117,17 @@ loadInstr ip mem = fmap parseInstr (load ip mem) >>= \case
     parseParam 0 n = Position . Absolute <$> load n mem
     parseParam 1 n = Immediate           <$> load n mem
     parseParam 2 n = Position . Relative <$> load n mem
-    parseParam m _ = Left $ "Invalid param mode: " ++ show m
+    parseParam m _ = Left $ IllegalParams $ "Invalid param mode: " ++ show m
 
     parsePointer m n = parseParam m n >>= \case
         Position  p -> pure p
-        Immediate _ -> Left $ "Unexpected immediate param mode"
+        Immediate _ -> Left $ IllegalParams $ "Unexpected immediate param mode"
 
     parseBinop c (p1 : p2 : p3 : _) = c
         <$> parseParam   p1 (ip + 1)
         <*> parseParam   p2 (ip + 2)
         <*> parsePointer p3 (ip + 3)
-    parseBinop _ _ = Left $ "Missing parameter modes"
+    parseBinop _ _ = Left $ IllegalParams $ "Missing parameter modes for binop"
 
 data Machine = Machine
     { mInputs  :: [Int]
@@ -127,7 +139,7 @@ data Machine = Machine
 initMachine :: [Int] -> Program -> Machine
 initMachine inputs (Program mem) = Machine inputs 0 0 (Memory mem)
 
-stepMachine :: Machine -> Either String (Machine, Maybe Int)
+stepMachine :: Machine -> Either Interrupt (Machine, Maybe Int)
 stepMachine machine@Machine {..} = do
     let resolvePointer (Absolute p) = p
         resolvePointer (Relative p) = mRelBase + p
@@ -150,7 +162,7 @@ stepMachine machine@Machine {..} = do
 
         Output o -> pure (machine', Just o)
         Input  p -> case mInputs of
-            []     -> Left $ "No input available"
+            []     -> Left InsufficientInput
             i : is -> do
                 m <- store (resolvePointer p) i mMem
                 pure (machine' {mMem = m, mInputs = is}, Nothing)
@@ -164,18 +176,18 @@ stepMachine machine@Machine {..} = do
         RelativeBaseOffset o -> pure
             (machine' {mRelBase = mRelBase + o}, Nothing)
 
-        Halt -> Left $ "Machine halted normally"
+        Halt -> Left HaltSuccess
 
-runMachine :: Machine -> ([Int], String)
+runMachine :: Machine -> ([Int], Interrupt, Machine)
 runMachine machine = case stepMachine machine of
-    Left err              -> ([], err)
+    Left err              -> ([], err, machine)
     Right (machine', out) ->
         -- Set up recursion in a way that preserves laziness.
-        let (output, err) = runMachine machine' in
-        (maybeToList out ++ output, err)
+        let (output, err, machine'') = runMachine machine' in
+        (maybeToList out ++ output, err, machine'')
 
 evalMachine :: Machine -> [Int]
-evalMachine = fst . runMachine
+evalMachine = (\(o, _, _) -> o) . runMachine
 
 test :: IO ()
 test = do
