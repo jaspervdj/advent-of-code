@@ -1,19 +1,24 @@
-{-# LANGUAGE DeriveFoldable #-}
-module Main where
+{-# LANGUAGE DeriveFoldable      #-}
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+module Main (main) where
 
-import qualified AdventOfCode.NanoParser as NP
-import qualified Data.Foldable           as F
-import qualified Data.Graph              as G
-import qualified Data.Map                as Map
-import           Data.Maybe              (fromMaybe)
-import qualified Data.Set                as Set
-import qualified System.IO               as IO
+import qualified AdventOfCode.BinarySearch as BS
+import qualified AdventOfCode.NanoParser   as NP
+import           Control.Monad             (forM_)
+import           Control.Monad.Except      (throwError)
+import           Control.Monad.Reader      (ReaderT, asks, runReaderT)
+import           Control.Monad.State       (StateT, execStateT, modify, state)
+import           Data.Either               (isRight)
+import qualified Data.Map                  as Map
+import qualified System.IO                 as IO
 
-type Chemical = String
-data Reaction a = Reaction [(Int, a)] (Int, a) deriving (Foldable, Show)
+data Recipe     a = Recipe [(Int, a)] (Int, a) deriving (Foldable, Show)
+type RecipeBook a = Map.Map a (Recipe a)
+type Inventory  a = Map.Map a Int
 
-parseReactions :: NP.Parser Char [Reaction Chemical]
-parseReactions = NP.many1 $ Reaction
+parseRecipeBook :: NP.Parser Char [Recipe String]
+parseRecipeBook = NP.many1 $ Recipe
     <$> NP.sepBy1 quantity (NP.char ',' <* NP.spaces)
     <*  NP.string "=>" <* NP.spaces
     <*> quantity
@@ -22,28 +27,34 @@ parseReactions = NP.many1 $ Reaction
         <$> NP.decimal <* NP.spaces
         <*> NP.many1 NP.alpha <* NP.spaces
 
-reverseSearch :: Ord a => [Reaction a] -> Map.Map a Int -> Map.Map a Int
-reverseSearch reactions requirements0 = F.foldl'
-    (\requirements element -> case Map.lookup element reactionsByRhs of
-        Nothing -> requirements  -- We probably arrived at ORE
-        Just (Reaction inputs (quantity, _)) ->
-            let required = fromMaybe 0 $ Map.lookup element requirements
-                times = (required + quantity - 1) `div` quantity in
-            Map.unionWith (+) requirements $
-                Map.fromList [(e, q * times) | (q, e) <- inputs])
-    requirements0
-    ordered
-  where
-    edges c  = [to | Reaction from (_, to) <- reactions, c `elem` map snd from]
-    elements = Set.fromList $ concatMap F.toList reactions
-    ordered  = concatMap G.flattenSCC $ G.stronglyConnComp
-        [(c, c, edges c) | c <- Set.toList elements]
+makeRecipeBook :: Ord a => [Recipe a] -> RecipeBook a
+makeRecipeBook rs = Map.fromList [(to, r) | r@(Recipe _ (_, to)) <- rs]
 
-    reactionsByRhs = Map.fromList
-        [(to, r) | r@(Reaction _ (_, to)) <- reactions]
+type MixerM e a = ReaderT (RecipeBook e) (StateT (Inventory e) (Either e)) a
+
+mix :: Ord a => Int -> a -> MixerM a ()
+mix want x = do
+    got <- state $ \inv -> case Map.lookup x inv of
+        Nothing  -> (0, inv)
+        Just got ->
+            let n = max 0 (min want got) in (n, Map.insert x (got - n) inv)
+
+    recipe <- asks (Map.lookup x)
+    case recipe of
+        _ | got >= want                    -> pure ()
+        Nothing                              -> throwError x
+        Just (Recipe inputs (quantity, _)) -> do
+            let required = want - got
+                times    = (required + quantity - 1) `div` quantity
+                leftover = times * quantity - required
+            forM_ inputs $ \(inputq, inpute) -> mix (inputq * times) inpute
+            modify $ Map.insertWith (+) x leftover
 
 main :: IO ()
 main = do
-    reactions <- NP.hRunParser IO.stdin parseReactions
-    print . fromMaybe 0 . Map.lookup "ORE" $
-        reverseSearch reactions (Map.singleton "FUEL" 1)
+    recipes <- makeRecipeBook <$> NP.hRunParser IO.stdin parseRecipeBook
+    let ores   = 1000000000000
+        cargo  = Map.singleton "ORE" ores
+        fuel n = execStateT (runReaderT (mix n "FUEL") recipes) cargo
+    either (fail "nope") (print . maybe 0 (ores -) . Map.lookup "ORE") (fuel 1)
+    print . BS.upperBound $ isRight . fuel
