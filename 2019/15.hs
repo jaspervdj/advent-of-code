@@ -1,22 +1,19 @@
 {-# LANGUAGE LambdaCase #-}
 module Main where
 
+import qualified AdventOfCode.Dijkstra   as Dijkstra
 import qualified AdventOfCode.Grid       as G
 import           AdventOfCode.IntCode
 import qualified AdventOfCode.NanoParser as NP
 import qualified AdventOfCode.V2         as V2
 import qualified Data.List.Extended      as L
-import           Data.Map                (Map)
 import qualified Data.Map                as Map
 import           Data.Maybe              (fromMaybe, maybeToList)
-import           Data.Monoid             (Sum (..))
-import           Data.OrdPSQ             (OrdPSQ)
-import qualified Data.OrdPSQ             as PSQ
 import qualified System.IO               as IO
 
 data Tile = Frontier | Floor | Wall | Goal deriving (Eq, Ord, Show)
 
-accessible :: G.Grid Tile -> G.Pos -> [(Sum Int, G.Pos)]
+accessible :: G.Grid Tile -> G.Pos -> [(Int, G.Pos)]
 accessible g p =
     [ (1, q)
     | q <- G.neighbours p
@@ -51,7 +48,8 @@ toClosestFrontier grid pos
     | null byDistance = Nothing
     | otherwise       = Just $ snd $ L.minimumOn fst byDistance
   where
-    distances  = dijkstra (accessible grid) pos
+    distances  = Dijkstra.dijkstra (accessible grid) isGoal pos
+    isGoal p   = Map.lookup p grid == Just Frontier
     byDistance =
         [ (dist, v2ToDir $ step V2..-. pos)
         | (q, (dist, path)) <- Map.toList distances
@@ -97,41 +95,13 @@ main :: IO ()
 main = do
     program <- NP.hRunParser IO.stdin parseProgram
     let grid      = exploration program
-        distances = dijkstra (accessible grid) G.origin
+        isGoal p  = Map.lookup p grid == Just Goal
+        distances = Dijkstra.dijkstra (accessible grid) isGoal G.origin
     goal <- case filter ((== Goal) . snd) $ Map.toList grid of
         []         -> fail "No goal found"
         (p, _) : _ -> pure p
     G.printGrid IO.stdout $ fmap tileToChar grid
-    print . getSum . maybe 0 fst $ Map.lookup goal distances
+    print . maybe 0 fst $ Map.lookup goal distances
 
-    let fill = dijkstra (accessible grid) goal
-    print . getSum . maximum . map (fst . snd) $ Map.toList fill
-
---------------------------------------------------------------------------------
--- TODO: put some decent astar in AdventOfCode.*
-
-discover
-    :: (Ord vertex, Ord distance)
-    => vertex -> distance -> path
-    -> OrdPSQ vertex distance path
-    -> OrdPSQ vertex distance path
-discover vertex distance path = snd . PSQ.alter decrease vertex
-  where
-    decrease (Just (d, p)) | d <= distance = ((), Just (d, p))
-    decrease _             = ((), Just (distance, path))
-
-dijkstra
-    :: (Ord vertex, Ord distance, Monoid distance)
-    => (vertex -> [(distance, vertex)])
-    -> vertex
-    -> Map vertex (distance, [vertex])
-dijkstra graph start = loop Map.empty (PSQ.singleton start mempty [])
-  where
-    loop distances queue0 = case PSQ.minView queue0 of
-        Nothing -> distances
-        Just (vertex, dist, path, queue1) -> loop
-            (Map.insert vertex (dist, path) distances)
-            (L.foldl'
-                (\q (d, n) -> discover n (dist <> d) (vertex : path) q)
-                queue1
-                (filter ((`Map.notMember` distances) . snd) (graph vertex)))
+    let fill = Dijkstra.dijkstra (accessible grid) (const False) goal
+    print . maximum . map (fst . snd) $ Map.toList fill
