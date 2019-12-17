@@ -13,6 +13,7 @@ module AdventOfCode.Grid
     , manhattan
 
     , Grid
+    , fromString
     , readGrid
     , printGrid
     , center
@@ -21,7 +22,7 @@ module AdventOfCode.Grid
 
 import           AdventOfCode.V2
 import qualified AdventOfCode.V2.Box as Box
-import           Control.Monad       (foldM, forM_)
+import           Control.Monad       (forM_)
 import qualified Data.List           as L
 import qualified Data.Map            as M
 import           Data.Maybe          (fromMaybe)
@@ -67,18 +68,17 @@ move dir (V2 x y) = case dir of
 
 type Grid a = M.Map Pos a
 
+fromString :: String -> Grid Char
+fromString =
+    L.foldl'
+        (\acc (y, l) -> L.foldl'
+            (\m (x, c) -> M.insert (V2 x y) c m) acc (zip [0 ..] l))
+        M.empty .
+    zip [0 ..] .
+    lines
+
 readGrid :: (Char -> IO a) -> IO.Handle -> IO (Grid a)
-readGrid f h = do
-    ls <- lines <$> IO.hGetContents h
-    foldM
-        (\acc (y, l) -> foldM
-            (\m (x, c) -> do
-                v <- f c
-                return $ M.insert (V2 x y) v m)
-            acc
-            (zip [0 ..] l))
-        M.empty
-        (zip [0 ..] ls)
+readGrid f h = IO.hGetContents h >>= traverse f . fromString
 
 printGrid :: IO.Handle -> Grid Char -> IO ()
 printGrid h grid = case box grid of
