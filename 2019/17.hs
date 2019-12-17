@@ -6,6 +6,7 @@ import qualified AdventOfCode.NanoParser as NP
 import qualified AdventOfCode.V2         as V2
 import           Control.Applicative     ((<|>))
 import           Control.Monad           (guard)
+import           Data.Char               (ord)
 import           Data.Char               (chr)
 import qualified Data.Map                as Map
 import           Data.Maybe              (mapMaybe)
@@ -35,11 +36,11 @@ turn :: Turn -> G.Dir -> G.Dir
 turn L = G.turnLeft
 turn R = G.turnRight
 
-followScaffolding :: Scaffolding -> Robot -> [(Turn, Int)]
-followScaffolding scaffolding (pos, dir) =
+traceScaffolding :: Scaffolding -> Robot -> [(Turn, Int)]
+traceScaffolding scaffolding (pos, dir) =
     case turnAndWalk L <|> turnAndWalk R of
         Nothing            -> []
-        Just (t, s, robot) -> (t, s) : followScaffolding scaffolding robot
+        Just (t, s, robot) -> (t, s) : traceScaffolding scaffolding robot
   where
     turnAndWalk :: Turn -> Maybe (Turn, Int, Robot)
     turnAndWalk tc = do
@@ -52,6 +53,16 @@ followScaffolding scaffolding (pos, dir) =
         guard $ steps > 0
         pure (tc, steps, (pos', dir'))
 
+-- | Hard manual labor
+manual :: [Int]
+manual = concatMap (map ord . (++ "\n"))
+    [ "A,A,B,C,A,C,B,C,A,B"
+    , "L,4,L,10,L,6"
+    , "L,6,L,4,R,8,R,8"
+    , "L,6,R,8,L,10,L,8,L,8"
+    , "n"
+    ]
+
 main :: IO ()
 main = do
     prog <- NP.hRunParser IO.stdin parseProgram
@@ -62,6 +73,6 @@ main = do
         _         -> fail "robot not found"
 
     G.printGrid IO.stderr cgrid
+    IO.hPutStrLn IO.stderr . show $ traceScaffolding scaffolding robot
     print . sum . alignmentParameters $ intersections scaffolding
-    print $ followScaffolding scaffolding robot
-    print $ length $ followScaffolding scaffolding robot
+    print . last . evalMachine . initMachine manual $ makeProgram [2] <> prog
