@@ -1,9 +1,11 @@
-{-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE LambdaCase   #-}
-module Main where
+{-# LANGUAGE LambdaCase #-}
+module Main
+    ( main
+    ) where
 
 import qualified AdventOfCode.Dijkstra as Dijkstra
 import qualified AdventOfCode.Grid     as G
+import qualified AdventOfCode.V2       as V2
 import           Data.Char             (isAlpha, isLower, toLower)
 import qualified Data.Map              as Map
 import           Data.Maybe            (listToMaybe, mapMaybe)
@@ -29,8 +31,8 @@ charToTile = \case
     c              -> Left $ "Unknown map character: " ++ show c
 
 data SearchState = SearchState
-    { ssPos  :: !G.Pos
-    , ssKeys :: !(Set.Set Char)
+    { ssRobots :: !(Map.Map Int G.Pos)
+    , ssKeys   :: !(Set.Set Char)
     } deriving (Eq, Ord, Show)
 
 collectAllKeys :: Maze -> Maybe Int
@@ -39,7 +41,12 @@ collectAllKeys maze =
     listToMaybe . map (fst . snd) . filter (goal . fst) $ Map.toList distances
   where
     neighbours :: SearchState -> [(Int, SearchState)]
-    neighbours ss = map ((,) 1) $ mapMaybe (move ss) [G.U, G.R, G.D, G.L]
+    neighbours (SearchState robots keys) = do
+        (idx, pos) <- Map.toList robots
+        (d, pos', key) <- walkToNewKey keys pos
+        let keys'   = Set.insert key keys
+            robots' = Map.insert idx pos' robots
+        pure (d, SearchState robots' keys')
 
     goal :: SearchState -> Bool
     goal = (>= numKeysInMaze) . Set.size . ssKeys
@@ -49,22 +56,47 @@ collectAllKeys maze =
 
     start :: SearchState
     start = SearchState
-        { ssPos = case [p | (p, Start) <- Map.toList maze] of
-            [p] -> p
-            _   -> error "ambiguous or empty starting position"
-        , ssKeys = Set.empty
-        }
+        (Map.fromList $ zip [0 ..] [p | (p, Start) <- Map.toList maze])
+        Set.empty
 
-    move :: SearchState -> G.Dir -> Maybe SearchState
-    move !ss dir = case Map.lookup pos maze of
-        Just Wall -> Nothing
-        Just (Door k) | not (k `Set.member` ssKeys ss) -> Nothing
-        Just (Key k) -> Just ss {ssPos = pos, ssKeys = Set.insert k (ssKeys ss)}
-        _ -> Just ss {ssPos = pos}
-      where
-        pos = G.move dir (ssPos ss)
+    moves :: Set.Set Char -> G.Pos -> [(G.Pos, Maybe Char)]
+    moves keys p = G.neighbours p >>= \p' -> case Map.lookup p' maze of
+        Just Wall                                 -> []
+        Just (Door k) | not (k `Set.member` keys) -> []
+        Just (Key k)  | not (k `Set.member` keys) -> [(p', Just k)]
+        _                                         -> [(p', Nothing)]
+
+    walkToNewKey :: Set.Set Char -> G.Pos -> [(Int, G.Pos, Char)]
+    walkToNewKey keys pos =
+        -- A nested dijkstra so we only look at interesting positions (those
+        -- that have keys).
+        mapMaybe (\((p, mbK), (d, _)) -> mbK >>= \k -> pure (d, p, k)) .
+        Map.toList $
+        Dijkstra.dijkstra
+            (\case
+                (_, Just _)  -> []
+                (p, Nothing) -> map ((,) 1) (moves keys p))
+            (const False)
+            (pos, Nothing)
+
+parallelize :: Maze -> Maybe Maze
+parallelize maze = case [p | (p, Start) <- Map.toList maze] of
+    [V2.V2 x y] -> Just $ Map.fromList
+        [ (V2.V2 (x - 1) (y - 1), Start)
+        , (V2.V2  x      (y - 1), Wall)
+        , (V2.V2 (x + 1) (y - 1), Start)
+        , (V2.V2 (x - 1)  y     , Wall)
+        , (V2.V2  x       y     , Wall)
+        , (V2.V2 (x + 1)  y     , Wall)
+        , (V2.V2 (x - 1) (y + 1), Start)
+        , (V2.V2  x      (y + 1), Wall)
+        , (V2.V2 (x + 1) (y + 1), Start)
+        ] <> maze
+    _ -> Nothing
 
 main :: IO ()
 main = do
-    maze <- G.readGrid (either fail pure . charToTile) IO.stdin
+    maze    <- G.readGrid (either fail pure . charToTile) IO.stdin
     print $ collectAllKeys maze
+    patched <- maybe (fail "parallelize failed") pure (parallelize maze)
+    print $ collectAllKeys patched
