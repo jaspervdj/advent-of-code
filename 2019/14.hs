@@ -5,12 +5,14 @@ module Main (main) where
 
 import qualified AdventOfCode.BinarySearch as BS
 import qualified AdventOfCode.NanoParser   as NP
-import           Control.Monad             (forM_)
+import           Control.Monad             (forM_, guard)
 import           Control.Monad.Except      (throwError)
 import           Control.Monad.Reader      (ReaderT, asks, runReaderT)
 import           Control.Monad.State       (StateT, execStateT, modify, state)
 import           Data.Either               (isRight)
+import           Data.Functor              (($>))
 import qualified Data.Map                  as Map
+import           Data.Maybe                (fromMaybe)
 import qualified System.IO                 as IO
 
 data Recipe     a = Recipe [(Int, a)] (Int, a) deriving (Foldable, Show)
@@ -57,4 +59,4 @@ main = do
         cargo  = Map.singleton "ORE" ores
         fuel n = execStateT (runReaderT (mix n "FUEL") recipes) cargo
     either (fail "nope") (print . maybe 0 (ores -) . Map.lookup "ORE") (fuel 1)
-    print . BS.upperBound $ isRight . fuel
+    print . fromMaybe 0 . BS.upperBound $ \n -> guard (isRight $ fuel n) $> n
