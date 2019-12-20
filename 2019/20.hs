@@ -1,28 +1,40 @@
 {-# LANGUAGE LambdaCase #-}
-module Main where
+module Main
+    ( main
+    ) where
 
 import qualified AdventOfCode.Dijkstra as Dijkstra
 import qualified AdventOfCode.Grid     as G
+import qualified AdventOfCode.V2       as V2
+import qualified AdventOfCode.V2.Box   as Box
 import           Control.Monad         (guard)
 import           Data.Char             (isAlpha)
 import qualified Data.List             as L
 import qualified Data.Map              as Map
-import           Data.Maybe            (fromMaybe, listToMaybe, maybeToList)
+import           Data.Maybe            (fromMaybe, maybeToList)
 import qualified System.IO             as IO
 
-data PortalId = PortalId !Char !Char deriving (Eq, Ord, Show)
+data Portal
+    = Inner !Char !Char
+    | Outer !Char !Char
+    deriving (Eq, Ord, Show)
+
+insideOut :: Portal -> Portal
+insideOut (Inner l r) = Outer l r
+insideOut (Outer l r) = Inner l r
 
 data Tile
     = Wall
     | Floor
-    | Portal PortalId
+    | Portal Portal
     deriving (Eq, Ord, Show)
 
 tileToChar :: Tile -> Char
 tileToChar = \case
-    Wall                  -> '#'
-    Floor                 -> '.'
-    Portal (PortalId c _) -> c
+    Wall               -> '#'
+    Floor              -> '.'
+    Portal (Inner c _) -> c
+    Portal (Outer c _) -> c
 
 mkGrid :: G.Grid Char -> G.Grid Tile
 mkGrid grid = Map.mapMaybeWithKey
@@ -38,45 +50,78 @@ mkGrid grid = Map.mapMaybeWithKey
                     pure (npos, tile)
             guard $ any ((== '.') . snd) neighbours
             (npos, o) <- L.find (isAlpha . snd) neighbours
-            pure $ Portal $ if pos < npos then PortalId c o else PortalId o c)
+            let (l, r) = if pos < npos then (c, o) else (o, c)
+            pure $ Portal $ if outer npos then Outer l r else Inner l r)
     grid
+  where
+    (Box.Box (V2.V2 left top) (V2.V2 right bottom)) =
+        fromMaybe (Box.Box G.origin G.origin) (G.box grid)
+
+    outer (V2.V2 x y) =
+        x - 2 <= left || y - 2 <= top || x + 2 >= right || y + 2 >= bottom
 
 data Maze = Maze
-    { mGrid    :: !(G.Grid Tile)
-    , mPortals :: !(Map.Map PortalId [G.Pos])
+    { mGrid            :: !(G.Grid Tile)
+    , mPortals         :: !(Map.Map Portal G.Pos)
+    , mPortalDistances :: !(Map.Map Portal [(Int, Portal)])
     }
 
 mkMaze :: G.Grid Tile -> Maze
-mkMaze grid = Maze grid $
-    Map.fromListWith (++) [(pid, [p]) | (p, Portal pid) <- Map.toList grid]
-
-portalTiles :: Maze -> PortalId -> [G.Pos]
-portalTiles (Maze grid portals) pid = do
-    pos       <- fromMaybe [] (Map.lookup pid portals)
-    neighbour <- G.neighbours pos
-    guard $ Map.lookup neighbour grid == Just Floor
-    pure neighbour
-
-shortestPath :: Maze -> Maybe Int
-shortestPath maze@(Maze grid _) = do
-    start <- listToMaybe . portalTiles maze $ PortalId 'A' 'A'
-    end   <- listToMaybe . portalTiles maze $ PortalId 'Z' 'Z'
-    let distances = Dijkstra.dijkstra neighbours (const False) start
-    fst <$> Map.lookup end distances
+mkMaze grid =
+    Maze {mGrid = grid, mPortals = portals, mPortalDistances = portalDistances}
   where
-    neighbours :: G.Pos -> [(Int, G.Pos)]
-    neighbours pos = do
+    portals = Map.fromList [(pid, p) | (p, Portal pid) <- Map.toList grid]
+
+    portalDistances = Map.fromList $ do
+        (portal, start) <- Map.toList portals
+        let distances =
+                [ (d, p)
+                | (v, (d, _)) <- Map.toList $
+                    Dijkstra.dijkstra neighbours goal (Left start)
+                , p <- case v of Left _ -> []; Right pid -> [pid]
+                ]
+        pure (portal, distances)
+
+    goal                  = const False
+    neighbours (Right _)  = []
+    neighbours (Left pos) = do
         neighbour <- G.neighbours pos
         tile      <- maybe [] pure $ Map.lookup neighbour grid
         case tile of
-            Floor      -> pure (1, neighbour)
+            Floor      -> pure (1, Left neighbour)
             Wall       -> []
-            Portal pid -> do
-                warp <- portalTiles maze pid
-                guard $ warp /= pos
-                pure (1, warp)
+            Portal pid -> pure (0, Right pid)
+
+shortestPath :: Maze -> Maybe Int
+shortestPath (Maze _ _ portalDistances) = do
+    let distances = Dijkstra.dijkstra neighbours (const False) (Outer 'A' 'A')
+    pred . fst <$> Map.lookup (Outer 'Z' 'Z') distances
+  where
+    neighbours :: Portal -> [(Int, Portal)]
+    neighbours p = do
+        p' <- case p of
+            Inner l r -> [Inner l r, Outer l r]
+            Outer l r -> [Inner l r, Outer l r]
+        fromMaybe [] $ Map.lookup p' portalDistances
+
+recursiveShortestPath :: Maze -> Maybe Int
+recursiveShortestPath (Maze _ _ portalDistances) =
+    let distances = Dijkstra.dijkstra neighbours (== goal) (0, Outer 'A' 'A') in
+    pred . fst <$> Map.lookup goal distances
+  where
+    goal                = (0 :: Int, Outer 'Z' 'Z')
+    neighbours (lvl, p) = do
+        (d, p') <- fromMaybe [] $ Map.lookup p portalDistances
+        let lvl' = case (p, p') of
+                (Inner _ _, Outer _ _) -> lvl - 1
+                (Outer _ _, Inner _ _) -> lvl + 1
+                _                      -> lvl
+        guard $ lvl >= 0
+        pure (d, if (lvl', p') == goal then goal else (lvl', insideOut p'))
 
 main :: IO ()
 main = do
     grid <- mkGrid <$> G.readGrid pure IO.stdin
+    G.printGrid IO.stderr $ fmap tileToChar grid
     print . fromMaybe 0 . shortestPath $ mkMaze grid
+    print . fromMaybe 0 . recursiveShortestPath $ mkMaze grid
