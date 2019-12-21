@@ -18,14 +18,18 @@ module AdventOfCode.IntCode
     , runMachine
     , evalMachine
 
+    , runAsciiMachine
+
     , test
     ) where
 
 import qualified AdventOfCode.NanoParser as NP
 import qualified AdventOfCode.NanoTest   as NT
+import           Data.Char               (chr, ord)
 import qualified Data.IntMap             as IM
 import           Data.Maybe              (fromMaybe, maybeToList)
 import           Data.Semigroup          (Semigroup)
+import qualified System.IO               as IO
 
 data Interrupt
     = HaltSuccess
@@ -188,6 +192,21 @@ runMachine machine = case stepMachine machine of
 
 evalMachine :: Machine -> [Int]
 evalMachine = (\(o, _, _) -> o) . runMachine
+
+-- | Run a machine that reads and prints ASCII interactively.  Mostly useful for
+-- debugging.
+runAsciiMachine :: (IO.Handle, IO.Handle) -> Program -> IO ()
+runAsciiMachine (inh, outh) prog = do
+    IO.hSetBuffering inh IO.NoBuffering
+    input <- map ord <$> IO.hGetContents inh
+    let (outputs, interrupt, _) = runMachine $ initMachine input prog
+    IO.hPutStrLn outh $ concatMap renderAsciiOrNumber outputs
+    case interrupt of
+        HaltSuccess -> pure ()
+        _           -> IO.hPutStrLn outh $ show interrupt
+
+renderAsciiOrNumber :: Int -> String
+renderAsciiOrNumber i = if i <= 0xff then [chr i] else show i
 
 test :: IO ()
 test = do
