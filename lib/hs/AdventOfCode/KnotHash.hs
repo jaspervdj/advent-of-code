@@ -14,7 +14,6 @@ import           Control.Monad.ST            (ST, runST)
 import           Data.Bits                   (xor)
 import           Data.Char                   (ord)
 import           Data.Proxy                  (Proxy (..))
-import           Data.Semigroup              (Semigroup (..))
 import qualified Data.Vector.Unboxed         as VU
 import qualified Data.Vector.Unboxed.Mutable as VUM
 import           Data.Word                   (Word8)

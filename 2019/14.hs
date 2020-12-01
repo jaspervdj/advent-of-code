@@ -58,5 +58,5 @@ main = do
     let ores   = 1000000000000
         cargo  = Map.singleton "ORE" ores
         fuel n = execStateT (runReaderT (mix n "FUEL") recipes) cargo
-    either (fail "nope") (print . maybe 0 (ores -) . Map.lookup "ORE") (fuel 1)
+    either fail (print . maybe 0 (ores -) . Map.lookup "ORE") (fuel 1)
     print . fromMaybe 0 . BS.upperBound $ \n -> guard (isRight $ fuel n) $> n

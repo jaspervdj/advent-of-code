@@ -1,6 +1,6 @@
 module Main where
 
-import           Data.List   (maximum, nub, permutations)
+import           Data.List   (nub, permutations)
 import qualified Data.Map    as Map
 import           Data.Maybe  (fromMaybe)
 import           Data.Monoid (Sum (..))

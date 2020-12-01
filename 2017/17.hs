@@ -1,7 +1,6 @@
 {-# LANGUAGE BangPatterns #-}
 
 import           Data.List     (foldl')
-import           Data.Monoid   ((<>))
 import           Data.Sequence (Seq)
 import qualified Data.Sequence as Seq
 

@@ -28,7 +28,6 @@ import qualified AdventOfCode.NanoTest   as NT
 import           Data.Char               (chr, ord)
 import qualified Data.IntMap             as IM
 import           Data.Maybe              (fromMaybe, maybeToList)
-import           Data.Semigroup          (Semigroup)
 import qualified System.IO               as IO
 
 data Interrupt

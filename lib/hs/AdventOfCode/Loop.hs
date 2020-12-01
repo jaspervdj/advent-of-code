@@ -8,7 +8,6 @@ module AdventOfCode.Loop
     ) where
 
 import qualified Data.Map as M
-import Debug.Trace (trace)
 
 -- | A detected loop.
 --

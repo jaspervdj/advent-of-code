@@ -8,7 +8,6 @@ module AdventOfCode.V2.Box
     ) where
 
 import           AdventOfCode.V2
-import           Data.Semigroup  (Semigroup (..))
 
 data Box a = Box
     { bTopLeft     :: !(V2 a)
