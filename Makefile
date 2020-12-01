@@ -7,7 +7,7 @@ C_BINS  = $(C_SRCS:.c=.c.bin)
 HS_BINS = $(HS_SRCS:.hs=.hs.bin)
 ML_BINS = $(ML_SRCS:.ml=.ml.bin)
 
-GHC 	  = stack exec ghc --
+GHC 	  = ghc
 GHC_FLAGS = -Wall -ilib/hs -O2
 
 CLOJURE_PATH = lib/clj:/usr/share/java/clojure-1.8.jar
