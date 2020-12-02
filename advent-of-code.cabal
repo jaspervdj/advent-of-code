@@ -1,0 +1,32 @@
+cabal-version:      2.2
+name:               advent-of-code
+version:            0.1.0.0
+author:             Jasper Van der Jeugt
+maintainer:         m@jaspervdj.be
+build-type:         Simple
+extra-source-files: README.md
+
+library
+  hs-source-dirs:   lib/hs
+  default-language: Haskell2010
+
+  build-depends:
+    base >= 4.13 && <4.14
+
+  exposed-modules:
+    Data.List.Extended
+    AdventOfCode.NanoParser
+
+common 2020
+  build-depends:    advent-of-code, base >=4.13 && <4.14
+  hs-source-dirs:   2020
+  default-language: Haskell2010
+
+
+executable 2020-01
+  import:  2020
+  main-is: 01.hs
+
+executable 2020-02
+  import:  2020
+  main-is: 02.hs
