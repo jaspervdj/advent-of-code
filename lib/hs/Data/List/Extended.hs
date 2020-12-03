@@ -1,6 +1,7 @@
 module Data.List.Extended
     ( module Data.List
     , select
+    , selectN
     , (!!?)
     , minimaBy
     , maximaBy
@@ -17,6 +18,14 @@ import           Data.Ord      (comparing)
 select :: [a] -> [(a, [a])]
 select []       = []
 select (x : xs) = (x, xs) : [(y, x : ys) | (y, ys) <- select xs]
+
+selectN :: Int -> [a] -> [([a], [a])]
+selectN n items
+    | n <= 0    = [([], items)]
+    | otherwise = do
+        (x, rem) <- select items
+        (xs, rem') <- selectN (n - 1) rem
+        pure (x : xs, rem')
 
 -- | Like '!!', but returns a 'Maybe'.
 (!!?) :: [a] -> Int -> Maybe a
