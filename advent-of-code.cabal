@@ -1,4 +1,4 @@
-cabal-version:      2.2
+cabal-version:      2.4
 name:               advent-of-code
 version:            0.1.0.0
 author:             Jasper Van der Jeugt
@@ -12,13 +12,18 @@ library
 
   build-depends:
     base       >= 4.13 && < 4.15,
-    containers >= 0.6  && < 0.7
+    containers >= 0.6  && < 0.7,
+    vector     >= 0.12 && < 0.13
 
   exposed-modules:
+    AdventOfCode.AStar
     AdventOfCode.BinarySearch
     AdventOfCode.Dijkstra
     AdventOfCode.Grid
+    AdventOfCode.Grid.Dijkstra
+    AdventOfCode.Hex
     AdventOfCode.IntCode
+    AdventOfCode.KnotHash
     AdventOfCode.Loop
     AdventOfCode.NanoParser
     AdventOfCode.NanoTest
@@ -27,6 +32,7 @@ library
     AdventOfCode.V2
     AdventOfCode.V2.Box
     AdventOfCode.V3
+    Control.Monad.Extended
     Data.List.Extended
 
 common solution
@@ -35,107 +41,259 @@ common solution
 
   build-depends:
     advent-of-code,
-    base       >= 4.13 && < 4.15,
-    containers >= 0.6  && < 0.7,
-    mtl        >= 2.2  && < 2.3,
-    vector     >= 0.12 && < 0.13
+    array                >= 0.5  && < 0.6,
+    base                 >= 4.13 && < 4.15,
+    bytestring           >= 0.10 && < 0.11,
+    containers           >= 0.6  && < 0.7,
+    hashable             >= 1.3  && < 1.4,
+    mtl                  >= 2.2  && < 2.3,
+    primitive            >= 0.7  && < 0.8,
+    unordered-containers >= 0.2  && < 0.3,
+    vector               >= 0.12 && < 0.13
+
+common 2015
+  import:         solution
+  hs-source-dirs: 2015
+executable 2015-08
+  import:  2015
+  main-is: 08.hs
+executable 2015-09
+  import:  2015
+  main-is: 09.hs
+executable 2015-11
+  import:  2015
+  main-is: 11.hs
+executable 2015-12
+  import:  2015
+  main-is: 12.hs
+executable 2015-13
+  import:  2015
+  main-is: 13.hs
+executable 2015-15
+  import:  2015
+  main-is: 15.hs
+executable 2015-16
+  import:  2015
+  main-is: 16.hs
+executable 2015-17
+  import:  2015
+  main-is: 17.hs
+executable 2015-19
+  import:  2015
+  main-is: 19.hs
+executable 2015-20
+  import:  2015
+  main-is: 20.hs
+
+common 2017
+  import:         solution
+  hs-source-dirs: 2017
+executable 2017-01
+  import:  2017
+  main-is: 01.hs
+executable 2017-02
+  import:  2017
+  main-is: 02.hs
+executable 2017-03
+  import:  2017
+  main-is: 03.hs
+executable 2017-04
+  import:  2017
+  main-is: 04.hs
+executable 2017-07
+  import:  2017
+  main-is: 07.hs
+executable 2017-08
+  import:  2017
+  main-is: 08.hs
+executable 2017-09
+  import:  2017
+  main-is: 09.hs
+executable 2017-10
+  import:  2017
+  main-is: 10.hs
+executable 2017-11
+  import:  2017
+  main-is: 11.hs
+executable 2017-12
+  import:  2017
+  main-is: 12.hs
+executable 2017-13
+  import:  2017
+  main-is: 13.hs
+executable 2017-14
+  import:  2017
+  main-is: 14.hs
+executable 2017-15
+  import:  2017
+  main-is: 15.hs
+executable 2017-16
+  import:  2017
+  main-is: 16.hs
+executable 2017-17
+  import:  2017
+  main-is: 17.hs
+executable 2017-18
+  import:  2017
+  main-is: 18.hs
+executable 2017-19
+  import:  2017
+  main-is: 19.hs
+executable 2017-20
+  import:  2017
+  main-is: 20.hs
+executable 2017-21
+  import:  2017
+  main-is: 21.hs
+executable 2017-22
+  import:  2017
+  main-is: 22.hs
+executable 2017-23
+  import:  2017
+  main-is: 23.hs
+executable 2017-24
+  import:  2017
+  main-is: 24.hs
+executable 2017-25
+  import:  2017
+  main-is: 25.hs
+
+common 2018
+  import:         solution
+  hs-source-dirs: 2018
+executable 2018-01
+  import:  2018
+  main-is: 01.hs
+executable 2018-02
+  import:  2018
+  main-is: 02.hs
+executable 2018-03
+  import:  2018
+  main-is: 03.hs
+executable 2018-04
+  import:  2018
+  main-is: 04.hs
+executable 2018-05
+  import:  2018
+  main-is: 05.hs
+executable 2018-06
+  import:  2018
+  main-is: 06.hs
+executable 2018-07
+  import:  2018
+  main-is: 07.hs
+executable 2018-08
+  import:  2018
+  main-is: 08.hs
+executable 2018-09
+  import:  2018
+  main-is: 09.hs
+executable 2018-10
+  import:  2018
+  main-is: 10.hs
+executable 2018-11
+  import:  2018
+  main-is: 11.hs
+executable 2018-12
+  import:  2018
+  main-is: 12.hs
+executable 2018-13
+  import:  2018
+  main-is: 13.hs
+executable 2018-14
+  import:  2018
+  main-is: 14.hs
+executable 2018-15
+  import:  2018
+  main-is: 15.hs
+executable 2018-16
+  import:  2018
+  main-is: 16.hs
+executable 2018-17
+  import:  2018
+  main-is: 17.hs
+executable 2018-18
+  import:  2018
+  main-is: 18.hs
+executable 2018-20
+  import:  2018
+  main-is: 20.hs
+executable 2018-25
+  import:  2018
+  main-is: 25.hs
 
 common 2019
   import:         solution
   hs-source-dirs: 2019
-
 executable 2019-01
   import:  2019
   main-is: 01.hs
-
 executable 2019-02
   import:  2019
   main-is: 02.hs
-
 executable 2019-03
   import:  2019
   main-is: 03.hs
-
 executable 2019-04
   import:  2019
   main-is: 04.hs
-
 executable 2019-05
   import:  2019
   main-is: 05.hs
-
 executable 2019-06
   import:  2019
   main-is: 06.hs
-
 executable 2019-07
   import:  2019
   main-is: 07.hs
-
 executable 2019-08
   import:  2019
   main-is: 08.hs
-
 executable 2019-09
   import:  2019
   main-is: 09.hs
-
 executable 2019-10
   import:  2019
   main-is: 10.hs
-
 executable 2019-11
   import:  2019
   main-is: 11.hs
-
 executable 2019-12
   import:  2019
   main-is: 12.hs
-
 executable 2019-13
   import:  2019
   main-is: 13.hs
-
 executable 2019-14
   import:  2019
   main-is: 14.hs
-
 executable 2019-15
   import:  2019
   main-is: 15.hs
-
 executable 2019-16
   import:  2019
   main-is: 16.hs
-
 executable 2019-17
   import:  2019
   main-is: 17.hs
-
 executable 2019-18
   import:  2019
   main-is: 18.hs
-
 executable 2019-19
   import:  2019
   main-is: 19.hs
-
 executable 2019-20
   import:  2019
   main-is: 20.hs
-
 executable 2019-21
   import:  2019
   main-is: 21.hs
-
 executable 2019-22
   import:  2019
   main-is: 22.hs
-
 executable 2019-23
   import:  2019
   main-is: 23.hs
-
 executable 2019-24
   import:  2019
   main-is: 24.hs
@@ -143,11 +301,12 @@ executable 2019-24
 common 2020
   import:         solution
   hs-source-dirs: 2020
-
 executable 2020-01
   import:  2020
   main-is: 01.hs
-
 executable 2020-02
   import:  2020
   main-is: 02.hs
+executable 2020-03
+  import:  2020
+  main-is: 03.hs

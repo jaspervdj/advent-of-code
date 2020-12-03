@@ -1,0 +1,6 @@
+cradle:
+  cabal:
+    - path: ./lib/hs
+      component: "lib:advent-of-code"
+    - path: ./2020/03.hs
+      component: "exe:2020-03"

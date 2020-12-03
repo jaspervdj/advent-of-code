@@ -6,7 +6,6 @@ import           AdventOfCode.V2
 import qualified AdventOfCode.V2.Box  as Box
 import qualified Data.List            as L
 import qualified Data.Map             as M
-import           Data.Semigroup       ((<>))
 import qualified System.IO            as IO
 
 data Light = Light

@@ -22,8 +22,8 @@ fromV2 :: V2 a -> Box a
 fromV2 v2 = Box v2 v2
 
 width, height :: Num a => Box a -> a
-width  (Box (V2 lx _)  (V2 rx _))  = (rx - lx)
-height (Box (V2 _  ty) (V2 _  by)) = (by - ty)
+width  (Box (V2 lx _)  (V2 rx _))  = rx - lx + 1
+height (Box (V2 _  ty) (V2 _  by)) = by - ty + 1
 
 area :: Num a => Box a -> a
 area b = width b * height b
