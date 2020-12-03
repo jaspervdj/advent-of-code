@@ -11,17 +11,138 @@ library
   default-language: Haskell2010
 
   build-depends:
-    base >= 4.13 && <4.14
+    base       >= 4.13 && < 4.15,
+    containers >= 0.6  && < 0.7
 
   exposed-modules:
-    Data.List.Extended
+    AdventOfCode.BinarySearch
+    AdventOfCode.Dijkstra
+    AdventOfCode.Grid
+    AdventOfCode.IntCode
+    AdventOfCode.Loop
     AdventOfCode.NanoParser
+    AdventOfCode.NanoTest
+    AdventOfCode.Parsing
+    AdventOfCode.PriorityQueue
+    AdventOfCode.V2
+    AdventOfCode.V2.Box
+    AdventOfCode.V3
+    Data.List.Extended
+
+common solution
+  default-language: Haskell2010
+  ghc-options:      -Wall
+
+  build-depends:
+    advent-of-code,
+    base       >= 4.13 && < 4.15,
+    containers >= 0.6  && < 0.7,
+    mtl        >= 2.2  && < 2.3,
+    vector     >= 0.12 && < 0.13
+
+common 2019
+  import:         solution
+  hs-source-dirs: 2019
+
+executable 2019-01
+  import:  2019
+  main-is: 01.hs
+
+executable 2019-02
+  import:  2019
+  main-is: 02.hs
+
+executable 2019-03
+  import:  2019
+  main-is: 03.hs
+
+executable 2019-04
+  import:  2019
+  main-is: 04.hs
+
+executable 2019-05
+  import:  2019
+  main-is: 05.hs
+
+executable 2019-06
+  import:  2019
+  main-is: 06.hs
+
+executable 2019-07
+  import:  2019
+  main-is: 07.hs
+
+executable 2019-08
+  import:  2019
+  main-is: 08.hs
+
+executable 2019-09
+  import:  2019
+  main-is: 09.hs
+
+executable 2019-10
+  import:  2019
+  main-is: 10.hs
+
+executable 2019-11
+  import:  2019
+  main-is: 11.hs
+
+executable 2019-12
+  import:  2019
+  main-is: 12.hs
+
+executable 2019-13
+  import:  2019
+  main-is: 13.hs
+
+executable 2019-14
+  import:  2019
+  main-is: 14.hs
+
+executable 2019-15
+  import:  2019
+  main-is: 15.hs
+
+executable 2019-16
+  import:  2019
+  main-is: 16.hs
+
+executable 2019-17
+  import:  2019
+  main-is: 17.hs
+
+executable 2019-18
+  import:  2019
+  main-is: 18.hs
+
+executable 2019-19
+  import:  2019
+  main-is: 19.hs
+
+executable 2019-20
+  import:  2019
+  main-is: 20.hs
+
+executable 2019-21
+  import:  2019
+  main-is: 21.hs
+
+executable 2019-22
+  import:  2019
+  main-is: 22.hs
+
+executable 2019-23
+  import:  2019
+  main-is: 23.hs
+
+executable 2019-24
+  import:  2019
+  main-is: 24.hs
 
 common 2020
-  build-depends:    advent-of-code, base >=4.13 && <4.14
-  hs-source-dirs:   2020
-  default-language: Haskell2010
-
+  import:         solution
+  hs-source-dirs: 2020
 
 executable 2020-01
   import:  2020
