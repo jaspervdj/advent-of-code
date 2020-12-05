@@ -6,3 +6,4 @@
 *.depends
 *.bak
 *.gdb
+/dist-newstyle
