@@ -28,8 +28,8 @@ dijkstra neighbours goal start =
 
                     dists1 = Map.insert current (cdist, path) dists0
 
-                    fringe2 = (L.foldl'
+                    fringe2 = L.foldl'
                         (\acc (d, v) -> PQ.push d (v, v : path) acc)
-                        fringe1 interesting) in
+                        fringe1 interesting in
 
                 if goal current then dists1 else go fringe2 dists1
