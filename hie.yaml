@@ -6,6 +6,8 @@ cradle:
       component: "exe:2015-21"
     - path: ./2015/22.hs
       component: "exe:2015-22"
+    - path: ./2015/23.hs
+      component: "exe:2015-23"
     - path: ./2020/03.hs
       component: "exe:2020-03"
     - path: ./2020/04.hs

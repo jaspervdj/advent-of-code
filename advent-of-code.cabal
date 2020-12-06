@@ -90,6 +90,9 @@ executable 2015-21
 executable 2015-22
   import:  2015
   main-is: 22.hs
+executable 2015-23
+  import:  2015
+  main-is: 23.hs
 
 common 2017
   import:         solution
