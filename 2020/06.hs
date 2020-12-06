@@ -8,14 +8,12 @@ import           Data.Set           (Set)
 import qualified Data.Set           as Set
 import qualified System.IO          as IO
 
-type Forms a = NE.NonEmpty (Set.Set a)
-
-readForms :: IO.Handle -> IO [Forms Char]
+readForms :: IO.Handle -> IO [NonEmpty (Set Char)]
 readForms h =
     fmap (fmap Set.fromList) . filter (/= ("" :| [])) .
     NE.groupBy (on (&&) (not . null)) . lines <$> IO.hGetContents h
 
-intersections :: Ord a => NonEmpty (Set.Set a) -> Set a
+intersections :: Ord a => NonEmpty (Set a) -> Set a
 intersections (x :| xs) = foldl' Set.intersection x xs
 
 main :: IO ()
