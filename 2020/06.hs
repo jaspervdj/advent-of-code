@@ -1,21 +1,22 @@
 module Main where
 
-import           Data.Function (on)
-import           Data.List     (foldl', groupBy)
-import           Data.Set      (Set)
-import qualified Data.Set      as Set
-import qualified System.IO     as IO
+import           Data.Function      (on)
+import           Data.List          (foldl')
+import           Data.List.NonEmpty (NonEmpty (..))
+import qualified Data.List.NonEmpty as NE
+import           Data.Set           (Set)
+import qualified Data.Set           as Set
+import qualified System.IO          as IO
 
-type Forms a = [Set.Set a]
+type Forms a = NE.NonEmpty (Set.Set a)
 
 readForms :: IO.Handle -> IO [Forms Char]
 readForms h =
-    map (map Set.fromList) . filter (/= [""]) .
-    groupBy (on (&&) (not . null)) . lines <$> IO.hGetContents h
+    fmap (fmap Set.fromList) . filter (/= ("" :| [])) .
+    NE.groupBy (on (&&) (not . null)) . lines <$> IO.hGetContents h
 
-intersections :: Ord a => [Set.Set a] -> Set a
-intersections []       = Set.empty
-intersections (x : xs) = foldl' Set.intersection x xs
+intersections :: Ord a => NonEmpty (Set.Set a) -> Set a
+intersections (x :| xs) = foldl' Set.intersection x xs
 
 main :: IO ()
 main = do
