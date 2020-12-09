@@ -2,10 +2,14 @@
 module Main where
 
 import qualified AdventOfCode.NanoParser as P
+import AdventOfCode.Dijkstra (dijkstra)
 import           Control.Applicative     ((<|>))
+import Debug.Trace
 import qualified Data.Set                as Set
 import qualified Data.Vector             as V
 import qualified System.IO               as IO
+import qualified Data.Map as Map
+import Data.Map (Map)
 
 type Program = V.Vector Instr
 
@@ -54,6 +58,30 @@ runProgram program = go Set.empty emptyConsole
             let instr = program V.! cPc c in
             go (Set.insert (cPc c) visited) (runInstr instr c)
 
+-- Current instruction number and whether or not we've already switched an
+-- instruction.
+data Vertex = Vertex !Int !Bool deriving (Eq, Ord, Show)
+
+controlFlow program =
+    filter (isGoal . fst) $ Map.toList $
+    dijkstra neighbours isGoal (Vertex 0 False)
+  where
+    valid :: Vertex -> Bool
+    valid (Vertex i _) = i >= 0 && i <= V.length program
+
+    neighbours :: Vertex -> [(Int, Vertex)]
+    neighbours (Vertex i switched) =
+        let next = case program V.! i of
+                Acc _ -> [Vertex (i + 1) switched]
+                Nop _ | switched -> [Vertex (i + 1) switched]
+                Nop n -> [Vertex (i + 1) switched, Vertex (i + n) True]
+                Jmp n | switched -> [Vertex (i + n) switched]
+                Jmp n -> [Vertex (i + n) switched, Vertex (i + 1) True] in
+        [(1, v) | v <- next, valid v]
+
+    isGoal :: Vertex -> Bool
+    isGoal (Vertex i _) = i == V.length program
+
 main :: IO ()
 main = do
     program <- P.hRunParser IO.stdin parseProgram
@@ -68,7 +96,9 @@ main = do
                 Nop n -> [Jmp n]
                 Acc _ -> []
             case runProgram $ program V.// [(idx, instr)] of
-                Terminate acc -> [acc]
+                Terminate acc -> trace ("switching " <> show idx) [acc]
                 _             -> []
+
+    print $ controlFlow program
 
     print $ head terminating
