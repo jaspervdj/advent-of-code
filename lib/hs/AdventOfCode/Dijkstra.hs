@@ -1,11 +1,38 @@
 module AdventOfCode.Dijkstra
-    ( dijkstra
+    ( Bfs (..)
+    , bfs
+    , dijkstra
     ) where
 
 import qualified AdventOfCode.PriorityQueue as PQ
 import           Control.Monad              (guard)
 import qualified Data.List                  as L
 import qualified Data.Map                   as Map
+
+data Bfs v = Bfs
+    { bfsDistances :: Map.Map v [v]
+    , bfsGoal      :: Maybe (v, [v])
+    }
+
+bfs :: Ord v
+    => (v -> [v])   -- ^ Neighbours
+    -> (v -> Bool)  -- ^ Is this a goal?
+    -> v            -- ^ Start
+    -> Bfs v
+bfs neighbours goal start = go Map.empty (Map.singleton start [start])
+  where
+    go visited fringe
+        | Map.null fringe = Bfs visited Nothing
+        | g : _ <- goals  = Bfs visited' (Just g)
+        | otherwise       = go visited' fringe'
+      where
+        goals    = filter (goal . fst) $ Map.toList fringe
+        visited' = Map.unionWith const visited fringe
+        fringe'  = Map.fromList $ do
+            (n, path) <- Map.toList fringe
+            nb <- neighbours n
+            guard . not $ nb `Map.member` visited'
+            pure (nb, nb : path)
 
 dijkstra
     :: Ord v

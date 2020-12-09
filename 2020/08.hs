@@ -1,8 +1,10 @@
 {-# LANGUAGE RecordWildCards #-}
 module Main where
 
+import           AdventOfCode.Dijkstra   (bfs, bfsGoal)
 import qualified AdventOfCode.NanoParser as P
 import           Control.Applicative     ((<|>))
+import           Data.Maybe              (listToMaybe)
 import qualified Data.Set                as Set
 import qualified Data.Vector             as V
 import qualified System.IO               as IO
@@ -54,6 +56,33 @@ runProgram program = go Set.empty emptyConsole
             let instr = program V.! cPc c in
             go (Set.insert (cPc c) visited) (runInstr instr c)
 
+-- Current instruction number and whether or not we've already switched an
+-- instruction.  Doing a simple forward search on this can show us which
+-- instruction to switch.
+data Vertex = Vertex !Int !Bool deriving (Eq, Ord, Show)
+
+controlFlow :: Program -> Maybe Int
+controlFlow program = do
+    (_, path) <- bfsGoal $ bfs neighbours isGoal (Vertex 0 False)
+    Vertex i _ <- listToMaybe $ filter (\(Vertex _ s) -> not s) path
+    pure i
+  where
+    valid :: Vertex -> Bool
+    valid (Vertex i _) = i >= 0 && i <= V.length program
+
+    neighbours :: Vertex -> [Vertex]
+    neighbours (Vertex i switched) =
+        let next = case program V.! i of
+                Acc _ -> [Vertex (i + 1) switched]
+                Nop _ | switched -> [Vertex (i + 1) switched]
+                Nop n -> [Vertex (i + 1) switched, Vertex (i + n) True]
+                Jmp n | switched -> [Vertex (i + n) switched]
+                Jmp n -> [Vertex (i + n) switched, Vertex (i + 1) True] in
+        filter valid next
+
+    isGoal :: Vertex -> Bool
+    isGoal (Vertex i _) = i == V.length program
+
 main :: IO ()
 main = do
     program <- P.hRunParser IO.stdin parseProgram
@@ -61,14 +90,15 @@ main = do
         Looping acc -> print acc
         _           -> fail "no solution"
 
-    let terminating = do
-            idx <- [0 .. V.length program - 1]
-            instr <- case program V.! idx of
-                Jmp n -> [Nop n]
-                Nop n -> [Jmp n]
-                Acc _ -> []
-            case runProgram $ program V.// [(idx, instr)] of
-                Terminate acc -> [acc]
-                _             -> []
+    switch <- case controlFlow program of
+        Nothing -> fail "no switch?"
+        Just s  -> pure s
 
-    print $ head terminating
+    let program' = case program V.! switch of
+            Jmp n -> program V.// [(switch, Nop n)]
+            Nop n -> program V.// [(switch, Jmp n)]
+            Acc _ -> program
+
+    case runProgram program' of
+        Terminate acc -> print acc
+        _             -> fail "not terminating"
