@@ -1,6 +1,8 @@
 module AdventOfCode.Dijkstra
     ( Bfs (..)
     , bfs
+
+    , Dijkstra (..)
     , dijkstra
     ) where
 
@@ -34,17 +36,22 @@ bfs neighbours goal start = go Map.empty (Map.singleton start [start])
             guard . not $ nb `Map.member` visited'
             pure (nb, nb : path)
 
+data Dijkstra v = Dijkstra
+    { dijkstraDistances :: Map.Map v (Int, [v])
+    , dijkstraGoal      :: Maybe (v, Int, [v])
+    }
+
 dijkstra
     :: Ord v
     => (v -> [(Int, v)])     -- ^ Neighbours
     -> (v -> Bool)           -- ^ Is this a goal?
     -> v                     -- ^ Start
-    -> Map.Map v (Int, [v])  -- ^ Distance, path.
+    -> Dijkstra v
 dijkstra neighbours goal start =
     go (PQ.singleton 0 (start, [start])) Map.empty
   where
     go fringe0 dists0 = case PQ.pop fringe0 of
-        Nothing -> dists0
+        Nothing -> Dijkstra dists0 Nothing
         Just (cdist, (current, path), fringe1)
             | current `Map.member` dists0 -> go fringe1 dists0
             | otherwise ->
@@ -59,4 +66,6 @@ dijkstra neighbours goal start =
                         (\acc (d, v) -> PQ.push d (v, v : path) acc)
                         fringe1 interesting in
 
-                if goal current then dists1 else go fringe2 dists1
+                if goal current
+                    then Dijkstra dists1 $ Just (current, cdist, path)
+                    else go fringe2 dists1

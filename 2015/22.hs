@@ -2,10 +2,9 @@
 {-# LANGUAGE RecordWildCards #-}
 module Main where
 
-import           AdventOfCode.Dijkstra (dijkstra)
+import           AdventOfCode.Dijkstra (dijkstra, dijkstraGoal)
 import           Control.Monad         ((<=<))
 import           Data.Either           (isLeft)
-import qualified Data.Map              as Map
 import           Data.Maybe            (maybeToList)
 
 data Wizard = Wizard
@@ -126,8 +125,8 @@ main = do
         isGoal = isLeft
         state0 = Right (makeWizard 50 500, Boss 51 9)
 
-        distances1 = Map.toList $ dijkstra neighbours1 isGoal state0
-        distances2 = Map.toList $ dijkstra neighbours2 isGoal state0
+        Just (_, mana1, _) = dijkstraGoal $ dijkstra neighbours1 isGoal state0
+        Just (_, mana2, _) = dijkstraGoal $ dijkstra neighbours2 isGoal state0
 
-    print . minimum . map (fst . snd) $ filter (isGoal . fst) distances1
-    print . minimum . map (fst . snd) $ filter (isGoal . fst) distances2
+    print mana1
+    print mana2

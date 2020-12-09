@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 module Main where
 
-import qualified AdventOfCode.Dijkstra   as Dijkstra
+import           AdventOfCode.Dijkstra   (Dijkstra (..), dijkstra)
 import qualified AdventOfCode.Grid       as G
 import           AdventOfCode.IntCode
 import qualified AdventOfCode.NanoParser as NP
@@ -48,7 +48,7 @@ toClosestFrontier grid pos
     | null byDistance = Nothing
     | otherwise       = Just $ snd $ L.minimumOn fst byDistance
   where
-    distances  = Dijkstra.dijkstra (accessible grid) isGoal pos
+    distances  = dijkstraDistances $ dijkstra (accessible grid) isGoal pos
     isGoal p   = Map.lookup p grid == Just Frontier
     byDistance =
         [ (dist, v2ToDir $ step V2..-. pos)
@@ -94,14 +94,12 @@ exploration prog =
 main :: IO ()
 main = do
     program <- NP.hRunParser IO.stdin parseProgram
-    let grid      = exploration program
-        isGoal p  = Map.lookup p grid == Just Goal
-        distances = Dijkstra.dijkstra (accessible grid) isGoal G.origin
-    goal <- case filter ((== Goal) . snd) $ Map.toList grid of
-        []         -> fail "No goal found"
-        (p, _) : _ -> pure p
+    let grid     = exploration program
+        isGoal p = Map.lookup p grid == Just Goal
+        mbGoal   = dijkstraGoal $ dijkstra (accessible grid) isGoal G.origin
+    (goal, part1, _) <- maybe (fail "No goal found") pure mbGoal
     G.printGrid IO.stdout $ fmap tileToChar grid
-    print . maybe 0 fst $ Map.lookup goal distances
+    print part1
 
-    let fill = Dijkstra.dijkstra (accessible grid) (const False) goal
+    let fill = dijkstraDistances $ dijkstra (accessible grid) (const False) goal
     print . maximum . map (fst . snd) $ Map.toList fill

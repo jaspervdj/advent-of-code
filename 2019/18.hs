@@ -3,12 +3,12 @@ module Main
     ( main
     ) where
 
-import qualified AdventOfCode.Dijkstra as Dijkstra
+import           AdventOfCode.Dijkstra
 import qualified AdventOfCode.Grid     as G
 import qualified AdventOfCode.V2       as V2
 import           Data.Char             (isAlpha, isLower, toLower)
 import qualified Data.Map              as Map
-import           Data.Maybe            (listToMaybe, mapMaybe)
+import           Data.Maybe            (mapMaybe)
 import qualified Data.Set              as Set
 import qualified System.IO             as IO
 
@@ -36,9 +36,9 @@ data SearchState = SearchState
     } deriving (Eq, Ord, Show)
 
 collectAllKeys :: Maze -> Maybe Int
-collectAllKeys maze =
-    let distances = Dijkstra.dijkstra neighbours goal start in
-    listToMaybe . map (fst . snd) . filter (goal . fst) $ Map.toList distances
+collectAllKeys maze = do
+    (_, dist, _) <- dijkstraGoal $ dijkstra neighbours goal start
+    pure dist
   where
     neighbours :: SearchState -> [(Int, SearchState)]
     neighbours (SearchState robots keys) = do
@@ -71,8 +71,7 @@ collectAllKeys maze =
         -- A nested dijkstra so we only look at interesting positions (those
         -- that have keys).
         mapMaybe (\((p, mbK), (d, _)) -> mbK >>= \k -> pure (d, p, k)) .
-        Map.toList $
-        Dijkstra.dijkstra
+        Map.toList $ dijkstraDistances $ dijkstra
             (\case
                 (_, Just _)  -> []
                 (p, Nothing) -> map ((,) 1) (moves keys p))

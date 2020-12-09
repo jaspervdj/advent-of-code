@@ -3,7 +3,7 @@ module Main
     ( main
     ) where
 
-import qualified AdventOfCode.Dijkstra as Dijkstra
+import           AdventOfCode.Dijkstra (Dijkstra (..), dijkstra)
 import qualified AdventOfCode.Grid     as G
 import qualified AdventOfCode.V2       as V2
 import qualified AdventOfCode.V2.Box   as Box
@@ -76,8 +76,8 @@ mkMaze grid =
         (portal, start) <- Map.toList portals
         let distances =
                 [ (d, p)
-                | (v, (d, _)) <- Map.toList $
-                    Dijkstra.dijkstra neighbours goal (Left start)
+                | (v, (d, _)) <- Map.toList $ dijkstraDistances $
+                    dijkstra neighbours goal (Left start)
                 , p <- case v of Left _ -> []; Right pid -> [pid]
                 ]
         pure (portal, distances)
@@ -94,7 +94,8 @@ mkMaze grid =
 
 shortestPath :: Maze -> Maybe Int
 shortestPath (Maze _ _ portalDistances) = do
-    let distances = Dijkstra.dijkstra neighbours (const False) (Outer 'A' 'A')
+    let distances = dijkstraDistances $
+            dijkstra neighbours (const False) (Outer 'A' 'A')
     pred . fst <$> Map.lookup (Outer 'Z' 'Z') distances
   where
     neighbours :: Portal -> [(Int, Portal)]
@@ -105,9 +106,9 @@ shortestPath (Maze _ _ portalDistances) = do
         fromMaybe [] $ Map.lookup p' portalDistances
 
 recursiveShortestPath :: Maze -> Maybe Int
-recursiveShortestPath (Maze _ _ portalDistances) =
-    let distances = Dijkstra.dijkstra neighbours (== goal) (0, Outer 'A' 'A') in
-    pred . fst <$> Map.lookup goal distances
+recursiveShortestPath (Maze _ _ portalDistances) = do
+    (_, d, _) <- dijkstraGoal $ dijkstra neighbours (== goal) (0, Outer 'A' 'A')
+    pure d
   where
     goal                = (0 :: Int, Outer 'Z' 'Z')
     neighbours (lvl, p) = do
