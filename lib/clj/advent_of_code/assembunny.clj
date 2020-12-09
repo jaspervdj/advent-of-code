@@ -1,5 +1,7 @@
 (ns advent-of-code.assembunny)
 
+(require 'clojure.core.reducers)
+
 (defn parse-val [s] (try (Integer/parseInt s) (catch Exception e (keyword s))))
 
 (defn parse-instr [line]
@@ -9,7 +11,8 @@
       "inc" [:inc (parse-val (nth words 1))]
       "dec" [:dec (parse-val (nth words 1))]
       "jnz" [:jnz (parse-val (nth words 1)) (parse-val (nth words 2))]
-      "tgl" [:tgl (parse-val (nth words 1))])))
+      "tgl" [:tgl (parse-val (nth words 1))]
+      "out" [:out (parse-val (nth words 1))])))
 
 (defn parse-instructions
   [input]
@@ -61,35 +64,41 @@
 (defn run
   ([initial-instructions] (run initial-instructions {}))
   ([initial-instructions initial-memory]
+     (run initial-instructions initial-memory 100))
+  ([initial-instructions initial-memory outs-limit]
     (loop [instructions initial-instructions
            mem initial-memory
+           outs []
            ip 0]
       (if
-       (or (< ip 0) (>= ip (count instructions)))
-       mem
+       (or (< ip 0) (>= ip (count instructions)) (>= (count outs) outs-limit))
+       [mem outs]
        (if-let [[instructions' mem' ip'] (run-fast instructions mem ip)]
-         (recur instructions' mem' ip')
+         (recur instructions' mem' outs ip')
          (let [[op x y] (nth instructions ip)]
            (case op
              :cpy (if-not
                    (keyword? y) ;; Invalid instruction check.
-                   (recur instructions mem (+ ip 1))
+                   (recur instructions mem outs (+ ip 1))
                    (recur
                     instructions
                     (assoc mem y (get-val mem x))
+                    outs
                     (+ ip 1)))
              :inc (recur
                    instructions
                    (assoc mem x (inc (get-val mem x)))
+                   outs
                    (+ ip 1))
              :dec (recur
                    instructions
                    (assoc mem x (dec (get-val mem x)))
+                   outs
                    (+ ip 1))
              :jnz (if-not
                    (= 0 (get-val mem x))
-                   (recur instructions mem (+ ip (get-val mem y)))
-                   (recur instructions mem (+ ip 1)))
+                   (recur instructions mem outs (+ ip (get-val mem y)))
+                   (recur instructions mem outs (+ ip 1)))
              :tgl (let [idx (+ ip (get-val mem x))]
                     (recur
                      (if
@@ -97,4 +106,10 @@
                       (update instructions idx toggle-instr)
                       instructions)
                      mem
-                     (+ ip 1))))))))))
+                     outs
+                     (+ ip 1)))
+             :out (recur
+                   instructions
+                   mem
+                   (conj outs (get-val mem x))
+                   (+ ip 1)))))))))

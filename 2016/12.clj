@@ -3,7 +3,7 @@
 (defn main
   []
   (let [instructions (parse-instructions (slurp *in*))]
-    (println (:a (run instructions)))
-    (println (:a (run instructions {:c 1})))))
+    (println (:a (first (run instructions))))
+    (println (:a (first (run instructions {:c 1}))))))
 
 (main)
