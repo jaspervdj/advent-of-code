@@ -343,3 +343,6 @@ executable 2020-08
 executable 2020-09
   import:  2020
   main-is: 09.hs
+executable 2020-10
+  import:  2020
+  main-is: 10.hs
