@@ -19,9 +19,9 @@ step1 grid = flip G.mapWithKey grid $ \pos tile -> case tile of
         Occupied | occupied pos >= 4 -> Vacant
         _                            -> tile
   where
-    neighbours pos = G.neighbours pos <> G.diagonal pos
-    occupied pos = length
-        [() | nb <- neighbours pos, Just Occupied == G.lookup nb grid]
+    occupied p =
+        length [() | nb <- G.neighbours p, Just Occupied == G.lookup nb grid] +
+        length [() | nb <- G.diagonal p, Just Occupied == G.lookup nb grid]
 
 step2 :: G.Grid Tile -> G.Grid Tile
 step2 grid = flip G.mapWithKey grid $ \pos tile -> case tile of

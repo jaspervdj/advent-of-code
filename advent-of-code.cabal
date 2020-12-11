@@ -40,7 +40,7 @@ library
 
 common solution
   default-language: Haskell2010
-  ghc-options:      -Wall
+  ghc-options:      -Wall -O2
 
   build-depends:
     advent-of-code,
