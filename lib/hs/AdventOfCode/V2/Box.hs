@@ -5,6 +5,7 @@ module AdventOfCode.V2.Box
     , width
     , height
     , area
+    , inside
     ) where
 
 import           AdventOfCode.V2
@@ -27,3 +28,7 @@ height (Box (V2 _  ty) (V2 _  by)) = by - ty + 1
 
 area :: Num a => Box a -> a
 area b = width b * height b
+
+inside :: Ord a => V2 a -> Box a -> Bool
+inside (V2 x y) (Box (V2 x0 y0) (V2 x1 y1)) =
+    x >= x0 && x <= x1 && y >= y0 && y <= y1
