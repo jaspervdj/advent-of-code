@@ -36,6 +36,7 @@ library
     AdventOfCode.V3
     Control.Monad.Extended
     Data.List.Extended
+    Data.Vector.Extended
 
 common solution
   default-language: Haskell2010

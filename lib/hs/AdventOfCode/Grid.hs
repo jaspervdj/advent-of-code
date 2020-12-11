@@ -45,15 +45,14 @@ origin = zero
 
 -- | Up, down, left and right neighbours
 neighbours :: Pos -> [Pos]
-neighbours p = [move d p | d <- [minBound .. maxBound]]
+neighbours (V2 x y) =
+    [V2 x (y - 1), V2 (x + 1) y, V2 x (y + 1) , V2 (x - 1) y]
 
 -- | Diagonal neighbours
 diagonal :: Pos -> [Pos]
 diagonal (V2 x y) =
-    [ V2 (x - 1) (y - 1)
-    , V2 (x - 1) (y + 1)
-    , V2 (x + 1) (y - 1)
-    , V2 (x + 1) (y + 1)
+    [ V2 (x - 1) (y - 1), V2 (x - 1) (y + 1)
+    , V2 (x + 1) (y - 1), V2 (x + 1) (y + 1)
     ]
 
 manhattan :: Pos -> Pos -> Int

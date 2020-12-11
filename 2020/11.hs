@@ -19,7 +19,7 @@ step1 grid = flip G.mapWithKey grid $ \pos tile -> case tile of
         Occupied | occupied pos >= 4 -> Vacant
         _                            -> tile
   where
-    neighbours = G.neighbours <> G.diagonal
+    neighbours pos = G.neighbours pos <> G.diagonal pos
     occupied pos = length
         [() | nb <- neighbours pos, Just Occupied == G.lookup nb grid]
 

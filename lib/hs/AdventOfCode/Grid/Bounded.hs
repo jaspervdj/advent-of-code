@@ -24,12 +24,12 @@ module AdventOfCode.Grid.Bounded
     , toString
     ) where
 
-import qualified AdventOfCode.Grid as G
-import           AdventOfCode.V2   (V2 (..))
-import           Control.Monad     (when)
-import           Data.Maybe        (fromMaybe)
-import qualified Data.Vector       as V
-import           Prelude           hiding (lookup)
+import qualified AdventOfCode.Grid    as G
+import           AdventOfCode.V2      (V2 (..))
+import           Control.Monad        (when)
+import           Data.Maybe           (fromMaybe)
+import qualified Data.Vector.Extended as V
+import           Prelude              hiding (lookup)
 
 data Grid a = Grid
     { gridWidth  :: {-# UNPACK #-} !Int
@@ -44,7 +44,7 @@ generate :: Int -> Int -> (G.Pos -> a) -> Grid a
 generate width height f = Grid
     { gridWidth  = width
     , gridHeight = height
-    , gridData   = V.generate (width * height) $ \idx ->
+    , gridData   = V.generate' (width * height) $ \idx ->
         let (y, x) = idx `divMod` width in f (V2 x y)
     }
 
@@ -66,6 +66,7 @@ fromString string = case lines string of
 mapWithKey :: (G.Pos -> a -> b) -> Grid a -> Grid b
 mapWithKey f Grid {..} = generate gridWidth gridHeight $ \(V2 x y) ->
     f (V2 x y) $! V.unsafeIndex gridData (y * gridWidth + x)
+{-# INLINABLE mapWithKey #-}
 
 lookup :: G.Pos -> Grid a -> Maybe a
 lookup (V2 x y) Grid {..}
