@@ -56,6 +56,9 @@ class Solution a where
 instance Solution Int where
     printSolution = print
 
+instance Solution Integer where
+    printSolution = print
+
 -- | 'pureMain' avoids using 'IO' and rather uses 'Either' for error handling.
 pureMain
     :: (Solution a, Solution b)

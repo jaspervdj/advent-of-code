@@ -64,14 +64,8 @@ fromString string = case lines string of
         go width (row : rows) xs
 
 mapWithKey :: (G.Pos -> a -> b) -> Grid a -> Grid b
-mapWithKey f Grid {..} = Grid
-    { gridWidth  = gridWidth
-    , gridHeight = gridHeight
-    , gridData   = V.generate (gridWidth * gridHeight) $ \idx ->
-        let (y, x) = idx `divMod` gridWidth
-            a      = V.unsafeIndex gridData idx in
-        f (V2 x y) a
-    }
+mapWithKey f Grid {..} = generate gridWidth gridHeight $ \(V2 x y) ->
+    f (V2 x y) $! V.unsafeIndex gridData (y * gridWidth + x)
 
 lookup :: G.Pos -> Grid a -> Maybe a
 lookup (V2 x y) Grid {..}
