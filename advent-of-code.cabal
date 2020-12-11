@@ -25,6 +25,7 @@ library
     AdventOfCode.IntCode
     AdventOfCode.KnotHash
     AdventOfCode.Loop
+    AdventOfCode.Main
     AdventOfCode.NanoParser
     AdventOfCode.NanoTest
     AdventOfCode.Parsing

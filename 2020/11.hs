@@ -1,19 +1,19 @@
 {-# LANGUAGE LambdaCase #-}
 import qualified AdventOfCode.Grid   as G
+import           AdventOfCode.Main   (pureMain)
 import           AdventOfCode.V2     (V2 (..), zero, (.+.))
 import qualified AdventOfCode.V2.Box as Box
 import qualified Data.Map            as Map
 import           Data.Maybe          (fromMaybe)
-import qualified System.IO           as IO
 
 data Seat = Vacant | Occupied deriving (Eq, Ord, Show)
 
-parseSeat :: Char -> IO (Maybe Seat)
+parseSeat :: Char -> Either String (Maybe Seat)
 parseSeat = \case
     '.' -> pure Nothing
     'L' -> pure $ Just Vacant
     '#' -> pure $ Just Occupied
-    c   -> fail $ "Unknown tile: " <> show c
+    c   -> Left $ "Unknown tile: " <> show c
 
 step1 :: G.Grid Seat -> G.Grid Seat
 step1 grid = flip Map.mapWithKey grid $ \pos tile -> case tile of
@@ -45,8 +45,7 @@ fixed :: Eq a => (a -> a) -> a -> a
 fixed f x = let y = f x in if x == y then x else fixed f y
 
 main :: IO ()
-main = do
-    grid0 <- Map.mapMaybe id <$> G.readGrid parseSeat IO.stdin
+main = pureMain $ \input -> do
+    grid0 <- Map.mapMaybe id <$> traverse parseSeat (G.fromString input)
     let solve f = length . filter (== Occupied) . map snd . Map.toList . fixed f
-    print $ solve step1 grid0
-    print $ solve step2 grid0
+    pure (pure $ solve step1 grid0, pure $ solve step2 grid0)
