@@ -22,7 +22,7 @@ data Virus = Virus
 
 zero :: Grid.Grid Node -> Virus
 zero grid = Virus
-    { vPos             = Grid.center grid
+    { vPos             = fromMaybe (error "no center") $ Grid.center grid
     , vDir             = Grid.U
     , vGrid            = grid
     , vInfectedByBurst = 0

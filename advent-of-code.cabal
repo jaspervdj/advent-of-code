@@ -20,6 +20,7 @@ library
     AdventOfCode.BinarySearch
     AdventOfCode.Dijkstra
     AdventOfCode.Grid
+    AdventOfCode.Grid.Bounded
     AdventOfCode.Grid.Dijkstra
     AdventOfCode.Hex
     AdventOfCode.IntCode

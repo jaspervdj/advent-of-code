@@ -87,10 +87,10 @@ printGrid h grid = case box grid of
         forM_ [minY .. maxY] $ \y -> IO.hPutStrLn h
             [fromMaybe ' ' (M.lookup (V2 x y) grid)  | x <- [minX .. maxX]]
 
-center :: Grid a -> Pos
+center :: Grid a -> Maybe Pos
 center grid = case M.maxViewWithKey grid of
-    Nothing               -> error "center: Empty grid"
-    Just ((V2 x y, _), _) -> V2 (x `div` 2) (y `div` 2)
+    Nothing               -> Nothing
+    Just ((V2 x y, _), _) -> Just $ V2 (x `div` 2) (y `div` 2)
 
 box :: Grid a -> Maybe (Box.Box Int)
 box grid
