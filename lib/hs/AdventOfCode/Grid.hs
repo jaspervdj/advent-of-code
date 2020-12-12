@@ -58,12 +58,12 @@ diagonal (V2 x y) =
 manhattan :: Pos -> Pos -> Int
 manhattan (V2 lx ly) (V2 rx ry) = abs (lx - rx) + abs (ly - ry)
 
-move :: Dir -> Pos -> Pos
-move dir (V2 x y) = case dir of
-    U -> V2 x       (y - 1)
-    L -> V2 (x - 1) y
-    D -> V2 x       (y + 1)
-    R -> V2 (x + 1) y
+move :: Int -> Dir -> Pos -> Pos
+move n dir (V2 x y) = case dir of
+    U -> V2 x       (y - n)
+    L -> V2 (x - n) y
+    D -> V2 x       (y + n)
+    R -> V2 (x + n) y
 
 type Grid a = M.Map Pos a
 

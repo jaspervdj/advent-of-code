@@ -47,7 +47,7 @@ traceScaffolding scaffolding (pos, dir) =
         let dir'          = turn tc dir
             (steps, pos') = go 0 pos
             go !i p       =
-                let p' = G.move dir' p in
+                let p' = G.move 1 dir' p in
                 if Map.member p' scaffolding then go (i + 1) p' else (i, p)
 
         guard $ steps > 0

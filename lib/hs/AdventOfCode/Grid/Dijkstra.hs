@@ -48,7 +48,7 @@ dijkstra accessible starting grid0 = do
                     neighbours = do
                         x   <- maybeToList (M.lookup px grid0)
                         dir <- [minBound .. maxBound]
-                        let py = G.move dir px
+                        let py = G.move 1 dir px
                         y <- maybeToList (M.lookup py grid0)
                         guard (accessible (px, x) dir (py, y))
                         return py

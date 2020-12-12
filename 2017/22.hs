@@ -30,7 +30,7 @@ zero grid = Virus
 
 burst :: (Node -> Node) -> Virus -> Virus
 burst f !v = v
-    { vPos             = Grid.move dir (vPos v)
+    { vPos             = Grid.move 1 dir (vPos v)
     , vDir             = dir
     , vGrid            = putNode (vPos v) next (vGrid v)
     , vInfectedByBurst =

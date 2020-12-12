@@ -40,7 +40,7 @@ zeroDude g = case candidates of
 stepDude :: Grid.Grid Cell -> Dude -> Maybe Dude
 stepDude grid = \dude -> msum $ do
     dir <- [dDir dude, Grid.turnLeft (dDir dude), Grid.turnRight (dDir dude)]
-    let !pos   = Grid.move dir (dPos dude)
+    let !pos   = Grid.move 1 dir (dPos dude)
         !steps = dSteps dude + 1
 
     cell <- maybeToList $ M.lookup pos grid

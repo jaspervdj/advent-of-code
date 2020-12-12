@@ -23,7 +23,7 @@ parseWires = NP.many1 $
 
 positions :: Wire -> [G.Pos]
 positions =
-    drop 1 . scanl' (flip G.move) G.origin .
+    drop 1 . scanl' (flip (G.move 1)) G.origin .
     concatMap (uncurry replicate . swap)
 
 main :: IO ()

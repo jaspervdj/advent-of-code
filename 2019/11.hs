@@ -26,7 +26,7 @@ runRobot prog state0 =
     step (State grid dir pos) (colorSignal, dirSignal) =
         let dir'  = if dirSignal == 0 then G.turnLeft dir else G.turnRight dir
             grid' = Map.insert pos colorSignal grid in
-        State grid' dir' (G.move dir' pos)
+        State grid' dir' (G.move 1 dir' pos)
 
     camera :: State -> Int
     camera (State g _ p) = fromMaybe 0 (Map.lookup p g)

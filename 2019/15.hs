@@ -75,7 +75,7 @@ exploration prog =
     -- Determine next place to go.
     step state signal = state {sGrid = grid , sPos  = pos , sNext = next}
       where
-        tpos = G.move (sNext state) (sPos state)
+        tpos = G.move 1 (sNext state) (sPos state)
         pos  = if signal == 0 then sPos state else tpos
         next = fromMaybe G.U $ toClosestFrontier grid pos
         grid = case signal of

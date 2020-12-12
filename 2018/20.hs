@@ -35,7 +35,7 @@ walks :: Regex G.Dir -> [Door]
 walks = fst . go zero []
   where
     go pos acc []               = (acc, [pos])
-    go pos acc (Atom x : xs)    = go (G.move x pos) ((pos, x) : acc) xs
+    go pos acc (Atom x : xs)    = go (G.move 1 x pos) ((pos, x) : acc) xs
     go pos acc (Choice cs : xs) =
         -- Here, the essential part is the 'L.nub' on the end positions of the
         -- different branches, which allows us to rule out a lot of duplication.
@@ -55,7 +55,7 @@ gridFromDoors = L.foldl' insertDoor M.empty
     -- We need to add two "edges" for every door.
     insertDoor grid (p, d) =
         M.insertWith S.union p (S.singleton d) $
-        M.insertWith S.union (G.move d p) (S.singleton $ G.turnAround d) $
+        M.insertWith S.union (G.move 1 d p) (S.singleton $ G.turnAround d) $
         grid
 
 --------------------------------------------------------------------------------

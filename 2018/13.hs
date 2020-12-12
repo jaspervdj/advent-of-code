@@ -67,7 +67,7 @@ tick removeCollisions rails carts0 =
         Just Collision  -> carts
         -- Actually move
         Just (Cart dir t) ->
-            let pos' = G.move dir pos
+            let pos' = G.move 1 dir pos
                 turn = case t `mod` 3 of
                     0 -> G.turnLeft dir
                     1 -> dir
