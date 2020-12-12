@@ -8,6 +8,8 @@ module Data.List.Extended
     , minimumOn
     , maximumOn
     , lexicographicSuccessor
+    , stripSuffix
+    , safeLast
     ) where
 
 import           Control.Monad (guard)
@@ -63,3 +65,9 @@ lexicographicSuccessor =
         let (ys, carry) = go xs
             y           = if x == maxBound then minBound else succ x in
         if carry then (y : ys, x == maxBound) else (x : ys, False)
+
+stripSuffix :: Eq a => [a] -> [a] -> Maybe [a]
+stripSuffix suffix = fmap reverse . stripPrefix (reverse suffix) . reverse
+
+safeLast :: [a] -> Maybe a
+safeLast ls = if null ls then Nothing else Just (last ls)

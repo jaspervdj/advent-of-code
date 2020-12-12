@@ -315,6 +315,9 @@ executable 2019-23
 executable 2019-24
   import:  2019
   main-is: 24.hs
+executable 2019-25
+  import:  2019
+  main-is: 25.hs
 
 common 2020
   import:         solution
