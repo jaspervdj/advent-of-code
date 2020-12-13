@@ -358,3 +358,6 @@ executable 2020-11
 executable 2020-12
   import:  2020
   main-is: 12.hs
+executable 2020-13
+  import:  2020
+  main-is: 13.hs

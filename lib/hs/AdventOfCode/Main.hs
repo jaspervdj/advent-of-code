@@ -53,6 +53,9 @@ defaultMain f = do
 class Solution a where
     printSolution :: a -> IO ()
 
+instance Solution () where
+    printSolution _ = pure ()
+
 instance Solution Int where
     printSolution = print
 
