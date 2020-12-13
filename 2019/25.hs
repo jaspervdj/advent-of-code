@@ -1,19 +1,19 @@
 {-# LANGUAGE DeriveFunctor   #-}
+{-# LANGUAGE LambdaCase      #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE LambdaCase #-}
+import           AdventOfCode.Dijkstra   (bfs, bfsGoal)
 import           AdventOfCode.IntCode
 import           AdventOfCode.Main
-import           AdventOfCode.Dijkstra (bfs, bfsGoal)
 import qualified AdventOfCode.NanoParser as NP
-import           Control.Applicative     (Alternative (..))
-import           Control.Monad           (join, guard)
-import           Control.Monad.State     (StateT, get, gets, modify, runStateT)
+import           Control.Monad           (guard, msum)
+import           Control.Monad.State     (StateT, gets, modify, runStateT)
 import           Control.Monad.Trans     (lift)
 import           Data.Foldable           (for_)
 import qualified Data.List.Extended      as L
 import qualified Data.Map                as Map
+import           Data.Maybe              (fromMaybe, isNothing)
+import qualified Data.Set                as Set
 import           Debug.Trace
-import qualified System.IO               as IO
 
 --------------------------------------------------------------------------------
 
@@ -66,7 +66,7 @@ runBot step0 program =
 
 --------------------------------------------------------------------------------
 
-newtype RoomName = RoomName String deriving (Eq, Ord, Show)
+newtype RoomName = RoomName {unRoomName :: String} deriving (Eq, Ord, Show)
 newtype Door = Door String deriving (Eq, Ord, Show)
 
 data Room = Room
@@ -74,6 +74,7 @@ data Room = Room
     , roomDescription :: String
     , roomDoors       :: [Door]
     , roomItems       :: [String]
+    , roomEjectedTo   :: Maybe RoomName
     } deriving (Show)
 
 readRoom :: Bot Room
@@ -91,21 +92,36 @@ readRoom = do
                 takeWhile ("- " `L.isPrefixOf`) remainder
             _ -> []
 
+        roomEjectedTo = msum $ map parseName info
+
     pure Room {..}
   where
-    readName = do
-        str <- readInput
-        case L.stripPrefix "== " str >>= L.stripSuffix " ==" of
-            Nothing -> fail "No room name"
-            Just x  -> pure $ RoomName x
+    parseName x = L.stripPrefix "== " x >>= fmap RoomName . L.stripSuffix " =="
+    readName = readInput >>= maybe (fail "No room name") pure . parseName
 
 data Explorer = Explorer
     { explorerRooms :: Map.Map RoomName Room
     , explorerEdges :: Map.Map (RoomName, Door) (Maybe RoomName)
+    , explorerItems :: Set.Set String
     } deriving (Show)
 
 emptyExplorer :: Explorer
-emptyExplorer = Explorer Map.empty Map.empty
+emptyExplorer = Explorer Map.empty Map.empty Set.empty
+
+prettyExplorer :: Explorer -> String
+prettyExplorer Explorer {..} = unlines $ concat $
+    [ prettyRoom room | (_, room) <- Map.toList explorerRooms
+    ] ++
+    ["Inventory" : ["- " ++ i | i <- Set.toList explorerItems]]
+  where
+    prettyRoom Room {..} = do
+        let header = unRoomName roomName ++
+                (if isNothing roomEjectedTo then "" else " XXX") ++
+                " (" ++ L.intercalate ", " roomItems ++ ")"
+        header : do
+            ((src, Door d), dst) <- Map.toList explorerEdges
+            guard $ src == roomName
+            pure $ "- " ++ d ++ " -> " ++ maybe "?" unRoomName dst
 
 data Ann i a = Ann i a deriving (Show)
 
@@ -115,26 +131,23 @@ instance Eq a => Eq (Ann i a) where
 instance Ord a => Ord (Ann i a) where
     compare (Ann _ x) (Ann _ y) = compare x y
 
-data Path = Path (Maybe Door) RoomName deriving (Show)
-
-instance Eq Path where
-    Path _ x == Path _ y = x == y
-
-instance Ord Path where
-    compare (Path _ x) (Path _ y) = compare x y
-
-findPath :: RoomName -> RoomName -> StateT Explorer Bot (Maybe [Door])
-findPath src dst = do
-    Explorer {..} <- get
+findPath
+    :: RoomName -> (Maybe RoomName -> Bool)
+    -> StateT Explorer Bot (Maybe [(RoomName, Door)])
+findPath start goal = do
+    edges <- gets explorerEdges
     pure $ do
-        path <- fmap snd $ bfsGoal $ bfs
-            (\(Path _ r) -> do
-                ((r', d), Just nb) <- Map.toList explorerEdges
-                guard $ r == r'
-                pure $ Path (Just d) nb)
-            (\(Path _ r) -> r == dst)
-            (Path Nothing src)
-        traverse (\(Path d _) -> d) . drop 1 $ reverse path
+        path <- bfsGoal $ bfs
+            (\case
+                Ann _ Nothing  -> []
+                Ann _ (Just r) ->
+                    [ Ann (Just (r', d)) nb
+                    | ((r', d), nb) <- Map.toList edges
+                    , r' == r
+                    ])
+            (\(Ann _ rn) -> goal rn)
+            (Ann Nothing $ Just start)
+        traverse (\(Ann p _) -> p) . drop 1 . reverse $ snd path
 
 walkPath :: [(RoomName, Door)] -> StateT Explorer Bot ()
 walkPath [] = pure ()
@@ -146,10 +159,20 @@ walkPath ((_, Door x) : xs) = do
             _ <- lift readRoom
             walkPath xs
 
-explore :: Maybe (RoomName, Door) -> StateT Explorer Bot ()
+forbidden :: Set.Set String
+forbidden = Set.fromList
+    [ "escape pod"
+    , "infinite loop"
+    , "molten lava"
+    , "giant electromagnet"
+    , "photons"
+    ]
+
+explore :: Maybe (RoomName, Door) -> StateT Explorer Bot RoomName
 explore mbPrev = do
+    -- Record current location.
     room <- lift readRoom
-    traceM $ show room
+    let location = fromMaybe (roomName room) $ roomEjectedTo room
 
     -- Record edge we took.
     for_ mbPrev $ \edge -> modify $ \e@Explorer {..} ->
@@ -160,39 +183,48 @@ explore mbPrev = do
         { explorerRooms = Map.insert (roomName room) room explorerRooms
         , explorerEdges = Map.unionWith const explorerEdges $ Map.fromList
              [ ((roomName room, door), Nothing)
-             | door <- roomDoors room
+             | isNothing $ roomEjectedTo room  -- Don't add that edge.
+             , door <- roomDoors room
              ]
         }
 
-    -- Find a new room to explore.
-    edges <- gets explorerEdges
-    let pathToUnexplored = do
-            path <- bfsGoal $ bfs
-                (\case
-                    Ann _ Nothing  -> []
-                    Ann _ (Just r) ->
-                        [ Ann (Just (r', d)) nb
-                        | ((r', d), nb) <- Map.toList edges
-                        , r' == r
-                        ])
-                (\case
-                    Ann _ Nothing -> True
-                    Ann _ (Just _) -> False)
-                (Ann Nothing . Just $ roomName room)
-            traverse (\(Ann p _) -> p) . drop 1 . reverse $ snd path
+    -- Pick up all items.
+    for_ (filter (not . (`Set.member` forbidden)) $ roomItems room) $ \item -> do
+        lift . writeOutput $ "take " <> item
+        _ <- lift $ readUntil "Command?"
+        modify $ \e -> e {explorerItems = Set.insert item $ explorerItems e}
+        pure ()
 
+    -- Find a new room to explore.
+    pathToUnexplored <- findPath location isNothing
     case pathToUnexplored of
-        Nothing -> pure ()
+        Nothing -> pure location
         Just path -> do
             walkPath path
-            traceM $ show path
             explore $ L.safeLast path
+
+solve :: RoomName -> StateT Explorer Bot ()
+solve start = do
+    Just toSec <- findPath start (== Just (RoomName "Security Checkpoint"))
+    walkPath toSec
+    _ <- lift readRoom
+    items <- gets $ Set.toList . explorerItems
+    for_ (L.powerset items) $ \combination -> do
+        for_ combination $ \item -> do
+            lift . writeOutput $ "drop " <> item
+            _ <- lift $ readUntil "Command?"
+            pure ()
+        lift $ writeOutput "west"
+        _ <- lift $ readUntil "Command?"
+        for_ combination $ \item -> do
+            lift . writeOutput $ "take " <> item
+            _ <- lift $ readUntil "Command?"
+            pure ()
 
 main :: IO ()
 main = defaultMain $ \problem -> do
     program <- NP.hRunParser problem parseProgram
-    case runBot (runStateT (explore Nothing) emptyExplorer) program of
-        Left err            -> fail err
-        Right (_, explorer) -> print explorer
-    runAsciiMachineIO (IO.stdin, IO.stdout) program
+    case runBot (runStateT (explore Nothing >>= solve) emptyExplorer) program of
+        Left err            -> putStrLn err
+        Right (_, explorer) -> putStrLn $ prettyExplorer explorer
     pure (pure (), pure ())

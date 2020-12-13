@@ -2,6 +2,7 @@ module Data.List.Extended
     ( module Data.List
     , select
     , selectN
+    , powerset
     , (!!?)
     , minimaBy
     , maximaBy
@@ -28,6 +29,10 @@ selectN n items
         (x, rem) <- select items
         (xs, rem') <- selectN (n - 1) rem
         pure (x : xs, rem')
+
+powerset :: [a] -> [[a]]
+powerset []       = [[]]
+powerset (x : xs) = powerset xs ++ map (x :) (powerset xs)
 
 -- | Like '!!', but returns a 'Maybe'.
 (!!?) :: [a] -> Int -> Maybe a
