@@ -11,7 +11,7 @@ instance Show Equation where
 
 -- | The key insight for me was that we can combine two such equations.
 instance Semigroup Equation where
-    Equation n k <> Equation m l = Equation (n * m) (solver k l)
+    Equation n k <> Equation m l = Equation (lcm n m) (solver k l)
       where
         solver x y = case compare x y of
             EQ -> x
@@ -19,7 +19,7 @@ instance Semigroup Equation where
             GT -> solver x (y + m * max 1 ((x - y) `div` m))
 
 -- | Because every integer satisfies `n * 1 = x + 0`, we have an identity
--- element as well.
+-- element as well?
 instance Monoid Equation where
     mempty = Equation 1 0
 
