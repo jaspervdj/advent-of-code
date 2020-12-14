@@ -7,7 +7,6 @@ import           Control.Applicative     ((<|>))
 import           Data.Bits               (shiftL, testBit)
 import           Data.List               (foldl')
 import           Data.Monoid             (Sum (..))
-
 import           Data.Word               (Word64)
 
 data Ternary = Z | O | X deriving (Eq)
@@ -97,7 +96,7 @@ runProgram f = maybe 0 (getSum . foldMap Sum) . fst . foldl' step (Nothing, [])
 part1 :: Program -> Word64
 part1 = runProgram $ \mask addr val ->
     ( map toTernary $ wordToBinary addr
-    , binaryToWord $ zipWith f mask (wordToBinary val)
+    , binaryToWord . zipWith f mask $ wordToBinary val
     )
   where
     f X a = a
