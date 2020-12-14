@@ -13,22 +13,29 @@ module Data.List.Extended
     , safeLast
     ) where
 
-import           Control.Monad (guard)
+import           Control.Monad  (guard)
+import           Data.Bifunctor (first, second)
 import           Data.List
-import           Data.Maybe    (listToMaybe)
-import           Data.Ord      (comparing)
+import           Data.Maybe     (listToMaybe)
+import           Data.Ord       (comparing)
 
 select :: [a] -> [(a, [a])]
 select []       = []
 select (x : xs) = (x, xs) : [(y, x : ys) | (y, ys) <- select xs]
 
 selectN :: Int -> [a] -> [([a], [a])]
-selectN n items
-    | n <= 0    = [([], items)]
-    | otherwise = do
-        (x, rem) <- select items
-        (xs, rem') <- selectN (n - 1) rem
-        pure (x : xs, rem')
+selectN n items = selectNL n (length items) items
+
+selectNL :: Int -> Int -> [a] -> [([a], [a])]
+selectNL n l items
+    | n == 0    = [([], items)]
+    | n == l    = [(items, [])]
+    | n >  l    = []
+    | otherwise = case items of
+        [] -> []   -- Impossible
+        (x : xs) ->
+            map (first (x :)) (selectNL (n - 1) (l - 1) xs) ++
+            map (second (x :)) (selectNL n (l - 1) xs)
 
 powerset :: [a] -> [[a]]
 powerset []       = [[]]

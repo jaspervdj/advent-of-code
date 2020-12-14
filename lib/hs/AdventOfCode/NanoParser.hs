@@ -90,7 +90,7 @@ digit = satisfy "digit" isDigit
 spaces :: Parser Char ()
 spaces = void $ many $ satisfy "whitespace" isSpace
 
-decimal :: Parser Char Int
+decimal :: (Integral a, Read a) => Parser Char a
 decimal = read <$> many1 digit
 
 signedDecimal :: Parser Char Int

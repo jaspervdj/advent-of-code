@@ -5,9 +5,10 @@ module AdventOfCode.Main
     , simpleMain
     ) where
 
+import           Data.Bifunctor     (bimap)
+import           Data.Word          (Word64)
 import           System.Environment (getArgs, getProgName)
 import qualified System.IO          as IO
-import Data.Bifunctor (bimap)
 import           Text.Read          (readMaybe)
 
 data Part = Part1 | Part2 deriving (Eq)
@@ -60,6 +61,9 @@ instance Solution Int where
     printSolution = print
 
 instance Solution Integer where
+    printSolution = print
+
+instance Solution Word64 where
     printSolution = print
 
 -- | 'pureMain' avoids using 'IO' and rather uses 'Either' for error handling.
