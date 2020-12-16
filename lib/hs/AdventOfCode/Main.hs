@@ -28,6 +28,10 @@ defaultMain f = do
             (pt1, pt2) <- f IO.stdin
             pt1
             pt2
+        [path] -> IO.withFile path IO.ReadMode $ \h -> do
+            (pt1, pt2) <- f h
+            pt1
+            pt2
         [_day, part, path] -> case parsePart part of
             Left err -> fail err
             Right p -> IO.withFile path IO.ReadMode $ \h -> do
