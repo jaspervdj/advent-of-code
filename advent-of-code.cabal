@@ -370,3 +370,6 @@ executable 2020-15
 executable 2020-16
   import:  2020
   main-is: 16.hs
+executable 2020-17
+  import:  2020
+  main-is: 17.hs

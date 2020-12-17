@@ -1,4 +1,5 @@
-{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveFoldable #-}
+{-# LANGUAGE DeriveFunctor  #-}
 module AdventOfCode.V2
     ( V2 (..)
     , zero
@@ -8,7 +9,7 @@ module AdventOfCode.V2
     ) where
 
 data V2 a = V2 {vX :: !a, vY :: !a}
-    deriving (Eq, Functor, Ord, Show)
+    deriving (Eq, Foldable, Functor, Ord, Show)
 
 zero :: Num a => V2 a
 zero = V2 0 0

@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DeriveFunctor  #-}
-{-# LANGUAGE Rank2Types  #-}
+{-# LANGUAGE Rank2Types     #-}
 module AdventOfCode.V3
     ( V3 (..)
     , zero
@@ -11,10 +11,12 @@ module AdventOfCode.V3
     , zipWith
     , zipWith3
     , mapWithIndex
+    , fromV2
     ) where
 
-import qualified Data.Foldable as F
-import           Prelude       hiding (sum, zipWith, zipWith3)
+import qualified AdventOfCode.V2 as V2
+import qualified Data.Foldable   as F
+import           Prelude         hiding (sum, zipWith, zipWith3)
 
 data V3 a = V3 {vX :: !a, vY :: !a, vZ :: !a}
     deriving (Eq, Foldable, Functor, Ord, Show)
@@ -49,3 +51,7 @@ zipWith3 f (V3 x1 y1 z1) (V3 x2 y2 z2) (V3 x3 y3 z3) =
 mapWithIndex :: ((forall e. V3 e -> e) -> a -> b) -> V3 a -> V3 b
 mapWithIndex f (V3 x y z) = V3 (f vX x) (f vY y) (f vZ z)
 {-# INLINE mapWithIndex #-}
+
+-- | Project a V2 vector on the Z=0 plane.
+fromV2 :: Num a => V2.V2 a -> V3 a
+fromV2 v2 = V3 (V2.vX v2) (V2.vY v2) 0
