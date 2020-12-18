@@ -35,14 +35,16 @@ neighbours x = filter (/= x) $ traverseVec (\i -> [i, i - 1, i + 1]) x
 
 step :: (TraversableVec t, Ord t) => Set t -> Set t
 step active0 =
-    Set.filter isActive . Set.fromList . concatMap neighbours $
-    Set.toList active0
+    Map.keysSet $ Map.filterWithKey isActive neighbourCount
   where
-    isActive x
-        | x `Set.member` active0 = nbs >= 2 && nbs <= 3
-        | otherwise              = nbs == 3
-      where
-        nbs = length . filter (`Set.member` active0) $ neighbours x
+    isActive k n
+        | k `Set.member` active0 = n >= 2 && n <= 3
+        | otherwise              = n == 3
+
+    neighbourCount = Map.fromListWith (+) $ do
+        x <- Set.toList active0
+        y <- neighbours x
+        pure (y, 1 :: Int)
 
 main :: IO ()
 main = simpleMain $ \inputstr ->
