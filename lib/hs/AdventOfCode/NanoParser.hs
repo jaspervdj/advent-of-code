@@ -10,6 +10,7 @@ module AdventOfCode.NanoParser
     , many1
     , sepBy
     , sepBy1
+    , chainl1
 
     , alpha
     , digit
@@ -25,7 +26,7 @@ import           Control.Applicative (Alternative (..), optional)
 import           Control.Monad       (void)
 import           Data.Char           (isAlpha, isDigit, isSpace)
 import           Data.Functor        (($>))
-import           Data.List           (intercalate)
+import           Data.List           (foldl', intercalate)
 import           Data.Maybe          (fromMaybe)
 import qualified System.IO           as IO
 
@@ -80,6 +81,10 @@ sepBy p s = sepBy1 p s <|> pure []
 
 sepBy1 :: Parser t a -> Parser t b -> Parser t [a]
 sepBy1 p s = (:) <$> p <*> many (s *> p)
+
+-- | Parse a left-associative chain of terms and operators.
+chainl1 :: Parser t a -> Parser t (a -> a -> a) -> Parser t a
+chainl1 t op = foldl' (\x (f, y) -> f x y) <$> t <*> many ((,) <$> op <*> t)
 
 alpha :: Parser Char Char
 alpha = satisfy "alpha" isAlpha
