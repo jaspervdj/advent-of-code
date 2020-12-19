@@ -1,15 +1,13 @@
-{-# LANGUAGE DeriveFunctor       #-}
+{-# LANGUAGE DeriveFunctor #-}
 import           AdventOfCode.Main
 import qualified AdventOfCode.NanoParser as P
 import           Control.Applicative     ((<|>))
 import           Data.Functor.Compose
-import qualified Data.List               as L
 import           Data.Map                (Map)
 import qualified Data.Map                as Map
-import           Data.Maybe              (maybeToList)
 
 
-data Rule c a = Or a a | Seq a a | Lit [c] | Ref a deriving (Functor, Show)
+data Rule c a = Or a a | Seq a a | Lit c | Ref a deriving (Functor, Show)
 
 newtype Fix f = Fix {unFix :: f (Fix f)}
 type ParsedRule c i = Fix (Compose (Rule c) (Either i))
@@ -23,7 +21,7 @@ parse = (,) <$> P.decimal <* P.char ':' <* P.spaces <*>
     term = pseq <|> lit
     pseq = foldr1 (\x -> fc . fmap Right . Seq x) <$> P.many1 ref
     ref  = fc . Ref . Left <$> P.decimal <* P.spaces
-    lit  = fc . Lit <$> (P.char '"' *> P.many1 P.alpha <* P.char '"')
+    lit  = fc . Lit <$> (P.char '"' *> P.alpha <* P.char '"')
 
 resolve :: Ord i => Map i (ParsedRule c i) -> Map i (ResolvedRule c)
 resolve unresolved = resolved
@@ -34,8 +32,9 @@ resolve unresolved = resolved
 match :: Eq c => ResolvedRule c -> [c] -> Bool
 match rule0 = any null . go rule0
   where
-    go (Fix rule) str = case rule of
-        Lit x   -> maybeToList $ x `L.stripPrefix` str
+    go (Fix _)    []          = []
+    go (Fix rule) str@(h : t) = case rule of
+        Lit c   -> if h == c then [t] else []
         Or x y  -> go x str ++ go y str
         Ref r   -> go r str
         Seq x y -> go x str >>= go y
