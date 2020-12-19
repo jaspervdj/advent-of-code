@@ -6,7 +6,6 @@ import           Data.Functor.Compose
 import           Data.Map                (Map)
 import qualified Data.Map                as Map
 
-
 data Rule c a = Or a a | Seq a a | Lit c | Ref a deriving (Functor, Show)
 
 newtype Fix f = Fix {unFix :: f (Fix f)}
@@ -34,7 +33,7 @@ match rule0 = any null . go rule0
   where
     go (Fix _)    []          = []
     go (Fix rule) str@(h : t) = case rule of
-        Lit c   -> if h == c then [t] else []
+        Lit c   -> [t | h == c]
         Or x y  -> go x str ++ go y str
         Ref r   -> go r str
         Seq x y -> go x str >>= go y
