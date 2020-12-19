@@ -376,3 +376,6 @@ executable 2020-17
 executable 2020-18
   import:  2020
   main-is: 18.hs
+executable 2020-19
+  import:  2020
+  main-is: 19.hs
