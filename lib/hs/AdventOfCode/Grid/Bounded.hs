@@ -21,7 +21,9 @@ module AdventOfCode.Grid.Bounded
     , fromString
     , mapWithKey
     , lookup
+    , index
     , toString
+    , toList
     ) where
 
 import qualified AdventOfCode.Grid    as G
@@ -74,7 +76,18 @@ lookup (V2 x y) Grid {..}
     | otherwise                                           = Just $
         V.unsafeIndex gridData (y * gridWidth + x)
 
+index :: G.Pos -> Grid a -> a
+index v g = fromMaybe
+    (error $ "AdventOfCode.Grid.Bounded.index: out of bounds: " ++ show v)
+    (lookup v g)
+
 toString :: Grid Char -> String
 toString g@Grid {..} = unlines $ do
     y <- [0 .. gridHeight - 1]
     [[fromMaybe ' ' $ lookup (V2 x y) g | x <- [0 .. gridWidth - 1]]]
+
+toList :: Grid a -> [(G.Pos, a)]
+toList g@Grid {..} = do
+    y <- [0 .. gridHeight - 1]
+    x <- [0 .. gridWidth - 1]
+    pure (V2 x y, index (V2 x y) g)
