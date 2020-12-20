@@ -1,4 +1,5 @@
 -- | Utilities for writing a main function.
+{-# LANGUAGE FlexibleInstances #-}
 module AdventOfCode.Main
     ( defaultMain
     , pureMain
@@ -69,6 +70,9 @@ instance Solution Integer where
 
 instance Solution Word64 where
     printSolution = print
+
+instance Solution [Char] where
+    printSolution = putStrLn
 
 -- | 'pureMain' avoids using 'IO' and rather uses 'Either' for error handling.
 pureMain
