@@ -391,3 +391,6 @@ executable 2020-22
 executable 2020-23
   import:  2020
   main-is: 23.hs
+executable 2020-24
+  import:  2020
+  main-is: 24.hs
