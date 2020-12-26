@@ -1,22 +1,17 @@
-{-# LANGUAGE DataKinds           #-}
-{-# LANGUAGE KindSignatures      #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-module Main where
-
-import           Data.Proxy     (Proxy (..))
-import           Data.Semigroup (stimes)
-import           GHC.TypeLits   (KnownNat, Nat, natVal)
+{-# LANGUAGE DataKinds #-}
+import           AdventOfCode.Modulo
+import           Data.Semigroup      (stimes)
 
 diagonal :: Int -> Int -> Int
 diagonal x y = let left = y + x - 1 in left * (left - 1) `div` 2 + x
 
-newtype Modulo (n :: Nat) = Modulo {unModulo :: Integer} deriving (Show)
+newtype Mul = Mul {unMul :: Modulo 33554393} deriving (Show)
 
-instance forall n. KnownNat n => Semigroup (Modulo n) where
-    Modulo x <> Modulo y = Modulo . rem (x * y) $ natVal (Proxy :: Proxy n)
+instance Semigroup Mul where
+    Mul x <> Mul y = Mul $ x * y
 
-code :: Int -> Modulo 33554393
-code n = Modulo 20151125 <> stimes (n - 1) (Modulo 252533)
+code :: Int -> Mul
+code n = Mul 20151125 <> stimes (n - 1) (Mul 252533)
 
 main :: IO ()
-main = print . unModulo . code $ diagonal 3083 2978
+main = print . unModulo . unMul . code $ diagonal 3083 2978

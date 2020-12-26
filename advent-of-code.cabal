@@ -27,6 +27,7 @@ library
     AdventOfCode.KnotHash
     AdventOfCode.Loop
     AdventOfCode.Main
+    AdventOfCode.Modulo
     AdventOfCode.NanoParser
     AdventOfCode.NanoTest
     AdventOfCode.Parsing
@@ -394,3 +395,6 @@ executable 2020-23
 executable 2020-24
   import:  2020
   main-is: 24.hs
+executable 2020-25
+  import:  2020
+  main-is: 25.hs

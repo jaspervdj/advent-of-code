@@ -2,13 +2,11 @@
 {-# LANGUAGE KindSignatures      #-}
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-module Main where
-
 import           AdventOfCode.Main
-import           Data.Proxy        (Proxy (..))
-import           Data.Semigroup    (stimes)
-import           GHC.TypeLits      (KnownNat, Nat, natVal)
-import           Text.Read         (readMaybe)
+import           AdventOfCode.Modulo
+import           Data.Semigroup      (stimes)
+import           GHC.TypeLits        (KnownNat, Nat)
+import           Text.Read           (readMaybe)
 
 data Technique
     = DealIntoNewStack
@@ -23,26 +21,6 @@ parseTechnique line = case words line of
     ["deal", "with", "increment", s] | Just n <- readMaybe s -> pure $
         DealWithIncrement n
     _ -> Left $ "Could not parse shuffle: " ++ line
-
-newtype Modulo (m :: Nat) = Modulo {unModulo :: Integer}
-
-mkModulo :: forall m. KnownNat m => Integer -> Modulo m
-mkModulo x = Modulo $ x `mod` natVal (Proxy :: Proxy m)
-
-instance Show (Modulo m) where
-    show (Modulo x) = show x
-
-instance forall m. KnownNat m => Bounded (Modulo m) where
-    minBound = 0
-    maxBound = Modulo $ natVal (Proxy :: Proxy m) - 1
-
-instance KnownNat m => Num (Modulo m) where
-    Modulo x + Modulo y = mkModulo (x + y)
-    Modulo x - Modulo y = mkModulo (x - y)
-    Modulo x * Modulo y = mkModulo (x * y)
-    abs (Modulo x)      = Modulo x
-    signum (Modulo _)   = fromInteger 1
-    fromInteger         = mkModulo
 
 data Shuffle (m :: Nat) = Shuffle !(Modulo m) !(Modulo m)
 
