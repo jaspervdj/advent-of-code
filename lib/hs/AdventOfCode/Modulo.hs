@@ -10,7 +10,7 @@ module AdventOfCode.Modulo
 import           Data.Proxy   (Proxy (..))
 import           GHC.TypeLits (KnownNat, Nat, natVal)
 
-newtype Modulo (m :: Nat) = Modulo {unModulo :: Integer}
+newtype Modulo (m :: Nat) = Modulo {unModulo :: Integer} deriving (Eq)
 
 mkModulo :: forall m. KnownNat m => Integer -> Modulo m
 mkModulo x = Modulo $ x `mod` natVal (Proxy :: Proxy m)
