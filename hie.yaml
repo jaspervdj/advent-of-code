@@ -56,3 +56,5 @@ cradle:
       component: "exe:2020-22"
     - path: ./2020/23.hs
       component: "exe:2020-23"
+    - path: ./2021/01.hs
+      component: "exe:2021-01"

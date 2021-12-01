@@ -398,3 +398,10 @@ executable 2020-24
 executable 2020-25
   import:  2020
   main-is: 25.hs
+
+common 2021
+  import:         solution
+  hs-source-dirs: 2021
+executable 2021-01
+  import:  2021
+  main-is: 01.hs
