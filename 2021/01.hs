@@ -11,9 +11,9 @@ slidingWindow n things =
 
 numIncreases :: Ord a => [a] -> Int
 numIncreases = maybe 0 snd . foldl'
-    (\mbPrev num -> case mbPrev of
-        Nothing        -> Just (num, 0 :: Int)
-        Just (n, !inc) -> Just (num, inc + if num > n then 1 else 0))
+    (\mbPrev y -> case mbPrev of
+        Nothing     -> Just (y, 0)
+        Just (x, i) -> let !i' = i + if y > x then 1 else 0 in Just (y, i'))
     Nothing
 
 main :: IO ()
