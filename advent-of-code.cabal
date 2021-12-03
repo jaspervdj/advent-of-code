@@ -408,3 +408,6 @@ executable 2021-01
 executable 2021-02
   import:  2021
   main-is: 02.hs
+executable 2021-03
+  import:  2021
+  main-is: 03.hs
