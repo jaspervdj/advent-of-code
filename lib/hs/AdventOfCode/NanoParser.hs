@@ -13,8 +13,10 @@ module AdventOfCode.NanoParser
     , chainl1
 
     , alpha
-    , digit
     , spaces
+    , horizontalSpaces
+    , newline
+    , digit
     , decimal
     , signedDecimal
 
@@ -89,11 +91,18 @@ chainl1 t op = foldl' (\x (f, y) -> f x y) <$> t <*> many ((,) <$> op <*> t)
 alpha :: Parser Char Char
 alpha = satisfy "alpha" isAlpha
 
-digit :: Parser Char Char
-digit = satisfy "digit" isDigit
-
 spaces :: Parser Char ()
 spaces = void $ many $ satisfy "whitespace" isSpace
+
+horizontalSpaces :: Parser Char ()
+horizontalSpaces = void . many $ satisfy "horizontal whitespace" $ \c ->
+    isSpace c && c /= '\n' && c /= '\r'
+
+newline :: Parser Char ()
+newline = char '\n' <|> (char '\r' *> char '\n')
+
+digit :: Parser Char Char
+digit = satisfy "digit" isDigit
 
 decimal :: (Integral a, Read a) => Parser Char a
 decimal = read <$> many1 digit

@@ -13,6 +13,7 @@ module AdventOfCode.Grid
     , manhattan
 
     , Grid
+    , fromList
     , fromString
     , readGrid
     , printGrid
@@ -67,14 +68,15 @@ move n dir (V2 x y) = case dir of
 
 type Grid a = M.Map Pos a
 
+fromList :: [[a]] -> Grid a
+fromList = L.foldl'
+    (\acc (y, row) -> L.foldl'
+        (\m (x, c) -> M.insert (V2 x y) c m) acc (zip [0 ..] row))
+    M.empty .
+    zip [0 ..]
+
 fromString :: String -> Grid Char
-fromString =
-    L.foldl'
-        (\acc (y, l) -> L.foldl'
-            (\m (x, c) -> M.insert (V2 x y) c m) acc (zip [0 ..] l))
-        M.empty .
-    zip [0 ..] .
-    lines
+fromString = fromList . lines
 
 readGrid :: (Char -> IO a) -> IO.Handle -> IO (Grid a)
 readGrid f h = IO.hGetContents h >>= traverse f . fromString
