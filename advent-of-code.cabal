@@ -414,3 +414,6 @@ executable 2021-03
 executable 2021-04
   import:  2021
   main-is: 04.hs
+executable 2021-05
+  import:  2021
+  main-is: 05.hs
