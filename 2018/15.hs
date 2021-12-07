@@ -2,7 +2,8 @@
 import qualified AdventOfCode.Grid          as G
 import qualified AdventOfCode.Grid.Dijkstra as Dijkstra
 import           AdventOfCode.V2
-import qualified Data.List.Extended         as L
+import           Data.Foldable.Extra        (minimaBy)
+import qualified Data.List                  as L
 import qualified Data.Map                   as M
 import           Data.Maybe                 (isJust, isNothing, listToMaybe,
                                              maybeToList)
@@ -70,7 +71,7 @@ enemies combatant Battle {..} =
 target :: (G.Pos, Combatant) -> Battle -> Maybe (G.Pos, Combatant)
 target (pos, combatant) battle = listToMaybe $
     readingOrder fst $
-    L.minimaBy (comparing (cHealth . snd)) $
+    minimaBy (comparing (cHealth . snd)) $
     [ (p, e)
     | p <- G.neighbours pos
     , e <- maybeToList $ M.lookup p (bCombatants battle)
@@ -110,7 +111,7 @@ move (pos, combatant) battle
         let distToGoal = Dijkstra.dijkstra accessible [t] (bTerrain battle)
             next =
                 map fst $ readingOrder fst $
-                L.minimaBy (comparing snd) $
+                minimaBy (comparing snd) $
                 [ (n, d)
                 | n <- G.neighbours pos
                 , d <- maybeToList $ M.lookup n distToGoal
@@ -135,7 +136,7 @@ move (pos, combatant) battle
     -- The closest targets.
     goals =
         map fst $ readingOrder fst $
-        L.minimaBy (comparing snd) $
+        minimaBy (comparing snd) $
         [ (p, dist)
         | (tp, _) <- enemies combatant battle
         , p       <- G.neighbours tp

@@ -6,7 +6,8 @@ import           AdventOfCode.Main
 import           AdventOfCode.V2           (V2 (..), (.+.))
 import qualified AdventOfCode.V2.Box       as Box
 import           Control.Monad             (guard, (>=>))
-import qualified Data.List.Extended        as L
+import qualified Data.List                 as L
+import           Data.List.Extra           (select, stripSuffix)
 import qualified Data.Map                  as Map
 import           Data.Maybe                (catMaybes, fromMaybe, maybeToList)
 import qualified Data.Set                  as Set
@@ -48,7 +49,7 @@ transformations grid0 =
 parseTiles :: String -> Either String [(Int, GB.Grid Char)]
 parseTiles = go . lines
   where
-    parseTileId = L.stripPrefix "Tile " >=> L.stripSuffix ":" >=> readMaybe
+    parseTileId = L.stripPrefix "Tile " >=> stripSuffix ":" >=> readMaybe
     go input = case break null input of
         ([], []) -> Right []
         (td : gridLines, remainder) | Just n <- parseTileId td -> do
@@ -84,7 +85,7 @@ fitTiles = go Map.empty
   where
     go acc [] = [acc]
     go acc tiles = do
-        (tile, remainder) <- L.select tiles
+        (tile, remainder) <- select tiles
         acc' <- take 1 $ fitTile tile acc
         go acc' remainder
 

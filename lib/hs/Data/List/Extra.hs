@@ -1,13 +1,9 @@
-module Data.List.Extended
-    ( module Data.List
+module Data.List.Extra
+    ( module L
     , select
     , selectN
     , powerset
     , (!!?)
-    , minimaBy
-    , maximaBy
-    , minimumOn
-    , maximumOn
     , lexicographicSuccessor
     , stripSuffix
     , safeLast
@@ -15,9 +11,8 @@ module Data.List.Extended
 
 import           Control.Monad  (guard)
 import           Data.Bifunctor (first, second)
-import           Data.List
+import qualified Data.List      as L
 import           Data.Maybe     (listToMaybe)
-import           Data.Ord       (comparing)
 
 select :: [a] -> [(a, [a])]
 select []       = []
@@ -45,29 +40,6 @@ powerset (x : xs) = powerset xs ++ map (x :) (powerset xs)
 (!!?) :: [a] -> Int -> Maybe a
 list !!? idx = guard (idx >= 0) >> listToMaybe (drop idx list)
 
--- | A better `minimumBy`.
-minimaBy :: Foldable t => (a -> a -> Ordering) -> t a -> [a]
-minimaBy f = foldl' step []
-  where
-    step []       x = [x]
-    step (y : ys) x = case f x y of
-        EQ -> x : y : ys
-        LT -> [x]
-        GT -> y : ys
-
-maximaBy :: (Ord a, Foldable t) => (a -> a -> Ordering) -> t a -> [a]
-maximaBy f = minimaBy (\x y -> down (f x y))
-  where
-    down LT = GT
-    down EQ = EQ
-    down GT = LT
-
-minimumOn :: (Ord b, Foldable t) => (a -> b) -> t a -> a
-minimumOn = minimumBy . comparing
-
-maximumOn :: (Ord b, Foldable t) => (a -> b) -> t a -> a
-maximumOn = maximumBy . comparing
-
 lexicographicSuccessor :: (Bounded a, Enum a, Eq a) => [a] -> [a]
 lexicographicSuccessor =
     \xs -> let (ys, carry) = go xs in if carry then minBound : ys else ys
@@ -79,7 +51,7 @@ lexicographicSuccessor =
         if carry then (y : ys, x == maxBound) else (x : ys, False)
 
 stripSuffix :: Eq a => [a] -> [a] -> Maybe [a]
-stripSuffix suffix = fmap reverse . stripPrefix (reverse suffix) . reverse
+stripSuffix suffix = fmap reverse . L.stripPrefix (reverse suffix) . reverse
 
 safeLast :: [a] -> Maybe a
 safeLast ls = if null ls then Nothing else Just (last ls)

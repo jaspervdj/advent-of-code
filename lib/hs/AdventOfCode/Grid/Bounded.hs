@@ -26,12 +26,13 @@ module AdventOfCode.Grid.Bounded
     , toList
     ) where
 
-import qualified AdventOfCode.Grid    as G
-import           AdventOfCode.V2      (V2 (..))
-import           Control.Monad        (when)
-import           Data.Maybe           (fromMaybe)
-import qualified Data.Vector.Extended as V
-import           Prelude              hiding (lookup)
+import qualified AdventOfCode.Grid as G
+import           AdventOfCode.V2   (V2 (..))
+import           Control.Monad     (when)
+import           Data.Maybe        (fromMaybe)
+import qualified Data.Vector       as V
+import qualified Data.Vector.Extra as V (generate')
+import           Prelude           hiding (lookup)
 
 data Grid a = Grid
     { gridWidth  :: {-# UNPACK #-} !Int

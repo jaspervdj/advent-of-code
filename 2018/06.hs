@@ -2,7 +2,8 @@ import qualified AdventOfCode.Grid    as G
 import qualified AdventOfCode.Parsing as Parsing
 import           AdventOfCode.V2
 import           Control.Monad        (forM, guard)
-import qualified Data.List.Extended   as L
+import           Data.Foldable.Extra  (minimaBy)
+import qualified Data.List            as L
 import qualified Data.Map             as M
 import           Data.Ord             (comparing)
 import qualified System.IO            as IO
@@ -32,7 +33,7 @@ bounds margin coordinates = (V2 minX minY, V2 maxX maxY)
 assign :: Ord a => (G.Pos, G.Pos) -> [Coordinate a] -> [(G.Pos, a)]
 assign (V2 minX minY, V2 maxX maxY) coordinates = do
     pos <- V2 <$> [minX .. maxX] <*> [minY .. maxY]
-    let close = L.minimaBy (comparing (G.manhattan pos . coordPos)) coordinates
+    let close = minimaBy (comparing (G.manhattan pos . coordPos)) coordinates
     case close of
         [Coordinate val _] -> return (pos, val)
         _                  -> []

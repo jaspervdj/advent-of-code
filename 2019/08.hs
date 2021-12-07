@@ -2,9 +2,10 @@
 {-# LANGUAGE DeriveFunctor     #-}
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE LambdaCase        #-}
-import qualified Data.Foldable      as F
-import qualified Data.List.Extended as L
-import           Data.Maybe         (mapMaybe)
+import qualified Data.Foldable       as F
+import           Data.Foldable.Extra (minimumOn)
+import qualified Data.List           as L
+import           Data.Maybe          (mapMaybe)
 
 newtype Compose f g a = Compose (f (g a))
     deriving (Foldable, Functor, Traversable)
@@ -40,7 +41,7 @@ main :: IO ()
 main = do
     img <- map (cut 25) . cut (25 * 6) . mapMaybe parsePixel <$> getContents
 
-    let layer0 = L.minimumOn (count Black) (map Compose img)
+    let layer0 = minimumOn (count Black) (map Compose img)
     print $ count White layer0 * count Transparent layer0
 
     putStr $ unlines $ map (map renderPixel) $

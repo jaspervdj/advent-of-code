@@ -4,7 +4,7 @@ module Main where
 import qualified AdventOfCode.Parsing as Parsing
 import           AdventOfCode.V3
 import qualified AdventOfCode.V3      as V3
-import qualified Data.List.Extended   as L
+import qualified Data.List.Extra      as L
 import qualified System.IO            as IO
 
 -- The key insight is that while the different moons influence each other's

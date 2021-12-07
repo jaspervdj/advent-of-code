@@ -2,7 +2,6 @@ module Main where
 
 import qualified AdventOfCode.NanoParser as NP
 import           Control.Applicative     (many)
-import           Data.Semigroup          (Semigroup (..))
 import qualified System.IO               as IO
 
 data MinCount a = MinCount !Int a

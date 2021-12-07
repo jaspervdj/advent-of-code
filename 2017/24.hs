@@ -1,10 +1,11 @@
 {-# LANGUAGE BangPatterns #-}
-import           Control.Arrow      ((&&&))
-import           Data.Function      (on)
-import           Data.List.Extended (foldl', select)
-import           Data.Maybe         (maybeToList)
-import qualified System.IO          as IO
-import           Text.Read          (readMaybe)
+import           Control.Arrow   ((&&&))
+import           Data.Foldable   (foldl')
+import           Data.Function   (on)
+import           Data.List.Extra (select)
+import           Data.Maybe      (maybeToList)
+import qualified System.IO       as IO
+import           Text.Read       (readMaybe)
 
 --------------------------------------------------------------------------------
 

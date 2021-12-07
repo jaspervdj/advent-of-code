@@ -2,7 +2,7 @@
 import           Control.Monad        (replicateM)
 import           Control.Monad.Except (throwError)
 import           Control.Monad.State  (StateT, evalStateT, get, put)
-import           Data.List.Extended   ((!!?))
+import           Data.List.Extra      ((!!?))
 import           Data.Maybe           (maybeToList)
 import qualified Data.Tree            as T
 

@@ -1,6 +1,6 @@
-import           Control.Monad      (guard)
-import           Data.List.Extended (select)
-import           Data.Maybe         (listToMaybe)
+import           Control.Monad   (guard)
+import           Data.List.Extra (select)
+import           Data.Maybe      (listToMaybe)
 
 main :: IO ()
 main = do

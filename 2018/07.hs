@@ -1,8 +1,9 @@
-import           Data.Char          (ord, toLower)
-import qualified Data.List.Extended as L
-import qualified Data.Map           as M
-import           Data.Maybe         (listToMaybe)
-import qualified System.IO          as IO
+import           Data.Char       (ord, toLower)
+import qualified Data.List       as L
+import           Data.List.Extra (select)
+import qualified Data.Map        as M
+import           Data.Maybe      (listToMaybe)
+import qualified System.IO       as IO
 
 data Dependencies a = Dependencies [a] [(a, a)] deriving (Show)
 
@@ -19,7 +20,7 @@ pop deps = do
 pick :: Eq a => Dependencies a -> Maybe (a, Dependencies a)
 pick (Dependencies items deps) = listToMaybe
     [ (i, Dependencies items' deps)
-    | (i, items') <- L.select items
+    | (i, items') <- select items
     , not $ or [y == i | (_, y) <- deps]
     ]
 

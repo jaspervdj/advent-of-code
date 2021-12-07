@@ -6,7 +6,8 @@ import qualified AdventOfCode.Grid       as G
 import           AdventOfCode.IntCode
 import qualified AdventOfCode.NanoParser as NP
 import qualified AdventOfCode.V2         as V2
-import qualified Data.List.Extended      as L
+import           Data.Foldable.Extra     (minimumOn)
+import qualified Data.List               as L
 import qualified Data.Map                as Map
 import           Data.Maybe              (fromMaybe, maybeToList)
 import qualified System.IO               as IO
@@ -46,7 +47,7 @@ v2ToDir (V2.V2 x y)
 toClosestFrontier :: G.Grid Tile -> G.Pos -> Maybe G.Dir
 toClosestFrontier grid pos
     | null byDistance = Nothing
-    | otherwise       = Just $ snd $ L.minimumOn fst byDistance
+    | otherwise       = Just $ snd $ minimumOn fst byDistance
   where
     distances  = dijkstraDistances $ dijkstra (accessible grid) isGoal pos
     isGoal p   = Map.lookup p grid == Just Frontier

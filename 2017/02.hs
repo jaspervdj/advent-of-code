@@ -1,4 +1,4 @@
-import Data.List.Extended (select)
+import Data.List.Extra (select)
 
 type Spreadsheet = [[Int]]
 

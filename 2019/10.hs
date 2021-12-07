@@ -1,13 +1,14 @@
 {-# LANGUAGE LambdaCase #-}
 module Main where
 
-import qualified AdventOfCode.Grid  as G
+import qualified AdventOfCode.Grid   as G
 import           AdventOfCode.V2
-import           Control.Monad      (guard)
-import qualified Data.List.Extended as L
-import qualified Data.Map           as Map
-import           Data.Maybe         (fromMaybe, isNothing)
-import qualified System.IO          as IO
+import           Control.Monad       (guard)
+import           Data.Foldable.Extra (maximumOn)
+import qualified Data.List           as L
+import qualified Data.Map            as Map
+import           Data.Maybe          (fromMaybe, isNothing)
+import qualified System.IO           as IO
 
 -- | What other points are perfectly on this line?  This is pretty slow but that
 -- doesn't matter too much.  The returned points are ordered in the direction of
@@ -88,7 +89,7 @@ parseAsteriods =
 main :: IO ()
 main = do
     asteroids <- parseAsteriods IO.stdin
-    let (pos, count) = L.maximumOn snd . Map.toList $ visible asteroids
+    let (pos, count) = maximumOn snd . Map.toList $ visible asteroids
         V2 x y       = laser asteroids pos !! (200 - 1)
     print count
     print $ x * 100 + y

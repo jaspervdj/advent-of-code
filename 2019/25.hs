@@ -9,7 +9,8 @@ import           Control.Monad           (guard, msum)
 import           Control.Monad.State     (StateT, gets, modify, runStateT)
 import           Control.Monad.Trans     (lift)
 import           Data.Foldable           (for_)
-import qualified Data.List.Extended      as L
+import qualified Data.List               as L
+import qualified Data.List.Extra         as L
 import qualified Data.Map                as Map
 import           Data.Maybe              (fromMaybe, isNothing)
 import qualified Data.Set                as Set

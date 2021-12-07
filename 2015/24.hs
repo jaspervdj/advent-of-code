@@ -1,12 +1,12 @@
 {-# LANGUAGE LambdaCase #-}
 module Main where
 
-import           Control.Monad      (guard)
-import           Data.List          (sortOn)
-import           Data.List.Extended (select)
-import           Data.Set           (Set)
-import qualified Data.Set           as Set
-import qualified System.IO          as IO
+import           Control.Monad   (guard)
+import           Data.List       (sortOn)
+import           Data.List.Extra (select)
+import           Data.Set        (Set)
+import qualified Data.Set        as Set
+import qualified System.IO       as IO
 
 readWeights :: IO.Handle -> IO [Int]
 readWeights h = map read . lines <$> IO.hGetContents h

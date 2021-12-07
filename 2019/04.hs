@@ -2,7 +2,8 @@
 module Main where
 
 import qualified AdventOfCode.NanoParser as NP
-import           Data.List.Extended      (group, lexicographicSuccessor)
+import           Data.List               (group)
+import           Data.List.Extra         (lexicographicSuccessor)
 import qualified System.IO               as IO
 
 newtype Digit = Digit {unDigit :: Char} deriving (Enum, Eq, Ord, Show)

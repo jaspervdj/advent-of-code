@@ -11,12 +11,13 @@ import qualified Data.IntMap           as IM
 import           Data.List             (foldl')
 import qualified Data.Vector           as V
 import qualified System.IO             as IO
+import Data.Kind (Type)
 
 --------------------------------------------------------------------------------
 
 -- | A square grid.
 class Grid a where
-    type Cell a :: *
+    type Cell a :: Type
 
     size     :: a -> Int
     index    :: Int -> Int -> a -> Cell a

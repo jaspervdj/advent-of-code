@@ -1,5 +1,6 @@
 -- | Okay so this one is pretty ugly.
-import           Control.Monad.Extended      (foldM, forM, ifM)
+import           Control.Monad               (foldM, forM)
+import           Control.Monad.Extra         (ifM)
 import           Control.Monad.Primitive     (PrimMonad (..))
 import           Control.Monad.ST            (runST)
 import           Data.Char                   (digitToInt, intToDigit)

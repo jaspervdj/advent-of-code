@@ -1,8 +1,9 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Main where
 
-import           Data.Char          (isSpace)
-import           Data.List.Extended (lexicographicSuccessor, nub)
+import           Data.Char       (isSpace)
+import           Data.List       (nub)
+import           Data.List.Extra (lexicographicSuccessor)
 
 newtype Lower = Lower {unLower :: Char} deriving (Enum, Eq, Ord, Show)
 

@@ -1,10 +1,9 @@
 {-# LANGUAGE BangPatterns #-}
-module Data.Vector.Extended
-    ( module Data.Vector
-    , generate'
+module Data.Vector.Extra
+    ( generate'
     ) where
 
-import Data.Vector
+import           Data.Vector
 import qualified Data.Vector.Mutable as VM
 
 -- | Strict version of 'generate'

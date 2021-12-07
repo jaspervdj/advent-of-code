@@ -1,7 +1,8 @@
 module Main where
 
-import           Data.Either        (partitionEithers)
-import           Data.List.Extended (maximumOn, minimumOn, selectN)
+import           Data.Either            (partitionEithers)
+import           Data.Foldable.Extra (maximumOn, minimumOn)
+import           Data.List.Extra (selectN)
 
 data Combatant = Combatant
     { cHitpoints :: !Int
@@ -12,9 +13,9 @@ data Combatant = Combatant
 simulate :: Combatant -> Combatant -> (Bool, Combatant, Combatant)
 simulate = go True
   where
-    go _ cmb1 cmb2 | cHitpoints cmb1 <= 0 = (False, cmb1, cmb2)
-    go _ cmb1 cmb2 | cHitpoints cmb2 <= 0 = (True, cmb1, cmb2)
-    go True cmb1 cmb2 = go False cmb1 (attack cmb1 cmb2)
+    go _ cmb1 cmb2     | cHitpoints cmb1 <= 0 = (False, cmb1, cmb2)
+    go _ cmb1 cmb2     | cHitpoints cmb2 <= 0 = (True, cmb1, cmb2)
+    go True cmb1 cmb2  = go False cmb1 (attack cmb1 cmb2)
     go False cmb1 cmb2 = go True (attack cmb2 cmb1) cmb2
 
     attack attacker defender =
