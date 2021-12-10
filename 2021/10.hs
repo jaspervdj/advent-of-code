@@ -2,13 +2,13 @@
 {-# LANGUAGE LambdaCase    #-}
 module Main where
 
-import           AdventOfCode.Main  (simpleMain)
-import           Data.Foldable      (foldl')
-import           Data.List          (sort)
-import           Data.List.NonEmpty (NonEmpty (..))
-import           Data.Maybe         (mapMaybe)
+import           AdventOfCode.Main (simpleMain)
+import           Data.Foldable     (foldl')
+import           Data.List         (sort)
+import           Data.Maybe        (mapMaybe)
+import           Data.Semigroup    (First (..), Last (..))
 
-data Parens a = Par [a] [a] | Bad a deriving (Functor, Show)
+data Parens a = Par [a] [a] | Bad (First a, Last a) deriving (Functor, Show)
 
 mkParens :: Char -> Parens Char
 mkParens c
@@ -17,12 +17,13 @@ mkParens c
     | c == '['        = Par [] [']']
     | c == '('        = Par [] [')']
     | c == '{'        = Par [] ['}']
-    | otherwise       = Bad c
+    | otherwise       = Bad (First c, Last c)
 
 instance Eq a => Semigroup (Parens a) where
+    Bad x          <> Bad y                   = Bad (x <> y)
     Bad x          <> _                       = Bad x
     _              <> Bad y                   = Bad y
-    Par _ (x : _ ) <> Par (y : _ ) _ | x /= y = Bad y
+    Par _ (x : _ ) <> Par (y : _ ) _ | x /= y = Bad (First y, Last x)
     Par l (_ : xs) <> Par (_ : ys) r          = Par l xs <> Par ys r
     Par l []       <> Par ys       r          = Par (l ++ ys) r
     Par l xs       <> Par []       r          = Par l (r ++ xs)
@@ -31,9 +32,9 @@ instance Eq a => Monoid (Parens a) where mempty = Par [] []
 
 firstIllegal :: Parens a -> Maybe a
 firstIllegal = \case
-    Par (c : _) _ -> Just c
-    Bad c         -> Just c
-    _             -> Nothing
+    Par (c : _) _    -> Just c
+    Bad (First c, _) -> Just c
+    _                -> Nothing
 
 illegalPoints :: Char -> Int
 illegalPoints = \case
