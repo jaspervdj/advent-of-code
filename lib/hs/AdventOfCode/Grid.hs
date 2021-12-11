@@ -16,6 +16,7 @@ module AdventOfCode.Grid
     , fromList
     , fromString
     , readGrid
+    , toString
     , printGrid
     , center
     , box
@@ -23,7 +24,6 @@ module AdventOfCode.Grid
 
 import           AdventOfCode.V2
 import qualified AdventOfCode.V2.Box as Box
-import           Control.Monad       (forM_)
 import qualified Data.List           as L
 import qualified Data.Map            as M
 import           Data.Maybe          (fromMaybe)
@@ -78,15 +78,18 @@ fromList = L.foldl'
 fromString :: String -> Grid Char
 fromString = fromList . lines
 
+toString :: Grid Char -> String
+toString grid = case box grid of
+    Nothing -> "<empty grid>"
+    Just (Box.Box (V2 minX minY) (V2 maxX maxY)) -> unlines $ do
+        y <- [minY .. maxY]
+        pure [fromMaybe ' ' (M.lookup (V2 x y) grid)  | x <- [minX .. maxX]]
+
 readGrid :: (Char -> IO a) -> IO.Handle -> IO (Grid a)
 readGrid f h = IO.hGetContents h >>= traverse f . fromString
 
 printGrid :: IO.Handle -> Grid Char -> IO ()
-printGrid h grid = case box grid of
-    Nothing -> IO.hPutStrLn h "<empty grid>"
-    Just (Box.Box (V2 minX minY) (V2 maxX maxY)) ->
-        forM_ [minY .. maxY] $ \y -> IO.hPutStrLn h
-            [fromMaybe ' ' (M.lookup (V2 x y) grid)  | x <- [minX .. maxX]]
+printGrid h = IO.hPutStrLn h . toString
 
 center :: Grid a -> Maybe Pos
 center grid = case M.maxViewWithKey grid of
