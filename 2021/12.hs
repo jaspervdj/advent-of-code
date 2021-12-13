@@ -30,19 +30,19 @@ parseGraph p =
 
 paths :: Ord a => (a -> Bool) -> (a -> Bool) -> a -> a -> Graph a -> [[a]]
 paths visitMany visitTwice start end graph =
-    go []   S.empty False start where
-    go path visited twice pos
+    go []   (S.singleton start) False start where
+    go path visited             twice pos
         | pos == end = [reverse (end : path)]
         | otherwise  = do
             next <- maybe [] S.toList $ M.lookup pos graph
             if  | visitMany next ->
-                    go (pos : path) (S.insert pos visited) twice next
+                    go (pos : path) visited twice next
                 | S.member next visited && visitTwice next && not twice ->
-                    go (pos : path) (S.insert pos visited) True next
+                    go (pos : path) visited True next
                 | S.member next visited ->
                     []
                 | otherwise ->
-                    go (pos : path) (S.insert pos visited) twice next
+                    go (pos : path) (S.insert next visited) twice next
 
 main :: IO ()
 main = pureMain $ \input -> do
