@@ -14,10 +14,12 @@ module AdventOfCode.NanoParser
     , chainl1
 
     , alpha
-    , spaces
-    , horizontalSpaces
     , newline
     , digit
+    , lower
+    , upper
+    , spaces
+    , horizontalSpaces
     , decimal
     , signedDecimal
 
@@ -27,7 +29,7 @@ module AdventOfCode.NanoParser
 
 import           Control.Applicative (Alternative (..), optional)
 import           Control.Monad       (void)
-import           Data.Char           (isAlpha, isDigit, isSpace)
+import qualified Data.Char           as Char
 import           Data.Functor        (($>))
 import           Data.List           (foldl', intercalate)
 import           Data.Maybe          (fromMaybe)
@@ -93,20 +95,26 @@ chainl1 :: Parser t a -> Parser t (a -> a -> a) -> Parser t a
 chainl1 t op = foldl' (\x (f, y) -> f x y) <$> t <*> many ((,) <$> op <*> t)
 
 alpha :: Parser Char Char
-alpha = satisfy "alpha" isAlpha
-
-spaces :: Parser Char ()
-spaces = void $ many $ satisfy "whitespace" isSpace
-
-horizontalSpaces :: Parser Char ()
-horizontalSpaces = void . many $ satisfy "horizontal whitespace" $ \c ->
-    isSpace c && c /= '\n' && c /= '\r'
+alpha = satisfy "alpha" Char.isAlpha
 
 newline :: Parser Char ()
 newline = char '\n' <|> (char '\r' *> char '\n')
 
 digit :: Parser Char Char
-digit = satisfy "digit" isDigit
+digit = satisfy "digit" Char.isDigit
+
+lower :: Parser Char Char
+lower = satisfy "lower" Char.isLower
+
+upper :: Parser Char Char
+upper = satisfy "upper" Char.isUpper
+
+spaces :: Parser Char ()
+spaces = void $ many $ satisfy "whitespace" Char.isSpace
+
+horizontalSpaces :: Parser Char ()
+horizontalSpaces = void . many $ satisfy "horizontal whitespace" $ \c ->
+    Char.isSpace c && c /= '\n' && c /= '\r'
 
 decimal :: (Integral a, Read a) => Parser Char a
 decimal = read <$> many1 digit
