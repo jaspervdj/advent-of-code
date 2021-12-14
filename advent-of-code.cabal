@@ -443,3 +443,6 @@ executable 2021-12
 executable 2021-13
   import:  2021
   main-is: 13.hs
+executable 2021-14
+  import:  2021
+  main-is: 14.hs
