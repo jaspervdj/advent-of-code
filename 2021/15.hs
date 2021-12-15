@@ -1,53 +1,44 @@
 module Main where
 
-import qualified AdventOfCode.Dijkstra as Dijkstra
-import qualified AdventOfCode.Grid     as G
-import           AdventOfCode.Main     (pureMain)
-import           AdventOfCode.V2       (V2 (..), (.+.))
-import qualified AdventOfCode.V2.Box   as Box
-import           Data.Char             (digitToInt, isDigit)
-import qualified Data.Map              as M
-import           Data.Maybe            (mapMaybe, maybeToList)
-import           Data.Traversable      (for)
+import qualified AdventOfCode.Dijkstra     as Dijkstra
+import qualified AdventOfCode.Grid.Bounded as G
+import           AdventOfCode.Main         (pureMain)
+import           AdventOfCode.V2           (V2 (..))
+import           Data.Char                 (digitToInt, isDigit)
+import           Data.Maybe                (mapMaybe, maybeToList)
+import           Data.Traversable          (for)
 
 solve :: G.Grid Int -> Either String Int
-solve grid = do
-    (start, end) <- case G.box grid of
-        Just b -> pure (Box.bTopLeft b, Box.bBottomRight b)
-        _      -> Left "empty grid"
+solve grid = case Dijkstra.dijkstraGoal dijkstra of
+    Nothing           -> Left "no path found"
+    Just (_, _, path) -> pure . sum $
+        mapMaybe (`G.lookup` grid) (drop 1 $ reverse path)
+  where
+    start    = V2 0 0
+    end      = V2 (G.gridWidth grid - 1) (G.gridHeight grid - 1)
+    dijkstra = Dijkstra.dijkstra
+        (\pos -> do
+            n <- G.neighbours pos
+            v <- maybeToList $ G.lookup n grid
+            pure (v, n))
+        (== end)
+        start
 
-    let dijkstra = Dijkstra.dijkstra
-            (\pos -> do
-                n <- G.neighbours pos
-                v <- maybeToList $ M.lookup n grid
-                pure (v, n))
-            (== end)
-            start
-
-    case Dijkstra.dijkstraGoal dijkstra of
-        Nothing           -> Left "no path found"
-        Just (_, _, path) -> pure . sum $
-            mapMaybe (`M.lookup` grid) (drop 1 $ reverse path)
-
-extend :: Int -> G.Grid Int -> Either String (G.Grid Int)
-extend n grid = do
-    V2 gw gh <- case G.box grid of
-        Just b -> pure $ V2 (Box.width b) (Box.height b)
-        _      -> Left "empty grid"
-
-    pure $ M.fromList $ do
-        xg <- [0 .. n - 1]
-        yg <- [0 .. n - 1]
-        (pos, val) <- M.toList grid
-        let pos' = pos .+. V2 (xg * gw) (yg * gh)
-            val' = (val + xg + yg - 1) `mod` 9 + 1
-        pure (pos', val')
+extend :: Int -> G.Grid Int -> G.Grid Int
+extend n grid = G.generate (n * gw) (n * gh) $ \(V2 x y) ->
+    let (gx, x') = divMod x gw
+        (gy, y') = divMod y gh
+        val = G.index (V2 x' y') grid in
+    (val + gx + gy - 1) `mod` 9 + 1
+  where
+    gw = G.gridWidth grid
+    gh = G.gridHeight grid
 
 main :: IO ()
 main = pureMain $ \input -> do
-    grid <- for (G.fromString input) $ \c ->
+    cgrid <- G.fromString input
+    grid <- for cgrid $ \c ->
         if isDigit c then Right (digitToInt c) else Left ("Bad digit: " ++ [c])
     part1 <- solve grid
-    grid' <- extend 5 grid
-    part2 <- solve grid'
+    part2 <- solve $ extend 5 grid
     pure (pure part1, pure part2)
