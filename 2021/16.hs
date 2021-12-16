@@ -11,6 +11,7 @@ import           Control.Monad              (replicateM)
 import           Control.Monad.Except       (throwError)
 import           Control.Monad.Reader       (ReaderT, ask, runReaderT)
 import           Control.Monad.State.Strict (StateT, evalStateT, get, put)
+import           Data.Char                  (isSpace)
 import           Data.Functor.Fix
 import           Data.List.NonEmpty         (NonEmpty (..))
 import qualified Data.Vector.Unboxed        as VU
@@ -19,28 +20,28 @@ import qualified Data.Vector.Unboxed        as VU
 
 type Bin = VU.Vector Bool
 
-fromHex :: Char -> Bin
+fromHex :: Char -> Either String Bin
 fromHex = \case
-    '0' -> [False, False, False, False]
-    '1' -> [False, False, False, True ]
-    '2' -> [False, False, True , False]
-    '3' -> [False, False, True , True ]
-    '4' -> [False, True , False, False]
-    '5' -> [False, True , False, True ]
-    '6' -> [False, True , True , False]
-    '7' -> [False, True , True , True ]
-    '8' -> [True , False, False, False]
-    '9' -> [True , False, False, True ]
-    'A' -> [True , False, True , False]
-    'B' -> [True , False, True , True ]
-    'C' -> [True , True , False, False]
-    'D' -> [True , True , False, True ]
-    'E' -> [True , True , True , False]
-    'F' -> [True , True , True , True ]
-    _   -> []
+    '0'  -> pure [False, False, False, False]
+    '1'  -> pure [False, False, False, True ]
+    '2'  -> pure [False, False, True , False]
+    '3'  -> pure [False, False, True , True ]
+    '4'  -> pure [False, True , False, False]
+    '5'  -> pure [False, True , False, True ]
+    '6'  -> pure [False, True , True , False]
+    '7'  -> pure [False, True , True , True ]
+    '8'  -> pure [True , False, False, False]
+    '9'  -> pure [True , False, False, True ]
+    'A'  -> pure [True , False, True , False]
+    'B'  -> pure [True , False, True , True ]
+    'C'  -> pure [True , True , False, False]
+    'D'  -> pure [True , True , False, True ]
+    'E'  -> pure [True , True , True , False]
+    'F'  -> pure [True , True , True , True ]
+    c    -> throwError $ "unknown character: " ++ show c
 
-fromHexString :: String -> Bin
-fromHexString = VU.concatMap fromHex . VU.fromList
+fromHexString :: String -> Either String Bin
+fromHexString = fmap VU.concat . traverse fromHex . filter (not . isSpace)
 
 toInt :: Bin -> Int
 toInt = VU.foldl' (\acc x -> acc * 2 + if x then 1 else 0) 0
@@ -115,14 +116,14 @@ parsePacket = do
     op 5 [x, y]   = pure $ Greater x y
     op 6 [x, y]   = pure $ Less    x y
     op 7 [x, y]   = pure $ Equal   x y
-    op o xs       = throwError $ "unknown operator " ++ show (o, length xs)
+    op o xs       = throwError $ "unknown operator: " ++ show (o, length xs)
 
 --------------------------------------------------------------------------------
 
 versionSum :: Fix Packet -> Int
 versionSum = cata $ \(Packet ver _ vers) -> ver + sum vers
 
-eval :: Fix Packet  -> Int
+eval :: Fix Packet -> Int
 eval = cata $ \(Packet _ _ body) -> case body of
     Literal n   -> n
     Sum     xs  -> sum xs
@@ -136,6 +137,7 @@ eval = cata $ \(Packet _ _ body) -> case body of
 --------------------------------------------------------------------------------
 
 main :: IO ()
-main = pureMain $ \inputStr -> do
-    packet <- runParser parsePacket $ fromHexString inputStr
+main = pureMain $ \input -> do
+    binary <- fromHexString input
+    packet <- runParser parsePacket binary
     pure (pure (versionSum packet), pure (eval packet))
