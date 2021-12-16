@@ -8,13 +8,9 @@ import           Control.Applicative     (many, optional, (<|>))
 import           Control.Monad           (guard)
 import           Data.Char               (isDigit)
 import           Data.Functor            (($>))
+import           Data.Functor.Fix
 import           Data.Maybe              (catMaybes, mapMaybe)
 import           Data.Maybe              (fromMaybe)
-
-newtype Fix f = Fix {unFix :: f (Fix f)}
-
-cata :: Functor f => (f a -> a) -> Fix f -> a
-cata f = f . fmap (cata f) . unFix
 
 data Json a
     = Int Int

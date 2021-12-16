@@ -6,16 +6,24 @@ maintainer:         m@jaspervdj.be
 build-type:         Simple
 extra-source-files: README.md
 
-library
-  hs-source-dirs:   lib/hs
+common depends
   default-language: Haskell2010
   ghc-options:      -Wall
 
   build-depends:
-    base       >= 4.13 && < 4.16,
-    containers >= 0.6  && < 0.7,
-    vector     >= 0.12 && < 0.13
+    array                >= 0.5  && < 0.6,
+    base                 >= 4.13 && < 4.16,
+    bytestring           >= 0.10 && < 0.12,
+    containers           >= 0.6  && < 0.7,
+    hashable             >= 1.3  && < 1.4,
+    mtl                  >= 2.2  && < 2.3,
+    primitive            >= 0.7  && < 0.8,
+    unordered-containers >= 0.2  && < 0.3,
+    vector               >= 0.12 && < 0.13
 
+library
+  import:         depends
+  hs-source-dirs: lib/hs
   exposed-modules:
     AdventOfCode.AStar
     AdventOfCode.BinarySearch
@@ -38,24 +46,14 @@ library
     AdventOfCode.V3
     Control.Monad.Extra
     Data.Foldable.Extra
+    Data.Functor.Fix
     Data.List.Extra
     Data.Vector.Extra
 
 common solution
-  default-language: Haskell2010
-  ghc-options:      -Wall -O2
-
-  build-depends:
-    advent-of-code,
-    array                >= 0.5  && < 0.6,
-    base                 >= 4.13 && < 4.16,
-    bytestring           >= 0.10 && < 0.12,
-    containers           >= 0.6  && < 0.7,
-    hashable             >= 1.3  && < 1.4,
-    mtl                  >= 2.2  && < 2.3,
-    primitive            >= 0.7  && < 0.8,
-    unordered-containers >= 0.2  && < 0.3,
-    vector               >= 0.12 && < 0.13
+  import:        depends
+  ghc-options:   -Wall -O2
+  build-depends: advent-of-code
 
 common 2015
   import:         solution
@@ -449,3 +447,6 @@ executable 2021-14
 executable 2021-15
   import:  2021
   main-is: 15.hs
+executable 2021-16
+  import:  2021
+  main-is: 16.hs
