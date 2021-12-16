@@ -63,7 +63,7 @@ parseBits n = do
 
 --------------------------------------------------------------------------------
 
-data Packet a = Packet Int Int (Body a) deriving (Functor, Show)
+data Packet a = Packet Int (Body a) deriving (Functor, Show)
 data Body a
     = Literal Int
     | Sum     (NonEmpty a)
@@ -97,7 +97,7 @@ parseUntil n p = do
 parsePacket :: Parser (Fix Packet)
 parsePacket = do
     (ver, typ) <- parseHeader
-    fmap (Fix . Packet ver typ) $ if typ == 4
+    fmap (Fix . Packet ver) $ if typ == 4
         then Literal <$> parseLiteral
         else do
             lengthType <- VU.head <$> parseBits 1
@@ -121,10 +121,10 @@ parsePacket = do
 --------------------------------------------------------------------------------
 
 versionSum :: Fix Packet -> Int
-versionSum = cata $ \(Packet ver _ vers) -> ver + sum vers
+versionSum = cata $ \(Packet ver vers) -> ver + sum vers
 
 eval :: Fix Packet -> Int
-eval = cata $ \(Packet _ _ body) -> case body of
+eval = cata $ \(Packet _ body) -> case body of
     Literal n   -> n
     Sum     xs  -> sum xs
     Product xs  -> product xs
