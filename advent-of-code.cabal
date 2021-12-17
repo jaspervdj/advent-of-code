@@ -450,3 +450,6 @@ executable 2021-15
 executable 2021-16
   import:  2021
   main-is: 16.hs
+executable 2021-17
+  import:  2021
+  main-is: 17.hs

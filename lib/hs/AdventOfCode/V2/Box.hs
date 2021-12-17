@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveFoldable #-}
 module AdventOfCode.V2.Box
     ( Box (..)
     , fromV2
@@ -13,7 +13,7 @@ import           AdventOfCode.V2
 data Box a = Box
     { bTopLeft     :: !(V2 a)
     , bBottomRight :: !(V2 a)
-    } deriving (Eq, Functor, Show)
+    } deriving (Eq, Foldable, Show)
 
 instance Ord a => Semigroup (Box a) where
     Box (V2 lx1 ty1) (V2 rx1 by1) <> Box (V2 lx2 ty2) (V2 rx2 by2) =
