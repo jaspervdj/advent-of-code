@@ -12,6 +12,7 @@ module AdventOfCode.V3
     , zipWith3
     , mapWithIndex
     , fromV2
+    , manhattan
     ) where
 
 import qualified AdventOfCode.V2 as V2
@@ -55,3 +56,7 @@ mapWithIndex f (V3 x y z) = V3 (f vX x) (f vY y) (f vZ z)
 -- | Project a V2 vector on the Z=0 plane.
 fromV2 :: Num a => V2.V2 a -> V3 a
 fromV2 v2 = V3 (V2.vX v2) (V2.vY v2) 0
+
+manhattan :: Num a => V3 a -> V3 a -> a
+manhattan (V3 x1 y1 z1) (V3 x2 y2 z2) =
+    abs (x1 - x2) + abs (y1 - y2) + abs (z1 - z2)
