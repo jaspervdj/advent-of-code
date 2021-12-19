@@ -2,15 +2,14 @@
 module Main where
 
 import           AdventOfCode.Main       (pureMain)
-import Debug.Trace
 import qualified AdventOfCode.NanoParser as P
 import           Control.Applicative     ((<|>))
 
-data T = I Int | P T T
+data T = I Int | P T T deriving (Eq)
 
 instance Show T where
     show = \case
-        I n -> show n
+        I n   -> show n
         P x y -> "[" ++ show x ++ "," ++ show y ++ "]"
 
 addL, addR :: Int -> T -> T
@@ -29,51 +28,58 @@ parseT =
     (P <$> (P.char '[' *> parseT <* P.char ',') <*> (parseT <* P.char ']'))
 
 type Zipper a = [Either a a]
-data Step = Explode Int Int (Zipper T) | Split Int (Zipper T) deriving (Show)
 
-next :: T -> Maybe Step
-next = go (0 :: Int) []
+findExplode :: T -> Maybe (Int, Int, Zipper T)
+findExplode = go (0 :: Int) []
   where
     go depth z node = case node of
-        P (I x) (I y) | depth >= 4 -> Just $ Explode x y z
+        P (I x) (I y) | depth >= 4 -> Just (x, y, z)
         P x y                      -> go (depth + 1) (Left  y : z) x <|>
                                       go (depth + 1) (Right x : z) y
-        I n | n >= 10              -> Just $ Split n z
         I _                        -> Nothing
 
-step :: Step -> T
-step (Explode n k z) =
-    build (Just n) (Just k) (I 0) z
+doExplode :: (Int, Int, Zipper T) -> T
+doExplode (n, k, z) =
+    go (Just n) (Just k) (I 0) z
   where
-    build _   _   t [] = t
-    build mbX mbY t (Left r : zs) = case mbY of
-        Nothing -> build mbX Nothing (P t r)          zs
-        Just y  -> build mbX Nothing (P t (addL y r)) zs
-    build mbX mbY t (Right l : zs) = case mbX of
-        Nothing -> build Nothing mbY (P l          t) zs
-        Just x  -> build Nothing mbY (P (addR x l) t) zs
-step (Split n z) =
+    go _   _   t [] = t
+    go mbX mbY t (Left r : zs) = case mbY of
+        Nothing -> go mbX Nothing (P t r)          zs
+        Just y  -> go mbX Nothing (P t (addL y r)) zs
+    go mbX mbY t (Right l : zs) = case mbX of
+        Nothing -> go Nothing mbY (P l          t) zs
+        Just x  -> go Nothing mbY (P (addR x l) t) zs
+
+findSplit :: T -> Maybe (Int, Zipper T)
+findSplit = go []
+  where
+    go z node = case node of
+        P x y -> go (Left  y : z) x <|> go (Right x : z) y
+        I n   -> if n >= 10 then Just (n, z) else Nothing
+
+doSplit :: (Int, Zipper T) -> T
+doSplit (n, z) =
     let x = n `div` 2
         y = n - x in
-    build (P (I x) (I y)) z
+    go (P (I x) (I y)) z
   where
-    build t []             = t
-    build t (Left  r : zs) = build (P t r) zs
-    build t (Right l : zs) = build (P l t) zs
+    go t []             = t
+    go t (Left  r : zs) = go (P t r) zs
+    go t (Right l : zs) = go (P l t) zs
 
 reduce :: T -> T
-reduce t = case next t of
-    Nothing -> t
-    Just s  -> reduce (step s)
+reduce t = case findExplode t of
+    Just expl -> reduce $ doExplode expl
+    Nothing -> case findSplit t of
+        Just s  -> reduce $ doSplit s
+        Nothing -> t
 
-solve :: T -> [String]
-solve t = case next t of
-    Nothing -> [show t]
-    Just s  -> show t : solve (step s)
+add :: T -> T -> T
+add x y = reduce $ P x y
 
 main :: IO ()
 main = pureMain $ \input -> do
     ts <- P.runParser (P.sepBy1 parseT P.spaces) input
-    let sum1 = foldl1 (\acc x -> P acc x) ts
-    traceM $ unlines $ solve sum1
-    pure (pure (show sum1), pure "k")
+    let part1 = foldl1 add ts
+        part2 = maximum [magnitude $ add x y | x <- ts, y <- ts, x /= y]
+    pure (pure (magnitude part1), pure part2)
