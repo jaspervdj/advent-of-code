@@ -55,4 +55,4 @@ main = do
     moons0 <- readMoons IO.stdin
     print . L.sum . map energy3 $ iterate step3 moons0 !! 1000
     let solve c = fixp (\ms -> step1 ms <$> ms) (c <$> moons0)
-    print $ solve V3.vX `lcm` solve V3.vY `lcm` solve V3.vZ
+    print $ solve V3.v3X `lcm` solve V3.v3Y `lcm` solve V3.v3Z

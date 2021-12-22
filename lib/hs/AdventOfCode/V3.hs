@@ -19,7 +19,7 @@ import qualified AdventOfCode.V2 as V2
 import qualified Data.Foldable   as F
 import           Prelude         hiding (sum, zipWith, zipWith3)
 
-data V3 a = V3 {vX :: !a, vY :: !a, vZ :: !a}
+data V3 a = V3 {v3X :: !a, v3Y :: !a, v3Z :: !a}
     deriving (Eq, Foldable, Functor, Ord, Show)
 
 zero :: Num a => V3 a
@@ -50,7 +50,7 @@ zipWith3 f (V3 x1 y1 z1) (V3 x2 y2 z2) (V3 x3 y3 z3) =
 {-# INLINE zipWith3 #-}
 
 mapWithIndex :: ((forall e. V3 e -> e) -> a -> b) -> V3 a -> V3 b
-mapWithIndex f (V3 x y z) = V3 (f vX x) (f vY y) (f vZ z)
+mapWithIndex f (V3 x y z) = V3 (f v3X x) (f v3Y y) (f v3Z z)
 {-# INLINE mapWithIndex #-}
 
 -- | Project a V2 vector on the Z=0 plane.
