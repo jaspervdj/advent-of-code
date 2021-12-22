@@ -1,23 +1,20 @@
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE DeriveFunctor #-}
 module Main where
-    
+
 import           AdventOfCode.Main           (simpleMain)
-import Debug.Trace
-import Control.Monad (liftM2)
 import           AdventOfCode.V3             (V3 (..), (.-.))
-import Data.List.NonEmpty (NonEmpty (..))
 import qualified AdventOfCode.V3             as V3
 import           Data.Char                   (isDigit)
 import           Data.Foldable               (foldl', for_)
 import           Data.List                   (isPrefixOf)
-import           Data.List.Extra             (powerset)
+import           Data.Maybe                  (maybeToList)
 import qualified Data.Vector.Unboxed         as VU
 import qualified Data.Vector.Unboxed.Mutable as VUM
 
 data Box a = Box
     { bMin :: !(V3 a)
     , bMax :: !(V3 a)
-    } deriving (Show)
+    } deriving (Functor, Show)
 
 instance Ord a => Semigroup (Box a) where
     Box lo0 hi0 <> Box lo1 hi1 =
@@ -46,19 +43,9 @@ depth  (Box (V3 _  _  lz) (V3 _  _  hz)) = hz - lz + 1
 volume :: Integral a => Box a -> a
 volume b = width b * height b * depth b
 
-parseBox :: String -> (Bool, Box Int)
-parseBox line =
-    let state   = "on" `isPrefixOf` line
-        clear c = if isDigit c || c == '-' then c else ' ' in
-    case map read . words $ map clear line of
-        [x0, x1, y0, y1, z0, z1] ->
-            (state, fromV3 (V3 x0 y0 z0) <> fromV3 (V3 x1 y1 z1))
-        _ -> error $ "Could not parse line: " ++ show line
-
-explicit :: Box Int -> [(Bool, Box Int)] -> Int
-explicit bounds boxes = VU.length $ VU.filter id vec
+dumb :: Box Int -> [(Bool, Box Int)] -> Int
+dumb bounds boxes = VU.length $ VU.filter id vec
   where
-    vec :: VU.Vector Bool
     vec = VU.create $ do
         v <- VUM.replicate (volume bounds) False
         for_ boxes $ \(state, box) -> case intersection box bounds of
@@ -71,34 +58,29 @@ explicit bounds boxes = VU.length $ VU.filter id vec
         let (V3 x y z) = v .-. bMin bounds in
         x + width bounds * (y + depth bounds * z)
 
-inclusionExclusion :: [a] -> [(Bool, NonEmpty a)]
-inclusionExclusion list = do
-    x : xs <- powerset list
-    let l = x :| xs
-    pure (even (length l) == even (length list), l)
-
-unionVolume :: [Box Int] -> Int
-unionVolume = foldl' step 0 . inclusionExclusion
+smart :: [(Bool, Box Int)] -> Integer
+smart = sum . map toVolume .
+    foldl' (\acc (on, box) -> if on then insert acc box else remove acc box) []
   where
-    step :: Int -> (Bool, NonEmpty (Box Int)) -> Int
-    step acc (add, boxes) =
-        let itsn :: Maybe (Box Int)
-            itsn = foldl1 mbIntersection $ fmap Just boxes in
-        (if add then (+) else (-)) acc (maybe 0 volume itsn)
+    insert, remove :: [(Box Int, Bool)] -> Box Int -> [(Box Int, Bool)]
+    insert bs box = (box, True) : remove bs box
+    remove bs box =
+        [(i, not on) | (b, on) <- bs, i <- maybeToList $ intersection b box] ++
+        bs
 
-    mbIntersection Nothing  _        = Nothing
-    mbIntersection _        Nothing  = Nothing
-    mbIntersection (Just l) (Just r) = intersection l r
-
-implicit :: [(Bool, Box Int)] -> Int
-implicit = snd . foldl' insert ([], 0) . reverse
-  where
-    insert (boxes, !numOn) (False, box) = (box : boxes, numOn)
-    insert (boxes, !numOn) (True,  box) = trace (show numOn) $
-        (box : boxes, numOn + unionVolume (box : boxes) - unionVolume boxes)
+    toVolume (b, on) = (if on then id else negate) . volume $ fromIntegral <$> b
 
 main :: IO ()
 main = simpleMain $ \input ->
     let boxes = map parseBox $ lines input
         bounds = Box (V3 (-50) (-50) (-50)) (V3 50 50 50) in
-    (explicit bounds boxes, implicit boxes)
+    (dumb bounds boxes, smart boxes)
+
+parseBox :: String -> (Bool, Box Int)
+parseBox line =
+    let state   = "on" `isPrefixOf` line
+        clear c = if isDigit c || c == '-' then c else ' ' in
+    case map read . words $ map clear line of
+        [x0, x1, y0, y1, z0, z1] ->
+            (state, fromV3 (V3 x0 y0 z0) <> fromV3 (V3 x1 y1 z1))
+        _ -> error $ "Could not parse line: " ++ show line
