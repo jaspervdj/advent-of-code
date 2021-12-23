@@ -27,11 +27,11 @@ step :: Probe -> Probe
 step Probe {..} = Probe
     { probePos = probePos .+. probeVel
     , probeVel = V2
-        { vX = case vX probeVel of
+        { v2X = case v2X probeVel of
             x | x < 0     -> x + 1
               | x > 0     -> x - 1
               | otherwise -> x
-        , vY = vY probeVel - 1
+        , v2Y = v2Y probeVel - 1
         }
     }
 
@@ -40,8 +40,8 @@ launch = iterate step . Probe (V2 0 0)
 
 overshot :: Target -> Probe -> Bool
 overshot target Probe {..} =
-    (vX probePos > vX (bBottomRight target) && vX probeVel > 0) ||
-    (vY probePos < vY (bTopLeft target)     && vY probeVel < 0)
+    (v2X probePos > v2X (bBottomRight target) && v2X probeVel > 0) ||
+    (v2Y probePos < v2Y (bTopLeft target)     && v2Y probeVel < 0)
 
 main :: IO ()
 main = pureMain $ \input -> do
@@ -52,5 +52,5 @@ main = pureMain $ \input -> do
             let path = takeWhile (not . overshot target) $ launch vel
             guard $ any (`inside` target) (map probePos path)
             pure path
-        highest = maximum $ map (vY . probePos) $ concat hits
+        highest = maximum $ map (v2Y . probePos) $ concat hits
     pure (pure highest, pure (length hits))

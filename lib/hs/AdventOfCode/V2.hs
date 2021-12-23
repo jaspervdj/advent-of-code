@@ -9,7 +9,7 @@ module AdventOfCode.V2
     , (.*)
     ) where
 
-data V2 a = V2 {vX :: !a, vY :: !a}
+data V2 a = V2 {v2X :: !a, v2Y :: !a}
     deriving (Eq, Foldable, Functor, Ord, Show, Traversable)
 
 zero :: Num a => V2 a

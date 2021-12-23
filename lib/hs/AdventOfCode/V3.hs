@@ -55,7 +55,7 @@ mapWithIndex f (V3 x y z) = V3 (f v3X x) (f v3Y y) (f v3Z z)
 
 -- | Project a V2 vector on the Z=0 plane.
 fromV2 :: Num a => V2.V2 a -> V3 a
-fromV2 v2 = V3 (V2.vX v2) (V2.vY v2) 0
+fromV2 v2 = V3 (V2.v2X v2) (V2.v2Y v2) 0
 
 manhattan :: Num a => V3 a -> V3 a -> a
 manhattan (V3 x1 y1 z1) (V3 x2 y2 z2) =

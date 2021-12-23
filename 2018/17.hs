@@ -68,7 +68,7 @@ flow maxY =
                     let grid2 = inserts (lw ++ rw) RestingWater grid1 in
                     -- If the water was stopped, we can try going one "up"
                     -- and restarting the flow from there.
-                    if vY pos1 > 0 then
+                    if v2Y pos1 > 0 then
                         flow maxY (pos1 .-. V2 0 1) grid2
                     else
                         grid2
@@ -94,7 +94,7 @@ flow maxY =
 
     fall pos0 grid0
         -- Bail out because we've fallen of the grid.
-        | vY down > maxY                           = Left grid0
+        | v2Y down > maxY                          = Left grid0
         -- Bail out because we've been here before.
         | Just FlowingWater <- M.lookup down grid0 = Left grid0
         -- We can fall further down.

@@ -20,7 +20,7 @@ walk slope grid = go 0 (V2.V2 0 0)
   where
     box = fromMaybe (Box.Box V2.zero V2.zero) $ G.box grid
     get (V2.V2 x y) = Map.lookup (V2.V2 (x `mod` Box.width box) y) grid
-    go !acc pos | V2.vY pos >= Box.height box = acc
+    go !acc pos | V2.v2Y pos >= Box.height box = acc
     go !acc pos =
         let acc' = case get pos of Just Tree -> acc + 1; _ -> acc in
         go acc' $ pos V2..+. slope

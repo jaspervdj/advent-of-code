@@ -73,7 +73,7 @@ simGame prog =
       where
         (outs, int, m') = runMachine m
         g'              = L.foldl' (flip updateGame) g (triples outs)
-        input           = case on compare V2.vX (gPaddle g') (gBall g') of
+        input           = case on compare V2.v2X (gPaddle g') (gBall g') of
             LT -> 1
             EQ -> 0
             GT -> -1

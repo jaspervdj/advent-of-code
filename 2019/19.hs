@@ -38,7 +38,7 @@ main = do
         -- The binary search may not give us the best solution since it's not
         -- continuous, so we need to try some other positions around there as
         -- well.
-        guess     <- fmap V2.vY $ BS.lowerBound $ \y -> fitShipAtY beam size y
+        guess     <- fmap V2.v2Y $ BS.lowerBound $ \y -> fitShipAtY beam size y
         V2.V2 x y <- listToMaybe $ mapMaybe (fitShipAtY beam 100)
             [guess - size .. guess]
         pure $ x * 10000 + y
