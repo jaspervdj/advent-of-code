@@ -46,7 +46,7 @@ entrance Env{..} pos =
 reachable :: Env -> State -> Amphipod -> [(G.Pos, Energy)]
 reachable env@Env{..} State{..} amphi =
     map (second ((* energy typ) . pred . length)) .
-    filter (\(p, _) -> p /= start && not (entrance env p)) .
+    filter (\(p, _) -> p /= start && not (entrance env p) && fills p) .
     M.toList . Dijkstra.bfsDistances $
     Dijkstra.bfs neighbours (const False) start
   where
@@ -61,6 +61,14 @@ reachable env@Env{..} State{..} amphi =
         guard $ nb `notElem` statePositions
         pure nb
 
+    fills pos = case envGrid M.! pos of
+        Hallway -> True
+        -- Check that we nicely move to the bottom
+        Room c -> (== 1) $ length $
+            filter (\p -> p `notElem` statePositions || p == start) $
+            filter (`M.member` envGrid) $
+            G.neighbours pos
+
 stateGoal :: Env -> State -> Bool
 stateGoal Env{..} State{..} = and $ do
     (amphi, pos) <- M.toList statePositions
@@ -68,7 +76,7 @@ stateGoal Env{..} State{..} = and $ do
 
 stateNeighbours :: Env -> State -> [(Energy, State)]
 stateNeighbours env@Env{..} state@State{..} = do
-    (amphi, start) <- M.toList statePositions
+    (amphi, _start) <- M.toList statePositions
     let moved = stateMoved M.! amphi
     guard $ moved < 2
     (end, cost) <- reachable env state amphi
@@ -109,4 +117,4 @@ parseInput str =
 main :: IO ()
 main = simpleMain $ \input ->
     let (env, state) = parseInput input in
-    (show (env, state), show $ solve env state)
+    (show (env, state), solve env state)
