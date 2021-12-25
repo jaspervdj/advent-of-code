@@ -22,6 +22,7 @@ module AdventOfCode.Grid.Bounded
     , mapWithKey
     , lookup
     , index
+    , (!)
     , toString
     , toList
     ) where
@@ -81,6 +82,9 @@ index :: G.Pos -> Grid a -> a
 index v g = fromMaybe
     (error $ "AdventOfCode.Grid.Bounded.index: out of bounds: " ++ show v)
     (lookup v g)
+
+(!) :: Grid a -> G.Pos -> a
+g ! v = index v g
 
 toString :: Grid Char -> String
 toString g@Grid {..} = unlines $ do
