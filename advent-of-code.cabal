@@ -478,6 +478,9 @@ executable 2021-25
 common 2022
   import:         solution
   hs-source-dirs: 2022
+executable 2022-03
+  import:  2022
+  main-is: 03.hs
 executable 2022-04
   import:  2022
   main-is: 04.hs
