@@ -490,3 +490,6 @@ executable 2022-03
 executable 2022-04
   import:  2022
   main-is: 04.hs
+executable 2022-05
+  import:  2022
+  main-is: 05.hs
