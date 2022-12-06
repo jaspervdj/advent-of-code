@@ -1,6 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 import           AdventOfCode.Main
 
+import           Control.Monad     (guard)
 import qualified Data.Map          as Map
 import qualified Data.Sequence     as Seq
 
@@ -17,8 +18,7 @@ pop :: Ord a => Buffer a -> Maybe (a, Buffer a)
 pop b = case Seq.viewl (bRing b) of
     Seq.EmptyL -> Nothing
     x Seq.:< xs ->
-        let freqs = Map.update
-                (\f -> if f <= 1 then Nothing else Just (f - 1)) x (bFreqs b) in
+        let freqs = Map.update (\f -> pred f <$ guard (f > 1)) x (bFreqs b) in
         Just (x, b {bRing = xs, bFreqs = freqs})
 
 push :: Ord a => a -> Buffer a -> Buffer a
@@ -27,8 +27,7 @@ push x b0 = b1
     , bFreqs = Map.insertWith (+) x 1 $ bFreqs b1
     }
   where
-    b1  | Seq.length (bRing b0) < bMax b0 = b0
-        | otherwise                       = maybe b0 snd $ pop b0
+    b1 = if Seq.length (bRing b0) < bMax b0 then b0 else maybe b0 snd $ pop b0
 
 sat :: Ord a => Buffer a -> Bool
 sat b = bMax b == Map.size (bFreqs b)
@@ -38,8 +37,7 @@ solve = go 1
   where
     go !i _  []       = i
     go !i b0 (x : xs) =
-        let b1 = push x b0 in
-        if sat b1 then i else go (i + 1) b1 xs
+        let b1 = push x b0 in if sat b1 then i else go (i + 1) b1 xs
 
 main :: IO ()
 main = simpleMain $ \input -> (solve (buffer 4) input, solve (buffer 14) input)
