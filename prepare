@@ -1,4 +1,4 @@
 #!/bin/sh
 # See <https://github.com/ZeusWPI/Advent-of-Code-Aggregator>
-cabal build "exe:2021-$1"
-cp "$(cabal exec which "2021-$1")" run
+cabal build "exe:2022-$1"
+cp "$(cabal exec which "2022-$1")" run
