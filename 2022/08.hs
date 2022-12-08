@@ -12,8 +12,8 @@ parseTrees = G.fromString >=> traverse parseTree
   where
     parseTree c = if isDigit c then Right (digitToInt c) else Left (show c)
 
-part1 :: G.Grid Int -> S.Set G.Pos
-part1 g = foldl' (\acc -> snd . foldl' step (-1, acc)) S.empty $
+visibleTrees :: G.Grid Int -> S.Set G.Pos
+visibleTrees g = foldl' (\acc -> snd . foldl' step (-1, acc)) S.empty $
     up ++ down ++ left ++ right
   where
     step !(!h, !acc) pos =
@@ -21,9 +21,9 @@ part1 g = foldl' (\acc -> snd . foldl' step (-1, acc)) S.empty $
         if tree > h then (tree, S.insert pos acc) else (h, acc)
 
     up    = [[V2 x y | y <- [ymax, ymax - 1 .. 0]] | x <- [0 .. xmax]]
-    down  = [[V2 x y | y <- [0 .. ymax]] | x <- [0 .. xmax]]
+    down  = [[V2 x y | y <- [0 .. ymax]]           | x <- [0 .. xmax]]
     left  = [[V2 x y | x <- [xmax, xmax - 1 .. 0]] | y <- [0 .. ymax]]
-    right = [[V2 x y | x <- [0 .. xmax]] | y <- [0 .. ymax]]
+    right = [[V2 x y | x <- [0 .. xmax]]           | y <- [0 .. ymax]]
 
     (xmax, ymax) = (G.gridWidth  g - 1, G.gridHeight g - 1)
 
@@ -48,5 +48,6 @@ scenicScore grid pos0 =
 main :: IO ()
 main = pureMain $ \input -> do
     trees <- parseTrees input
-    let part2 = maximum . map (scenicScore trees . fst) $ G.toList trees
-    pure (pure (S.size (part1 trees)), pure part2)
+    let part1 = S.size $ visibleTrees trees
+        part2 = maximum . map (scenicScore trees . fst) $ G.toList trees
+    pure (pure part1, pure part2)
