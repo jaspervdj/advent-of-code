@@ -5,9 +5,9 @@ import qualified AdventOfCode.NanoParser as NP
 import           AdventOfCode.V2         (V2 (..))
 import qualified AdventOfCode.V2         as V2
 import qualified AdventOfCode.V2.Box     as Box
-import           Data.List               (find)
+import           Data.List               (find, foldl')
 import qualified Data.Map                as M
-import           Data.Maybe              (fromJust, isNothing)
+import           Data.Maybe              (isNothing)
 import qualified Data.Set                as S
 
 type StraightLines = [[G.Pos]]
@@ -34,39 +34,54 @@ drawStraightLines = go S.empty
 
 data Tile = Rock | Sand deriving (Eq, Show)
 
-straightLinesToGrid :: StraightLines -> Either String (G.Grid Tile)
-straightLinesToGrid = fmap (M.fromSet (const Rock)) . drawStraightLines
+data Cave = Cave {caveGrid :: !(G.Grid Tile), caveBottom :: !Int}
 
-dropSand :: G.Pos -> G.Grid Tile -> Maybe G.Pos
-dropSand pos0 grid = go pos0
+instance Show Cave where
+    show = G.toString . fmap showTile . caveGrid
+      where
+        showTile Rock = '#'
+        showTile Sand = 'o'
+
+caveSand :: Cave -> Int
+caveSand = length . filter (== Sand) . map snd . M.toList . caveGrid
+
+straightLinesToCave :: StraightLines -> Either String Cave
+straightLinesToCave sls = do
+    rocks <- drawStraightLines sls
+    let grid   = M.fromSet (const Rock) rocks
+        bottom = maybe 0 (V2.v2Y . Box.bBottomRight) $ G.box grid
+    pure Cave {caveGrid = grid, caveBottom = bottom}
+
+fall :: G.Pos -> [G.Pos]
+fall (V2 x y) = [V2 x (y + 1), V2 (x - 1) (y + 1), V2 (x + 1) (y + 1)]
+
+dropSand :: G.Pos -> Cave -> Maybe G.Pos
+dropSand p0 cave = go p0
   where
-    go p = case find (\n -> isNothing $ M.lookup n grid) (next p) of
+    grid = caveGrid cave
+    go p = case find (\n -> isNothing $ M.lookup n grid) (fall p) of
         Nothing -> Just p
-        Just n  -> if V2.v2Y n > bottom then Nothing else go n
+        Just n  -> if V2.v2Y n > caveBottom cave then Nothing else go n
 
-    next (V2 x y) = [V2 x (y + 1), V2 (x - 1) (y + 1), V2 (x + 1) (y + 1)]
+pourSand :: G.Pos -> Cave -> Cave
+pourSand p cave = case dropSand p cave of
+    Nothing   -> cave
+    Just rest -> pourSand p cave {caveGrid = M.insert rest Sand (caveGrid cave)}
 
-    bottom = V2.v2Y $ case G.box grid of
-        Nothing -> pos0
-        Just b  -> Box.bBottomRight b
-
-pourSand :: G.Pos -> G.Grid Tile -> G.Grid Tile
-pourSand pos0 grid = case dropSand pos0 grid of
-    Nothing            -> grid
-    Just rest
-        | rest == pos0 -> M.insert rest Sand grid  -- flow blocked
-        | otherwise    -> pourSand pos0 (M.insert rest Sand grid)
+fillSand :: G.Pos -> Cave -> Cave
+fillSand p0 cave = cave {caveGrid = go (caveGrid cave) p0}
+  where
+    go !grid p@(V2 _ y)
+        | y >= caveBottom cave = grid
+        | p `M.member` grid    = grid
+        | otherwise            = foldl' go (M.insert p Sand grid) (fall p)
 
 main :: IO ()
 main = pureMain $ \input -> do
-    let pourx = 500
-    sls <- NP.runParser parseStraightLines input
-    grid1 <- pourSand (V2 pourx 0) <$> straightLinesToGrid sls
-    let part1 = length . filter (== Sand) . map snd $ M.toList grid1
+    sls   <- NP.runParser parseStraightLines input
+    cave0 <- straightLinesToCave sls
 
-    let floory = (+ 2) . V2.v2Y . Box.bBottomRight . fromJust $ G.box grid1
-    grid2 <- pourSand (V2 pourx 0) <$> straightLinesToGrid
-        ([V2 0 floory, V2 (2 * pourx) floory] : sls)
-    let part2 = length . filter (== Sand) . map snd $ M.toList grid2
+    let cave1 = pourSand (V2 500 0) cave0
+        cave2 = fillSand (V2 500 0) cave0 {caveBottom = caveBottom cave0 + 2}
 
-    pure (pure part1, pure part2)
+    pure (pure (caveSand cave1), pure (caveSand cave2))
