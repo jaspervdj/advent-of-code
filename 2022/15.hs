@@ -1,90 +1,79 @@
-import qualified AdventOfCode.Grid       as G
 import           AdventOfCode.Main
 import qualified AdventOfCode.NanoParser as NP
-import           AdventOfCode.V2         (V2 (..))
-import           Data.List               (foldl', sortOn)
-import           Data.Maybe              (fromJust, isJust)
-import qualified Data.Set                as S
+import           Data.List               (foldl')
+import           Data.Maybe              (mapMaybe)
 
 --------------------------------------------------------------------------------
 
-data Range a = Range a a deriving (Show)
+data RangeSet
+    = RSCons {-# UNPACK #-} !Int {-# UNPACK #-} !Int !RangeSet
+    | RSNil
 
-newtype Ranges a = Ranges [Range a] deriving (Show)
+empty :: RangeSet
+empty = RSNil
 
-mergeRange :: Integral a => Range a -> Range a -> Maybe (Range a)
-mergeRange (Range lo0 hi0) (Range lo1 hi1)
-    | hi0 + 1 < lo1 || lo0 - 1 > hi1 = Nothing
-    | otherwise                      = Just $ Range (min lo0 lo1) (max hi0 hi1)
+insert :: Int -> Int -> RangeSet -> RangeSet
+insert l h RSNil = RSCons l h RSNil
+insert l0 h0 rs@(RSCons l1 h1 rss)
+    | h0 + 1 < l1 = RSCons l0 h0 rs
+    | l0 > h1 + 1 = RSCons l1 h1 (insert l0 h0 rss)
+    | otherwise   = insert (min l0 l1) (max h0 h1) rss
 
-insertRange :: Integral a => Range a -> Ranges a -> Ranges a
-insertRange r (Ranges rs) = case break (isJust . mergeRange r) rs of
-    (_,   [])         -> Ranges (r : rs)
-    (pre, (x : post)) ->
-        insertRange (fromJust (mergeRange r x)) (Ranges $ pre ++ post)
+holes :: RangeSet -> RangeSet
+holes (RSCons _ h0 rs@(RSCons l1 _ _)) = RSCons (h0 + 1) (l1 - 1) (holes rs)
+holes _                                = RSNil
 
-singleton :: Integral a => a -> a -> Ranges a
-singleton x y = Ranges [if x > y then Range y x else Range x y]
+size :: RangeSet -> Int
+size (RSCons l h rs) = h - l + 1 + size rs
+size RSNil           = 0
 
-toList :: Integral a => Ranges a -> [a]
-toList (Ranges rs) = [x | Range lo hi <- rs, x <- [lo .. hi]]
-
-toSet :: Integral a => Ranges a -> S.Set a
-toSet = S.fromList . toList
-
-intersect :: Integral a => Range a -> Ranges a -> Ranges a
-intersect bound (Ranges rs) = Ranges [r | r <- rs, isJust (mergeRange bound r)]
-
-complement :: Integral a => Ranges a -> Ranges a
-complement (Ranges rs0) = Ranges $ go (sortOn (\(Range l _) -> l) rs0)
-  where
-    go (Range _ hi0 : Range lo1 hi1 : rs) =
-        Range (hi0 + 1) (lo1 - 1) : go (Range lo1 hi1 : rs)
-    go _ = []
-
-instance Integral a => Semigroup (Ranges a) where
-    acc <> Ranges rs = foldl' (flip insertRange) acc rs
-
-instance Integral a => Monoid (Ranges a) where
-    mempty  = Ranges []
-    mappend = (<>)
+toList :: RangeSet -> [Int]
+toList (RSCons l h rs) = [l .. h] ++ toList rs
+toList RSNil           = []
 
 --------------------------------------------------------------------------------
 
-type Sensor = (G.Pos, G.Pos)
+data Pos = Pos {-# UNPACK #-} !Int {-# UNPACK #-} !Int
+
+manhattan :: Pos -> Pos -> Int
+manhattan (Pos x0 y0) (Pos x1 y1) = abs (x1 - x0) + abs (y1 - y0)
+
+--------------------------------------------------------------------------------
+
+data Sensor = Sensor !Pos !Pos
 
 parseSensors :: NP.Parser Char [Sensor]
 parseSensors = NP.sepBy1 pair NP.newline
   where
-    pair = (,) <$>
-        (NP.string "Sensor at " *> pos) <*>
-        (NP.string ": closest beacon is at " *> pos)
-    pos = V2
+    pair = Sensor
+        <$> (NP.string "Sensor at " *> pos)
+        <*> (NP.string ": closest beacon is at " *> pos)
+    pos = Pos
         <$> (NP.string "x=" *> NP.signedDecimal)
         <*> (NP.string ", y=" *> NP.signedDecimal)
 
-coverRow :: Int -> Sensor -> Ranges Int
-coverRow y (sensor@(V2 sx sy), beacon)
-    | dy > manhattan = mempty
-    | otherwise      = singleton (sx - manhattan + dy) (sx + manhattan - dy)
+coverRow :: Int -> Sensor -> Maybe (Int, Int)
+coverRow y (Sensor sensor@(Pos sx sy) beacon)
+    | dy > dist = Nothing
+    | otherwise = Just (sx - dist + dy, sx + dist - dy)
   where
-    dy = abs $ y - sy
-    manhattan = G.manhattan sensor beacon
+    dy   = abs $ y - sy
+    dist = manhattan sensor beacon
 
 part1 :: Int -> [Sensor] -> Int
-part1 row input =
-    S.size . (`S.difference` beacons) . toSet $ foldMap (coverRow row) input
-  where
-    beacons = S.fromList [x | (_, V2 x y) <- input, y == row]
+part1 row =
+    size . foldl' (\rs (lo, hi) -> insert lo hi rs) empty .
+    mapMaybe (coverRow row)
 
 part2 :: Int -> [Sensor] -> Int
 part2 bound sensors = head $ do
     y <- [0 .. bound]
-    x <- toList . complement . intersect (Range 0 bound) $
-        foldMap (coverRow y) sensors
+    x <- toList . holes $
+        foldl' (\rs (lo, hi) -> insert lo hi rs) empty $
+        mapMaybe (coverRow y) sensors
     pure $ x * bound + y
 
 main :: IO ()
 main = pureMain $ \str -> do
     input <- NP.runParser parseSensors str
-    pure (pure (part1 2000000 input), pure (show (part2 4000000 input)))
+    pure (pure (part1 2000000 input), pure (part2 4000000 input))
