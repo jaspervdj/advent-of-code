@@ -1,11 +1,9 @@
+import qualified AdventOfCode.Dijkstra   as Dijkstra
 import           AdventOfCode.Main
-import qualified AdventOfCode.Dijkstra as Dijkstra
-import Data.List (nub, foldl')
-import Control.Monad (guard)
-import qualified Data.Set as S
-import qualified Data.Map as M
 import qualified AdventOfCode.NanoParser as NP
 import           Control.Applicative     ((<|>))
+import           Data.List               (foldl')
+import qualified Data.Map                as M
 
 type ValveId = String
 
@@ -30,126 +28,74 @@ makeDistances input = M.fromList $ do
         Dijkstra.bfs (snd . (input M.!)) (const False) v0
     pure ((v0, d), pred (length path))
 
+class Search s where
+    score     :: s -> Int
+    potential :: s -> Int
+    next      :: s -> [s]
+
+best :: Search s => s -> s -> s
+best s0 s1 = if score s0 > score s1 then s0 else s1
+
+bruteforce :: Search s => s -> s
+bruteforce search0 = go search0 search0
+  where
+    go best0 current
+        | potential current < score best0 = best0
+        | otherwise                       =
+            foldl' go (best best0 current) (next current)
+
 type Minute = Int
 
-data State = Valid (S.Set ValveId) Int | Invalid deriving (Show)
-
-best :: [State] -> State
-best []         = Invalid
-best [s]        = s
-best (Invalid : ss) = best ss
-best (Valid o s : Invalid : ss) = best (Valid o s : ss)
-best (Valid o0 s0 : Valid o1 s1 : ss)
-    | s0 > s1   = best (Valid o0 s0 : ss)
-    | otherwise = best (Valid o1 s1 : ss)
-
-fill1 :: Caves -> Distances -> Minute -> ValveId -> M.Map (Minute, ValveId) State
-fill1 input distances time start = mem
-  where
-    mem  = M.fromList [(k, comp k) | k <- keys]
-    keys = (,) <$> [0 .. time] <*> (fst <$> M.toList input)
-
-    comp (minute, loc)
-        | minute <= 0 = if loc == start then Valid S.empty 0 else Invalid
-        | otherwise   = best $ do
-            prev <- fst <$> M.toList input
-            let dist = distances M.! (prev, loc)
-            case M.lookup (minute - 1 - dist, prev) mem of
-                Nothing -> []
-                Just Invalid -> []
-                Just (Valid open score) -> do
-                    guard . not $ loc `S.member` open
-                    let timeLeft  = time - minute
-                        (flow, _) = input M.! loc
-                        pressure  = flow * timeLeft
-                    pure $ Valid (S.insert loc open) (score + pressure)
-
-data Search = Search
-    { searchDistances :: Distances
-    , searchClosed    :: M.Map ValveId Int
-    , searchTimeLeft  :: Minute
-    , searchScore     :: Int
-    , searchPosition  :: ValveId
+data State = State
+    { stateDistances :: Distances
+    , stateClosed    :: M.Map ValveId Int
+    , stateTimeLeft  :: Minute
+    , stateScore     :: Int
+    , statePosition  :: ValveId
     }
 
-bestScore :: Search -> Search -> Search
-bestScore s0 s1 = if searchScore s0 > searchScore s1 then s0 else s1
+instance Search State where
+    score = stateScore
 
-next :: Search -> [Search]
-next s | searchTimeLeft s <= 0 = []
-next s = do
-    (next, flow) <- M.toList $ searchClosed s
-    let dist     = searchDistances s M.! (searchPosition s, next)
-        timeLeft = searchTimeLeft s - dist - 1
-    pure s
-        { searchClosed   = M.delete next (searchClosed s)
-        , searchTimeLeft = timeLeft
-        , searchScore    = searchScore s + flow * timeLeft
-        , searchPosition = next
-        }
+    next s | stateTimeLeft s <= 0 = []
+    next s = do
+        (pos, flow) <- M.toList $ stateClosed s
+        let dist     = stateDistances s M.! (statePosition s, pos)
+            timeLeft = stateTimeLeft s - dist - 1
+        pure s
+            { stateClosed   = M.delete pos (stateClosed s)
+            , stateTimeLeft = timeLeft
+            , stateScore    = stateScore s + flow * timeLeft
+            , statePosition = pos
+            }
 
-potential :: Search -> Int
-potential s = (searchScore s +) $ sum $ do
-    (next, flow) <- M.toList $ searchClosed s
-    let dist     = searchDistances s M.! (searchPosition s, next)
-        timeLeft = searchTimeLeft s - dist - 1
-    pure $ flow * searchTimeLeft s
+    potential s = stateScore s + stateTimeLeft s * sum (stateClosed s)
 
-bruteforce :: Caves -> Distances -> Minute -> ValveId -> Int
-bruteforce input distances time start =
-    searchScore $
-    let search0 = Search distances (fst <$> input) time 0 start in
-    go search0 search0
-  where
-    go best0 current
-        | potential current < searchScore best0 = best0
-        | otherwise                             =
-            foldl' go (bestScore best0 current) (next current)
+data ElephantState = ElephantState State Minute ValveId
 
-data PairSearch = PairSearch Search Minute ValveId
+instance Search ElephantState where
+    score (ElephantState s _ _) = stateScore s
 
-pairScore :: PairSearch -> Int
-pairScore (PairSearch s _ _) = searchScore s
-
-pairBest :: PairSearch -> PairSearch -> PairSearch
-pairBest x y = if pairScore x > pairScore y then x else y
-
-pairNext :: PairSearch -> [PairSearch]
-pairNext (PairSearch s delay wait) = do
-    n <- next s
-    let dt = searchTimeLeft s - searchTimeLeft n
-    if dt < delay then
-        pure $ PairSearch n (delay - dt) wait
-    else
-        let delay' = dt - delay in
-        pure $ PairSearch
-            n {searchPosition = wait, searchTimeLeft = searchTimeLeft s - delay}
+    next (ElephantState s delay pos) = do
+        n <- next s
+        let dt = stateTimeLeft s - stateTimeLeft n
+        if dt < delay then pure $
+            ElephantState n (delay - dt) pos
+        else pure $
+            ElephantState
+            n {statePosition = pos, stateTimeLeft = stateTimeLeft s - delay}
             (dt - delay)
-            (searchPosition n)
+            (statePosition n)
 
-pairPotential :: PairSearch -> Int
-pairPotential (PairSearch s _ _) = (searchScore s +) $ sum $ do
-    (_, flow) <- M.toList $ searchClosed s
-    pure $ flow * searchTimeLeft s
-
-bruteforce2 :: Caves -> Distances -> Minute -> ValveId -> Int
-bruteforce2 input distances time start =
-    pairScore $
-    let search0 = PairSearch (Search distances (fst <$> input) time 0 start) 0 start in
-    go search0 search0
-  where
-    go best0 current
-        | pairPotential current < pairScore best0 = best0
-        | otherwise                             =
-            foldl' go (pairBest best0 current) (pairNext current)
+    potential (ElephantState s _ _) = potential s
 
 main :: IO ()
 main = pureMain $ \str -> do
     input <- NP.runParser parseCaves str
     let distances = makeDistances input
-        caves = M.filter ((> 0) . fst) input
-        Valid _ part1 = best . map snd . M.toList $ fill1 input distances 30 "AA"
-        part1' = bruteforce caves distances 30 "AA"
-        part2 = bruteforce2 caves distances 26 "AA"
-        -- Valid _ part2 = best . map snd . M.toList $ fill2 input distances 26 "AA"
-    pure (pure (show (part1, part1')), pure part2)
+        caves     = M.filter ((> 0)) $ fst <$> input
+        state1    = State distances caves 30 0 "AA"
+        part1     = score $ bruteforce state1
+        state2    = ElephantState state1 {stateTimeLeft = 26} 0 "AA"
+        part2     = score $ bruteforce state2
+    pure (pure part1, pure part2)
