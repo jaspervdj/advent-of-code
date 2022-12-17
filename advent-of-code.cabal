@@ -41,6 +41,7 @@ library
     AdventOfCode.NanoTest
     AdventOfCode.Parsing
     AdventOfCode.PriorityQueue
+    AdventOfCode.Stream
     AdventOfCode.V2
     AdventOfCode.V2.Box
     AdventOfCode.V3
@@ -526,3 +527,6 @@ executable 2022-15
 executable 2022-16
   import:  2022
   main-is: 16.hs
+executable 2022-17
+  import:  2022
+  main-is: 17.hs
