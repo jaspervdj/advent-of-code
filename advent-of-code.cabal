@@ -27,6 +27,7 @@ library
   exposed-modules:
     AdventOfCode.AStar
     AdventOfCode.BinarySearch
+    AdventOfCode.BranchAndBound
     AdventOfCode.Dijkstra
     AdventOfCode.Grid
     AdventOfCode.Grid.Bounded
@@ -533,3 +534,6 @@ executable 2022-17
 executable 2022-18
   import:  2022
   main-is: 18.hs
+executable 2022-19
+  import:  2022
+  main-is: 19.hs

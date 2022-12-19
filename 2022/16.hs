@@ -1,9 +1,10 @@
-import qualified AdventOfCode.Dijkstra   as Dijkstra
+{-# LANGUAGE TypeFamilies #-}
+import           AdventOfCode.BranchAndBound
+import qualified AdventOfCode.Dijkstra       as Dijkstra
 import           AdventOfCode.Main
-import qualified AdventOfCode.NanoParser as NP
-import           Control.Applicative     ((<|>))
-import           Data.List               (foldl')
-import qualified Data.Map                as M
+import qualified AdventOfCode.NanoParser     as NP
+import           Control.Applicative         ((<|>))
+import qualified Data.Map                    as M
 
 type ValveId = String
 
@@ -28,22 +29,6 @@ makeDistances input = M.fromList $ do
         Dijkstra.bfs (snd . (input M.!)) (const False) v0
     pure ((v0, d), pred (length path))
 
-class Search s where
-    score     :: s -> Int
-    potential :: s -> Int
-    next      :: s -> [s]
-
-best :: Search s => s -> s -> s
-best s0 s1 = if score s0 > score s1 then s0 else s1
-
-bruteforce :: Search s => s -> s
-bruteforce search0 = go search0 search0
-  where
-    go best0 current
-        | potential current < score best0 = best0
-        | otherwise                       =
-            foldl' go (best best0 current) (next current)
-
 type Minute = Int
 
 data State = State
@@ -54,7 +39,9 @@ data State = State
     , statePosition  :: ValveId
     }
 
-instance Search State where
+instance BranchAndBound State where
+    type Score State = Int
+
     score = stateScore
 
     next s | stateTimeLeft s <= 0 = []
@@ -73,7 +60,9 @@ instance Search State where
 
 data ElephantState = ElephantState State Minute ValveId
 
-instance Search ElephantState where
+instance BranchAndBound ElephantState where
+    type Score ElephantState = Int
+
     score (ElephantState s _ _) = stateScore s
 
     next (ElephantState s delay pos) = do
@@ -95,7 +84,7 @@ main = pureMain $ \str -> do
     let distances = makeDistances input
         caves     = M.filter ((> 0)) $ fst <$> input
         state1    = State distances caves 30 0 "AA"
-        part1     = score $ bruteforce state1
+        part1     = score $ branchAndBound state1
         state2    = ElephantState state1 {stateTimeLeft = 26} 0 "AA"
-        part2     = score $ bruteforce state2
+        part2     = score $ branchAndBound state2
     pure (pure part1, pure part2)
