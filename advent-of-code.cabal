@@ -549,3 +549,6 @@ executable 2022-21
 executable 2022-22
   import:  2022
   main-is: 22.hs
+executable 2022-23
+  import:  2022
+  main-is: 23.hs
