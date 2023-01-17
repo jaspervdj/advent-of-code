@@ -44,19 +44,26 @@ main = pureMain $ \str -> do
     let blizzards = precomputeBlizzards grid
         period    = V.length blizzards
 
-        dest  = V2 (G.gridWidth grid - 1) (G.gridHeight grid - 1)
+        dest  = V2 (G.gridWidth grid - 1) (G.gridHeight grid)
         start = V2 0 (-1)
 
-        state0 = (0, start)
         neighbourStates (time, pos) = do
             pos' <- pos : map (\d -> G.move 1 d pos) [G.U, G.R, G.D, G.L]
             let time' = (time + 1) `mod` period
             guard $ case G.lookup pos' $ blizzards V.! time' of
-                Nothing       -> pos' == start
+                Nothing       -> pos' == start || pos' == dest
                 Just blizzard -> not blizzard
             pure (time', pos')
 
-        part1 = length $ maybe [] snd $ bfsGoal $
-            bfs neighbourStates ((== dest) . snd) state0
+        part1 = pred . length . maybe [] snd . bfsGoal $
+            bfs neighbourStates ((== dest) . snd) (0, start)
 
-    pure (pure part1, pure "hello world")
+        part2a = pred . length . maybe [] snd . bfsGoal $
+            bfs neighbourStates ((== start) . snd) (part1, dest)
+
+        part2b = pred . length . maybe [] snd . bfsGoal $
+            bfs neighbourStates ((== dest) . snd) (part1 + part2a, start)
+
+        part2 = part1 + part2a + part2b
+
+    pure (pure part1, pure part2)
