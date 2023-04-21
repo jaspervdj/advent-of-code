@@ -4,6 +4,7 @@ import           AdventOfCode.Stream (Stream (..))
 import qualified AdventOfCode.Stream as Stream
 import           AdventOfCode.V2     (V2 (..), (.+.))
 import qualified AdventOfCode.V2     as V2
+import           Control.Monad       (guard)
 import           Data.Char           (isSpace)
 import           Data.Foldable       (foldl')
 import qualified Data.Map            as M
@@ -43,6 +44,24 @@ instance Show World where
         maybe M.empty (M.fromSet (const '@')) (wRock w) <>
         M.fromList [(V2 x 0, '-') | x <- [0 .. wWidth w - 1]]
 
+trim :: World -> World
+trim w = w {wGrid = wGrid w `S.intersection` relevant}
+  where
+    relevant = go S.empty $ S.fromList
+        [(V2 x (wTop w + 1), False) | x <- [0 .. wWidth w - 1]]
+
+    go visited queue0 = case S.minView queue0 of
+        Nothing -> visited
+        Just ((q, True), queue1) -> go (S.insert q visited) queue1
+        Just ((q, False), queue1) ->
+            let new = do
+                    p@(V2 x y) <- G.neighbours q
+                    guard $ x >= 0 && x < wWidth w
+                    guard $ y >= 0 && y <= wTop w
+                    guard . not $ p `S.member` visited
+                    pure (p, p `S.member` wGrid w) in
+            go (S.insert q visited) (queue1 <> S.fromList new)
+
 data Jet = L | R deriving (Eq, Show)
 
 parseJets :: String -> [Jet]
@@ -56,7 +75,7 @@ step :: World -> World
 step w
     | Nothing <- wRock w =
         let shape = Stream.head (wRocks w)
-            y     = wTop w + 3
+            y     = wTop w + 4
             rock  = move (V2 2 y) shape in
         w
             { wRocks = Stream.tail (wRocks w)
@@ -71,7 +90,7 @@ step w
             { wFall = not (wFall w)
             , wRock = Just rock1
             }
-        else w
+        else trim $ w
             { wRock    = Nothing
             , wGrid    = wGrid w <> rock0
             , wFall    = not (wFall w)
@@ -103,7 +122,7 @@ main :: IO ()
 main = simpleMain $ \input ->
     let jets   = parseJets $ filter (not . isSpace) input
         world0 = World (Stream.fromListCycle rocks) (Stream.fromListCycle jets)
-            10 Nothing False S.empty 0 0
+            7 Nothing False S.empty 0 0
         world2022 = head . dropWhile ((< 2022) . wStopped) $ iterate step world0
-        viz = unlines $ fmap show $ take 20 $ iterate step world0 in
+        viz = unlines . map show $ take 20 $ iterate step world0 in
     (viz, wTop world2022)
