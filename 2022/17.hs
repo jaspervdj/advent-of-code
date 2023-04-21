@@ -1,7 +1,6 @@
 import qualified AdventOfCode.Grid   as G
+import qualified AdventOfCode.Loop   as Loop
 import           AdventOfCode.Main
-import           AdventOfCode.Stream (Stream (..))
-import qualified AdventOfCode.Stream as Stream
 import           AdventOfCode.V2     (V2 (..), (.+.), (.-.))
 import qualified AdventOfCode.V2     as V2
 import           Control.Monad       (guard)
@@ -9,6 +8,7 @@ import           Data.Char           (isSpace)
 import           Data.Foldable       (foldl')
 import qualified Data.Map            as M
 import qualified Data.Set            as S
+import qualified Data.Vector         as V
 
 type Shape = S.Set G.Pos
 
@@ -28,15 +28,17 @@ move :: V2 Int -> Shape -> Shape
 move offset = S.map (.+. offset)
 
 data World = World
-    { wRocks   :: Stream Shape
-    , wJets    :: Stream Jet
-    , wWidth   :: Int
-    , wRock    :: Maybe (S.Set G.Pos)
-    , wFall    :: Bool
-    , wGrid    :: S.Set G.Pos
-    , wTop     :: Int
-    , wBottom  :: Int
-    , wStopped :: Int
+    { wRocks    :: V.Vector Shape
+    , wRocksIdx :: Int
+    , wJets     :: V.Vector Jet
+    , wJetsIdx  :: Int
+    , wWidth    :: Int
+    , wRock     :: Maybe (S.Set G.Pos)
+    , wFall     :: Bool
+    , wGrid     :: S.Set G.Pos
+    , wTop      :: Int
+    , wBottom   :: Int
+    , wStopped  :: Int
     }
 
 instance Show World where
@@ -44,6 +46,21 @@ instance Show World where
         M.fromSet (const '#') (wGrid w) <>
         maybe M.empty (M.fromSet (const '@')) (wRock w) <>
         M.fromList [(V2 x 0, '-') | x <- [0 .. wWidth w - 1]]
+
+emptyWorld :: World
+emptyWorld = World
+    { wRocks    = V.empty
+    , wRocksIdx = 0
+    , wJets     = V.empty
+    , wJetsIdx  = 0
+    , wWidth    = 7
+    , wRock     = Nothing
+    , wFall     = False
+    , wGrid     = S.empty
+    , wTop      = 0
+    , wBottom   = 0
+    , wStopped  = 0
+    }
 
 trim :: World -> World
 trim w = w
@@ -82,12 +99,12 @@ parseJets = map toJet
 step :: World -> World
 step w
     | Nothing <- wRock w =
-        let shape = Stream.head (wRocks w)
+        let shape = wRocks w V.! wRocksIdx w
             y     = wTop w + 4
             rock  = move (V2 2 y) shape in
         w
-            { wRocks = Stream.tail (wRocks w)
-            , wRock  = Just rock
+            { wRocksIdx = succ (wRocksIdx w) `mod` V.length (wRocks w)
+            , wRock     = Just rock
             }
 
     | Just rock0 <- wRock w, wFall w =
@@ -107,7 +124,7 @@ step w
             }
 
     | Just rock0 <- wRock w =
-        let (jet, jets) = Stream.uncons (wJets w)
+        let jet    = wJets w V.! wJetsIdx w
             offset = case jet of
                 L -> V2 (-1) 0
                 R -> V2 1 0
@@ -117,21 +134,51 @@ step w
                 any ((< 0) . V2.v2X) rock1 ||
                 not (S.null . S.intersection rock1 $ wGrid w) in
         if not stuck then w
-            { wJets = jets
-            , wRock = Just rock1
-            , wFall = not (wFall w)
+            { wJetsIdx = succ (wJetsIdx w) `mod` V.length (wJets w)
+            , wRock    = Just rock1
+            , wFall    = not (wFall w)
             }
         else w
-            { wJets = jets
-            , wFall = not (wFall w)
+            { wJetsIdx = succ (wJetsIdx w) `mod` V.length (wJets w)
+            , wFall    = not (wFall w)
             }
+
+wHeight :: World -> Int
+wHeight w = wTop w + wBottom w
 
 main :: IO ()
 main = simpleMain $ \input ->
     let jets   = parseJets $ filter (not . isSpace) input
-        world0 = World (Stream.fromListCycle rocks) (Stream.fromListCycle jets)
-            7 Nothing False S.empty 0 0 0
-        world2022 = head . dropWhile ((< 2022) . wStopped) $ iterate step world0
-        -- viz = unlines . map show $ take 20 $ iterate step world0 in
-        viz = show $ (!! 300) $ iterate step world0 in
-    (viz, wTop world2022 + wBottom world2022)
+        world0 = emptyWorld
+            { wRocks = V.fromList rocks
+            , wJets  = V.fromList jets
+            }
+        part1 = head . dropWhile ((< 2022) . wStopped) $ iterate step world0
+
+        -- Find loop in the input
+        key w  = (wRocksIdx w, wJetsIdx w, wGrid w)
+        stepToNextDrop w0 =
+            let w1 = step w0 in
+            if wRock w1 == Nothing then w1 else stepToNextDrop w1
+        Just loop = Loop.findLoop key stepToNextDrop world0
+
+        -- Determine bottom and stopped blocks in the loop.
+        stoppedAtFirst = wStopped $ Loop.lFirst loop
+        bottomAtFirst = wBottom $ Loop.lFirst loop
+        stoppedAtSecond = wStopped $ Loop.lSecond loop
+        bottomAtSecond = wBottom $ Loop.lSecond loop
+        stoppedPerCycle = stoppedAtSecond - stoppedAtFirst
+        bottomDeltaPerCycle = bottomAtSecond - bottomAtFirst
+
+        -- Skip using cycles.
+        stoppedTarget  = 1000000000000
+        numCycles      = (stoppedTarget - stoppedAtFirst) `div` stoppedPerCycle
+        fast           = (Loop.lFirst loop)
+            { wStopped = stoppedAtFirst + numCycles * stoppedPerCycle
+            , wBottom  = bottomAtFirst  + numCycles * bottomDeltaPerCycle
+            }
+
+        -- Now perform the slow steps as usual, with a higher wBottom.
+        part2 = head . dropWhile ((< stoppedTarget) . wStopped) $
+            iterate step fast in
+    (wHeight part1, wHeight part2)
