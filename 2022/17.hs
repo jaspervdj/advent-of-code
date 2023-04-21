@@ -15,7 +15,7 @@ rocks :: [Shape]
 rocks = fmap S.fromList $
     [ [V2 x 0 | x <- [0 .. 3]]
     , [V2 1 0, V2 0 1, V2 1 1, V2 2 1, V2 1 2]
-    , [V2 2 0, V2 2 1, V2 0 2, V2 1 2, V2 2 2]
+    , [V2 2 2, V2 2 1, V2 0 0, V2 1 0, V2 2 0]
     , [V2 0 y | y <- [0 .. 3]]
     , [V2 0 0, V2 1 0, V2 0 1, V2 1 1]
     ]
@@ -38,7 +38,7 @@ data World = World
     }
 
 instance Show World where
-    show w = G.toString $
+    show w = unlines . reverse . lines . G.toString $
         M.fromSet (const '#') (wGrid w) <>
         maybe M.empty (M.fromSet (const '@')) (wRock w) <>
         M.fromList [(V2 x 0, '-') | x <- [0 .. wWidth w - 1]]
@@ -56,7 +56,7 @@ step :: World -> World
 step w
     | Nothing <- wRock w =
         let shape = Stream.head (wRocks w)
-            y     = wTop w - shapeHeight shape - 3
+            y     = wTop w + 3
             rock  = move (V2 2 y) shape in
         w
             { wRocks = Stream.tail (wRocks w)
@@ -64,8 +64,8 @@ step w
             }
 
     | Just rock0 <- wRock w, wFall w =
-        let rock1 = move (V2 0 1) rock0
-            stuck = any ((>= 0) . V2.v2Y) rock1 ||
+        let rock1 = move (V2 0 (-1)) rock0
+            stuck = any ((<= 0) . V2.v2Y) rock1 ||
                 not (S.null . S.intersection rock1 $ wGrid w) in
         if not stuck then w
             { wFall = not (wFall w)
@@ -75,7 +75,7 @@ step w
             { wRock    = Nothing
             , wGrid    = wGrid w <> rock0
             , wFall    = not (wFall w)
-            , wTop     = minimum $ wTop w : map V2.v2Y (S.toList rock0)
+            , wTop     = maximum $ wTop w : map V2.v2Y (S.toList rock0)
             , wStopped = wStopped w + 1
             }
 
@@ -85,7 +85,7 @@ step w
                 L -> V2 (-1) 0
                 R -> V2 1 0
             rock1 = move offset rock0
-            stuck = any ((>= 0) . V2.v2Y) rock1 ||
+            stuck =
                 any ((>= wWidth w) . V2.v2X) rock1 ||
                 any ((< 0) . V2.v2X) rock1 ||
                 not (S.null . S.intersection rock1 $ wGrid w) in
@@ -103,7 +103,7 @@ main :: IO ()
 main = simpleMain $ \input ->
     let jets   = parseJets $ filter (not . isSpace) input
         world0 = World (Stream.fromListCycle rocks) (Stream.fromListCycle jets)
-            7 Nothing False S.empty 0 0
+            10 Nothing False S.empty 0 0
         world2022 = head . dropWhile ((< 2022) . wStopped) $ iterate step world0
         viz = unlines $ fmap show $ take 20 $ iterate step world0 in
-    (viz, negate (wTop world2022))
+    (viz, wTop world2022)
