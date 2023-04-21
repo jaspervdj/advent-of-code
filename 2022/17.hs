@@ -2,7 +2,7 @@ import qualified AdventOfCode.Grid   as G
 import           AdventOfCode.Main
 import           AdventOfCode.Stream (Stream (..))
 import qualified AdventOfCode.Stream as Stream
-import           AdventOfCode.V2     (V2 (..), (.+.))
+import           AdventOfCode.V2     (V2 (..), (.+.), (.-.))
 import qualified AdventOfCode.V2     as V2
 import           Control.Monad       (guard)
 import           Data.Char           (isSpace)
@@ -35,6 +35,7 @@ data World = World
     , wFall    :: Bool
     , wGrid    :: S.Set G.Pos
     , wTop     :: Int
+    , wBottom  :: Int
     , wStopped :: Int
     }
 
@@ -45,9 +46,16 @@ instance Show World where
         M.fromList [(V2 x 0, '-') | x <- [0 .. wWidth w - 1]]
 
 trim :: World -> World
-trim w = w {wGrid = wGrid w `S.intersection` relevant}
+trim w = w
+    { wGrid   = S.map (.-. V2 0 offset) relevant
+    , wRock   = S.map (.-. V2 0 offset) <$> wRock w
+    , wTop    = wTop w - offset
+    , wBottom = wBottom w + offset
+    }
   where
-    relevant = go S.empty $ S.fromList
+    offset = pred . minimum . fmap v2Y $ S.toList relevant
+
+    relevant = S.intersection (wGrid w) . go S.empty $ S.fromList
         [(V2 x (wTop w + 1), False) | x <- [0 .. wWidth w - 1]]
 
     go visited queue0 = case S.minView queue0 of
@@ -122,7 +130,8 @@ main :: IO ()
 main = simpleMain $ \input ->
     let jets   = parseJets $ filter (not . isSpace) input
         world0 = World (Stream.fromListCycle rocks) (Stream.fromListCycle jets)
-            7 Nothing False S.empty 0 0
+            7 Nothing False S.empty 0 0 0
         world2022 = head . dropWhile ((< 2022) . wStopped) $ iterate step world0
-        viz = unlines . map show $ take 20 $ iterate step world0 in
-    (viz, wTop world2022)
+        -- viz = unlines . map show $ take 20 $ iterate step world0 in
+        viz = show $ (!! 300) $ iterate step world0 in
+    (viz, wTop world2022 + wBottom world2022)
