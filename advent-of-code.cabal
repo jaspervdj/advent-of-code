@@ -45,7 +45,6 @@ library
     AdventOfCode.NanoTest
     AdventOfCode.Parsing
     AdventOfCode.PriorityQueue
-    AdventOfCode.Stream
     AdventOfCode.V2
     AdventOfCode.V2.Box
     AdventOfCode.V3
