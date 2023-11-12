@@ -1,3 +1,6 @@
+(load "lib/scm/list.scm")
+(load "lib/scm/string.scm")
+
 (define-structure range low high)
 
 (define (read-range port) (let*

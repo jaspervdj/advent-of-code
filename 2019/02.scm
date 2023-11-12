@@ -1,31 +1,10 @@
-(define (read-intcode port) (let*
-    ((not-space? (lambda (c) (not (char-whitespace? c))))
-     (chars (filter not-space? (read-all port read-char)))
-     (ints (split-string (list->string chars) #\,)))
-    (apply vector (map string->number ints))))
-
-(define (intcode-run! mem) (letrec*
-    ((binop (lambda (ip f) (let*
-        ((lhsp (vector-ref mem (+ ip 1)))
-            (lhs (vector-ref mem lhsp))
-            (rhsp (vector-ref mem (+ ip 2)))
-            (rhs (vector-ref mem rhsp))
-            (res (f lhs rhs))
-            (outp (vector-ref mem (+ ip 3))))
-            (vector-set! mem outp res))))
-     (loop (lambda (ip) void (let
-        ((opcode (vector-ref mem ip)))
-        (cond
-            ((= 1 opcode)  (binop ip +) (loop (+ ip 4)))
-            ((= 2 opcode)  (binop ip *) (loop (+ ip 4)))
-            ((= 99 opcode) void))))))
-    (loop 0)))
+(load "lib/scm/intcode.scm")
 
 (define (intcode-run intcode a b) (let
     ((cpy (vector-copy intcode)))
     (vector-set! cpy 1 a)
     (vector-set! cpy 2 b)
-    (intcode-run! cpy)
+    (intcode-run! cpy void void)
     (vector-ref cpy 0)))
 
 (define (solve intcode) (letrec*
@@ -35,6 +14,6 @@
         (else                                   (loop (+ a 1) b))))))
     (loop 0 0)))
 
-(let* ((intcode (read-intcode (current-input-port))))
+(let* ((intcode (string->intcode (read-line))))
     (write (intcode-run intcode 12 2)) (newline)
     (write (solve intcode)) (newline))

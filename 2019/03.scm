@@ -1,3 +1,7 @@
+(load "lib/scm/list.scm")
+(load "lib/scm/string.scm")
+(load "lib/scm/table.scm")
+
 (define-structure command dir n)
 
 (define (command-decrement c)
