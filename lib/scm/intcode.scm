@@ -32,8 +32,8 @@
        (case opcode
            ((add) (store 3 (+ (load 1) (load 2))) (loop (+ ip 4)))
            ((mul) (store 3 (* (load 1) (load 2))) (loop (+ ip 4)))
-           ((ipt) (store 1 (input))               (loop (+ ip 2)))
-           ((opt) (output (load 1))               (loop (+ ip 2)))
+           ((ipt) (input (lambda (x) (store 1 x) (loop (+ ip 2)))))
+           ((opt) (output (load 1) (lambda () (loop (+ ip 2)))))
            ((jit) (if (not (zero? (load 1))) (loop (load 2)) (loop (+ ip 3))))
            ((jif) (if (zero? (load 1))       (loop (load 2)) (loop (+ ip 3))))
            ((ltn) (store 3 (if (< (load 1) (load 2)) 1 0)) (loop (+ ip 4)))

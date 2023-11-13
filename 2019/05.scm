@@ -2,10 +2,10 @@
 
 (let*
     ((program (string->intcode (read-line)))
-     (out 0))
-    (intcode-run! (vector-copy program) (lambda () 1) (lambda (x) (set! out x)))
-    (write out)
-    (newline)
-    (intcode-run! (vector-copy program) (lambda () 5) (lambda (x) (set! out x)))
-    (write out)
-    (newline))
+     (out 0)
+     (run (lambda (n) (intcode-run!
+        (vector-copy program)
+        (lambda (k) (k n))
+        (lambda (x k) (set! out x) (k))))))
+    (run 1) (write out) (newline)
+    (run 5) (write out) (newline))
