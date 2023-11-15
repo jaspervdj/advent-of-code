@@ -28,9 +28,8 @@
             (filter (lambda (y) (not (equal? x y))) l)))
         l))))
 
-(define (run-amplifiers program pss) (let*
-    ((out 0)
-     (fifos (map
+(define (run-amplifiers program pss k) (let
+    ((fifos (map
         (lambda (s) (let ((fifo (empty-fifo))) (fifo-write fifo s) fifo))
         pss)))
     (for-range
@@ -39,21 +38,21 @@
             (lambda (k) (fifo-read (list-ref fifos idx) k))
             (lambda (x k) (let
                 ((fifo (list-ref fifos (remainder (+ idx 1) (length pss)))))
-                (set! out x)
                 (fifo-write fifo x)
                 (k)))))
         5)
     (fifo-write (car fifos) 0)
-    out))
+    (fifo-read (car fifos) k)))
 
 (define (max-thrust program pss) (let*
     ((best '()))
     (for-combinations
-        (lambda (pss) (let
-            ((thrust (run-amplifiers program pss)))
-            (cond
+        (lambda (pss) (run-amplifiers
+            program
+            pss
+            (lambda (thrust) (cond
                 ((null? best) (set! best thrust))
-                ((> thrust best) (set! best thrust)))))
+                ((> thrust best) (set! best thrust))))))
         pss)
     best))
 
