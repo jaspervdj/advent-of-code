@@ -1,3 +1,4 @@
+(load "lib/scm/list.scm")
 (load "lib/scm/intcode.scm")
 
 (define-structure fifo reader queue)
@@ -16,10 +17,6 @@
 
 (define (empty-fifo) (make-fifo '() '()))
 
-(define (for-range f n) (letrec
-    ((loop (lambda (i) (cond ((< i n) (f i) (loop (+ i 1)))))))
-    (loop 0)))
-
 (define (for-combinations f l) (cond
     ((null? l) (f '()))
     (else (for-each
@@ -33,7 +30,7 @@
         (lambda (s) (let ((fifo (empty-fifo))) (fifo-write fifo s) fifo))
         pss)))
     (for-range
-        (lambda (idx) (intcode-run!
+        (lambda (idx) (intcode-run
             (vector-copy program)
             (lambda (k) (fifo-read (list-ref fifos idx) k))
             (lambda (x k) (let

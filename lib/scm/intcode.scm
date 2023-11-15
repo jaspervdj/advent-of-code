@@ -16,19 +16,29 @@
     ((6)  'jif)
     ((7)  'ltn)
     ((8)  'equ)
+    ((9)  'rbe)
     ((99) 'hlt)))
 
-(define (intcode-run! mem input output) (letrec
-    ((loop (lambda (ip) void (let*
-       ((instr (vector-ref mem ip))
+(define (param-mode instr n) (case
+    (remainder (floor (/ instr (expt 10 (+ 1 n)))) 10)
+    ((0) 'position)
+    ((1) 'immediate)
+    ((2) 'relative)))
+
+(define (intcode-run program input output) (letrec
+    ((mem (make-table))
+     (relbase 0)
+     (loop (lambda (ip) (let*
+       ((instr (table-ref mem ip 0))
         (opcode (instr-opcode instr))
-        (load (lambda (n) (let
-           ((position-mode
-               (zero? (remainder (floor (/ instr (expt 10 (+ 1 n)))) 10)))
-            (lit (vector-ref mem (+ ip n))))
-           (if position-mode (vector-ref mem lit) lit))))
-        (store (lambda (n x)
-            (let ((out (vector-ref mem (+ ip n)))) (vector-set! mem out x)))))
+        (param-value (lambda (n) (table-ref mem (+ ip n) 0)))
+        (load (lambda (n) (case (param-mode instr n)
+            ((immediate) (param-value n))
+            ((position)  (table-ref mem (param-value n) 0))
+            ((relative)  (table-ref mem (+ relbase (param-value n)) 0)))))
+        (store (lambda (n x) (case (param-mode instr n)
+            ((position) (table-set! mem (param-value n) x))
+            ((relative) (table-set! mem (+ relbase (param-value n)) x))))))
        (case opcode
            ((add) (store 3 (+ (load 1) (load 2))) (loop (+ ip 4)))
            ((mul) (store 3 (* (load 1) (load 2))) (loop (+ ip 4)))
@@ -38,5 +48,10 @@
            ((jif) (if (zero? (load 1))       (loop (load 2)) (loop (+ ip 3))))
            ((ltn) (store 3 (if (< (load 1) (load 2)) 1 0)) (loop (+ ip 4)))
            ((equ) (store 3 (if (= (load 1) (load 2)) 1 0)) (loop (+ ip 4)))
+           ((rbe) (set! relbase (+ relbase (load 1))) (loop (+ ip 2)))
            ((hlt) void))))))
-    (loop 0)))
+    (for-range
+         (lambda (i) (table-set! mem i (vector-ref program i)))
+         (vector-length program))
+    (loop 0)
+    mem))

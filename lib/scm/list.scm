@@ -12,3 +12,8 @@
     ((null? l) #f)
     ((p? (car l)) #t)
     (else (any p? (cdr l)))))
+
+; Does this belong here?
+(define (for-range f n) (letrec
+    ((loop (lambda (i) (cond ((< i n) (f i) (loop (+ i 1)))))))
+    (loop 0)))
