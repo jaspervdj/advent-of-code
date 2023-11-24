@@ -33,3 +33,12 @@
     ((right) 'down)
     ((down)  'left)
     ((left)  'up)))
+
+(define-structure p3d x y z)
+
+(define (p3d-add p q) (make-p3d
+    (+ (p3d-x p) (p3d-x q))
+    (+ (p3d-y p) (p3d-y q))
+    (+ (p3d-z p) (p3d-z q))))
+
+(define (p3d-abs p) (+ (abs (p3d-x p)) (abs (p3d-y p)) (abs (p3d-z p))))
