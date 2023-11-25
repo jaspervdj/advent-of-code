@@ -9,3 +9,8 @@
                     (table-set! acc key1 (f val1 val2)))))
         table1)
     acc))
+
+(define (table-fold f z table) (let
+    ((acc z))
+    (table-for-each (lambda (k v) (set! acc (f k v acc))) table)
+    acc))
