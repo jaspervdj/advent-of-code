@@ -12,12 +12,12 @@ common depends
 
   build-depends:
     array                >= 0.5  && < 0.6,
-    base                 >= 4.13 && < 4.17,
+    base                 >= 4.13 && < 4.18,
     bytestring           >= 0.10 && < 0.12,
     containers           >= 0.6  && < 0.7,
     directory            >= 1.3  && < 1.4,
     filepath             >= 1.4  && < 1.5,
-    hashable             >= 1.3  && < 1.4,
+    hashable             >= 1.3  && < 1.5,
     mtl                  >= 2.2  && < 2.3,
     primitive            >= 0.7  && < 0.8,
     process              >= 1.6  && < 1.7,
@@ -557,3 +557,10 @@ executable 2022-24
 executable 2022-25
   import:  2022
   main-is: 25.hs
+
+common 2023
+  import:         solution
+  hs-source-dirs: 2023
+executable 2023-01
+  import:  2023
+  main-is: 01.hs
