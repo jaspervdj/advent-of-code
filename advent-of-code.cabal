@@ -567,3 +567,6 @@ executable 2023-01
 executable 2023-02
   import:  2023
   main-is: 02.hs
+executable 2023-03
+  import:  2023
+  main-is: 03.hs
