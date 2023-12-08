@@ -15,7 +15,7 @@
 
 (defn main
   []
-  (let [directions (parse-directions (slurp "2015/03.txt"))
+  (let [directions (parse-directions (slurp *in*))
         real-santa-directions (every-second directions)
         robo-santa-directions (every-second (rest directions))]
     (println (count (deliver-presents directions)))
@@ -23,3 +23,5 @@
                      +
                      (deliver-presents real-santa-directions)
                      (deliver-presents robo-santa-directions))))))
+
+(main)

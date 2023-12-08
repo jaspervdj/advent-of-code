@@ -1,9 +1,0 @@
-*.bin
-*.o
-*.hi
-*.cmx
-*.cmi
-*.depends
-*.bak
-*.gdb
-/dist-newstyle

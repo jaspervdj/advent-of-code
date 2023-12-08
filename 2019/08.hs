@@ -1,14 +1,18 @@
-{-# LANGUAGE DeriveFoldable    #-}
-{-# LANGUAGE DeriveFunctor     #-}
-{-# LANGUAGE DeriveTraversable #-}
-{-# LANGUAGE LambdaCase        #-}
+{-# LANGUAGE DeriveFoldable     #-}
+{-# LANGUAGE DeriveFunctor      #-}
+{-# LANGUAGE DeriveTraversable  #-}
+{-# LANGUAGE LambdaCase         #-}
+{-# LANGUAGE StandaloneDeriving #-}
 import qualified Data.Foldable       as F
 import           Data.Foldable.Extra (minimumOn)
 import qualified Data.List           as L
 import           Data.Maybe          (mapMaybe)
 
 newtype Compose f g a = Compose (f (g a))
-    deriving (Foldable, Functor, Traversable)
+
+deriving instance (Functor     f, Functor     g) => Functor     (Compose f g)
+deriving instance (Foldable    f, Foldable    g) => Foldable    (Compose f g)
+deriving instance (Traversable f, Traversable g) => Traversable (Compose f g)
 
 count :: (Eq a, Foldable f) => a -> f a -> Int
 count x = F.foldl' (\acc y -> if x == y then acc + 1 else acc) 0
