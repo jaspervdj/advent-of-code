@@ -324,5 +324,6 @@ in  rec {
         d09 = buildHaskell {year = "2023"; day = "09";};
         d10 = buildHaskell {year = "2023"; day = "10";};
         d11 = buildHaskell {year = "2023"; day = "11";};
+        d12 = buildHaskell {year = "2023"; day = "12";};
     };
 }
