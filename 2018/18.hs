@@ -58,6 +58,6 @@ main = do
     print $ resourceValue $ states !! 10
 
     -- Part 2
-    let Just loop = Loop.findLoop id stepLandscape grid
-        idx       = Loop.equivalent loop 1000000000
+    let loop = Loop.findLoop id stepLandscape grid
+        idx  = Loop.equivalent loop 1000000000
     print $ resourceValue $ states !! idx

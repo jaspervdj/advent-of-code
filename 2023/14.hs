@@ -61,9 +61,8 @@ main = pureMain $ \str -> do
     platform <- platformFromString str
     let part1 = rollRocks G.U platform
 
-    let step = rollRocks G.R . rollRocks G.D . rollRocks G.L . rollRocks G.U
-    loop <- maybe (Left "no loop") Right $ Loop.findLoop pRocks step platform
-    let smaller = Loop.equivalent loop 1000000000
-        part2   = (!! smaller) $ iterate step platform
+    let step  = rollRocks G.R . rollRocks G.D . rollRocks G.L . rollRocks G.U
+        loop  = Loop.findLoop pRocks step platform
+        part2 = (!! Loop.equivalent loop 1000000000) $ iterate step platform
 
     pure (pure (totalLoad part1), pure (totalLoad part2))

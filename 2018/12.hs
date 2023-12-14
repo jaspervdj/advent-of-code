@@ -58,11 +58,11 @@ main = do
     let generations = iterate (generation rules) initial
     print $ sum $ generations !! 20
 
-    let Just loop = Loop.findLoop showPots (generation rules) initial
+    let loop = Loop.findLoop showPots (generation rules) initial
 
-    -- It turns out that `lLength = 1`, which makes things a lot simpler.  We
-    -- assume this is the case for all inputs.
-    let shift =
+        -- It turns out that `lLength = 1`, which makes things a lot simpler.
+        -- We assume this is the case for all inputs.
+        shift =
             let (lo1, _) = range (Loop.lFirst loop)
                 (lo2, _) = range (Loop.lSecond loop) in
             lo2 - lo1

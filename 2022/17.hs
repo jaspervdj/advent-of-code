@@ -160,7 +160,7 @@ main = simpleMain $ \input ->
         stepToNextDrop w0 =
             let w1 = step w0 in
             if wRock w1 == Nothing then w1 else stepToNextDrop w1
-        Just loop = Loop.findLoop key stepToNextDrop world0
+        loop = Loop.findLoop key stepToNextDrop world0
 
         -- Determine bottom and stopped blocks in the loop.
         stoppedAtFirst = wStopped $ Loop.lFirst loop

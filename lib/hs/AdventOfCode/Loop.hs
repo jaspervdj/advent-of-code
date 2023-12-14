@@ -22,14 +22,14 @@ data Loop a = Loop
 
 findLoop
     :: Ord k
-    => (a -> k)        -- ^ Conversion to a key that has some equality measure
-    -> (a -> a)        -- ^ Step function
-    -> a               -- ^ Initial state
-    -> Maybe (Loop a)  -- ^ Resulting loop
+    => (a -> k)  -- ^ Conversion to a key that has some equality measure
+    -> (a -> a)  -- ^ Step function
+    -> a         -- ^ Initial state
+    -> Loop a    -- ^ Resulting loop
 findLoop toKey f = go M.empty 0
   where
     go memory !i !x = case M.lookup xk memory of
-        Just (j, y) -> Just $ Loop j y (i - j) x
+        Just (j, y) -> Loop j y (i - j) x
         Nothing     ->
             go (M.insert xk (i, x) memory) (i + 1) (f x)
       where
