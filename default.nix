@@ -12,7 +12,12 @@ let
                 ]);
         in  pkgs.stdenv.mkDerivation rec {
             name = "${year}-${day}";
-            srcs = [./${year} ./lib/hs];
+            srcs = [
+                (builtins.filterSource
+                    (name: type: builtins.baseNameOf name == "${day}.hs")
+                    ./${year})
+                ./lib/hs
+            ];
             sourceRoot = ".";
             nativeBuildInputs = [pkgs.makeWrapper];
             buildPhase = ''
