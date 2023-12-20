@@ -14,14 +14,17 @@ module AdventOfCode.Ranges
     , member
 
     , offset
+
+    , toPairs
+    , toList
     ) where
 
-import           Data.List  (foldl')
+import           Data.List  (foldl', sortOn)
 import           Data.Maybe (catMaybes, maybeToList)
 import           Prelude    hiding (maximum, minimum, null)
 import qualified Prelude    as Prelude
 
-data Range a = Range a a deriving (Eq, Show) -- Ordered, both inclusive.
+data Range a = Range !a !a deriving (Eq, Show) -- Ordered, both inclusive.
 
 newtype Ranges a = Ranges {unRanges :: [Range a]} deriving (Show)
 
@@ -106,3 +109,9 @@ member x (Ranges rs) = or [x >= lo && x <= hi | Range lo hi <- rs]
 
 offset :: Integral a => a -> Ranges a -> Ranges a
 offset d (Ranges rs) = Ranges [Range (lo + d) (hi + d) | Range lo hi <- rs]
+
+toList :: Integral a => Ranges a -> [a]
+toList r = [x | (lo, hi) <- toPairs r, x <- [lo .. hi]]
+
+toPairs :: Integral a => Ranges a -> [(a, a)]
+toPairs (Ranges rs) = sortOn fst [(lo, hi) | Range lo hi <- rs]

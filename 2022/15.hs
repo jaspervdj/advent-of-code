@@ -1,35 +1,8 @@
 import           AdventOfCode.Main
 import qualified AdventOfCode.NanoParser as NP
+import qualified AdventOfCode.Ranges     as R
 import           Data.List               (foldl')
 import           Data.Maybe              (mapMaybe)
-
---------------------------------------------------------------------------------
-
-data RangeSet
-    = RSCons {-# UNPACK #-} !Int {-# UNPACK #-} !Int !RangeSet
-    | RSNil
-
-empty :: RangeSet
-empty = RSNil
-
-insert :: Int -> Int -> RangeSet -> RangeSet
-insert l h RSNil = RSCons l h RSNil
-insert l0 h0 rs@(RSCons l1 h1 rss)
-    | h0 + 1 < l1 = RSCons l0 h0 rs
-    | l0 > h1 + 1 = RSCons l1 h1 (insert l0 h0 rss)
-    | otherwise   = insert (min l0 l1) (max h0 h1) rss
-
-holes :: RangeSet -> RangeSet
-holes (RSCons _ h0 rs@(RSCons l1 _ _)) = RSCons (h0 + 1) (l1 - 1) (holes rs)
-holes _                                = RSNil
-
-size :: RangeSet -> Int
-size (RSCons l h rs) = h - l + 1 + size rs
-size RSNil           = 0
-
-toList :: RangeSet -> [Int]
-toList (RSCons l h rs) = [l .. h] ++ toList rs
-toList RSNil           = []
 
 --------------------------------------------------------------------------------
 
@@ -62,14 +35,20 @@ coverRow y (Sensor sensor@(Pos sx sy) beacon)
 
 part1 :: Int -> [Sensor] -> Int
 part1 row =
-    size . foldl' (\rs (lo, hi) -> insert lo hi rs) empty .
+    R.size . foldl' (\rs (lo, hi) -> R.range lo hi <> rs) mempty .
     mapMaybe (coverRow row)
+
+holes :: R.Ranges Int -> R.Ranges Int
+holes ranges = mconcat $
+    zipWith (\(_, h) (l, _) -> R.range (h + 1) (l - 1)) list (drop 1 list)
+  where
+    list = R.toPairs ranges
 
 part2 :: Int -> [Sensor] -> Int
 part2 bound sensors = head $ do
     y <- [0 .. bound]
-    x <- toList . holes $
-        foldl' (\rs (lo, hi) -> insert lo hi rs) empty $
+    x <- R.toList . holes $
+        foldl' (\rs (lo, hi) -> R.range lo hi <> rs) mempty $
         mapMaybe (coverRow y) sensors
     pure $ x * bound + y
 
