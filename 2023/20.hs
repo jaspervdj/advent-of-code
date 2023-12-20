@@ -110,10 +110,9 @@ logP2 _                   = LogP2 mempty 0
 
 part2 :: Spec -> Either String Int
 part2 spec = do
-    con <- case [k | (k, (Conjunction, ns)) <- M.toList spec, "rx" `elem` ns] of
-        [k] -> pure k
+    prevs <- case inputs spec "rx" of
+        [k] -> pure $ inputs spec k
         _   -> throwError "no single con"
-    let prevs = [k | (k, (_, ns)) <- M.toList spec, con `elem` ns]
     when (null prevs) $ throwError "no prevs found"
     -- Iterate until we find a first high for each of the inputs to con.
     let (LogP2 his _) = head $
