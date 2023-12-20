@@ -1,6 +1,7 @@
 module AdventOfCode.Queue
     ( Queue
     , empty
+    , singleton
     , fromList
     , push
     , pop
@@ -10,6 +11,9 @@ data Queue a = Queue [a] [a]
 
 empty :: Queue a
 empty = Queue [] []
+
+singleton :: a -> Queue a
+singleton x = Queue [x] []
 
 fromList :: [a] -> Queue a
 fromList front = Queue front []

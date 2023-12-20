@@ -51,42 +51,25 @@ makeModules spec = M.mapWithKey makeModule spec
                 (m st', Just $ if all (== High) st' then Low else High) in
         m . M.fromList $ zip (inputs spec ident) (repeat Low)
 
-data State w = State
-    { stateSpec     :: !Spec
-    , stateModules  :: !Modules
-    , stateQueue    :: !(Q.Queue Event)
-    , stateLogEvent :: !(Event -> w)  -- Logs a single event
-    , stateLog      :: !w             -- Accumulated log
-    }
+send
+    :: Monoid w => Spec -> (Event -> w) -> Event -> (Modules, w) -> (Modules, w)
+send spec logEvent event = go (Q.singleton event)
+  where
+    go queue0 (modules0, writer) = case Q.pop queue0 of
+        Nothing           -> (modules0, writer)
+        Just (ev, queue1) ->
+            let (modules1, evs) = deliver ev modules0
+                queue2 = foldl' (\q e -> Q.push e q) queue1 evs in
+            go queue2 (modules1, writer <> logEvent ev)
 
-step :: Spec -> Event -> Modules -> (Modules, [Event])
-step spec (src, pulse, dst) modules = case M.lookup dst modules of
-    Nothing -> (modules, [])
-    Just (Module module0) ->
-        let (module1, mbOut) = module0 (src, pulse)
-            outs             = case mbOut of
-                Nothing -> []
-                Just o  -> [(dst, o, n) | n <- snd $ spec M.! dst] in
-        (M.insert dst module1 modules, outs)
-
-simulate :: Monoid w => State w -> State w
-simulate state = case Q.pop (stateQueue state) of
-    Nothing           -> state
-    Just (ev, queue0) ->
-        let (mods, evs) = step (stateSpec state) ev (stateModules state) in
-        simulate $ state
-            { stateQueue   = foldl' (\q e -> Q.push e q) queue0 evs
-            , stateModules = mods
-            , stateLog     = stateLog state <> stateLogEvent state ev
-            }
-
-send :: Monoid w => Event -> State w -> State w
-send event state = simulate $ state
-    { stateQueue = Q.push event (stateQueue state)
-    }
-
-initState :: Monoid w => Spec -> (Event -> w) -> State w
-initState spec f = State spec (makeModules spec) Q.empty f mempty
+    deliver (src, pulse, dst) modules = case M.lookup dst modules of
+        Nothing -> (modules, [])
+        Just (Module module0) ->
+            let (module1, mbOut) = module0 (src, pulse)
+                outs             = case mbOut of
+                    Nothing -> []
+                    Just o  -> [(dst, o, n) | n <- snd $ spec M.! dst] in
+            (M.insert dst module1 modules, outs)
 
 button :: Event
 button = ("button", Low, "broadcaster")
@@ -107,8 +90,8 @@ logP1 (_, High, _) = LogP1 0 1
 part1 :: Spec -> Int
 part1 spec = lo1 * hi1
   where
-    LogP1 lo1 hi1 = stateLog $
-        iterate (send button) (initState spec logP1) !! 1000
+    (_, LogP1 lo1 hi1) =
+        iterate (send spec logP1 button) (makeModules spec, mempty) !! 1000
 
 -- Remembers the first high for each module, and the number of button presses
 data LogP2 = LogP2 !(M.Map Identifier Int) !Int deriving (Show)
@@ -136,7 +119,7 @@ part2 spec = do
     let (LogP2 his _) = head $
             dropWhile (\(LogP2 found _) ->
                 not $ all (`M.member` found) prevs) $
-            map stateLog $ iterate (send button) (initState spec logP2)
+            map snd $ iterate (send spec logP2 button) (makeModules spec, mempty)
     pure $ foldl1' lcm $ map (his M.!) prevs
 
 main :: IO ()
