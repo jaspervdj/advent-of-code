@@ -7,19 +7,29 @@ module AdventOfCode.Ranges
     , intersection
     , union
 
+    , null
     , size
     , minimum
     , maximum
+    , member
+
+    , offset
     ) where
 
 import           Data.List  (foldl')
 import           Data.Maybe (catMaybes, maybeToList)
-import           Prelude    hiding (maximum, minimum)
+import           Prelude    hiding (maximum, minimum, null)
 import qualified Prelude    as Prelude
 
 data Range a = Range a a deriving (Eq, Show) -- Ordered, both inclusive.
 
-newtype Ranges a = Ranges {unRanges :: [Range a]}
+newtype Ranges a = Ranges {unRanges :: [Range a]} deriving (Show)
+
+instance Integral a => Semigroup (Ranges a) where
+    l <> r = union l r
+
+instance Integral a => Monoid (Ranges a) where
+    mempty = empty
 
 empty :: Ranges a
 empty = Ranges []
@@ -81,9 +91,18 @@ insertRange x = Ranges . go [] . unRanges
 union :: Integral a => Ranges a -> Ranges a -> Ranges a
 union xs = foldl' (\ys x -> insertRange x ys) xs . unRanges
 
+null :: Ranges a -> Bool
+null = Prelude.null . unRanges
+
 size :: Integral a => Ranges a -> a
 size (Ranges rs) = sum [hi - lo + 1 | Range lo hi <- rs]
 
 minimum, maximum :: Integral a => Ranges a -> a
 minimum (Ranges rs) = Prelude.minimum [lo | Range lo _  <- rs]
 maximum (Ranges rs) = Prelude.maximum [hi | Range _  hi <- rs]
+
+member :: Integral a => a -> Ranges a -> Bool
+member x (Ranges rs) = or [x >= lo && x <= hi | Range lo hi <- rs]
+
+offset :: Integral a => a -> Ranges a -> Ranges a
+offset d (Ranges rs) = Ranges [Range (lo + d) (hi + d) | Range lo hi <- rs]
