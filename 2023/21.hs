@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds #-}
 import qualified AdventOfCode.Grid.Bounded as G
 import           AdventOfCode.Main
 import           AdventOfCode.V2           (V2 (..))
@@ -43,12 +44,12 @@ step2 grid positions = S.fromList $ do
 
 solveQuadratic :: [(Int, Int)] -> Int -> Z3.Program
 solveQuadratic pts goal =
-    Z3.declareConst "a" Z3.RealType <>
-    Z3.declareConst "b" Z3.RealType <>
-    Z3.declareConst "c" Z3.RealType <>
-    mconcat [Z3.declareConstEq var Z3.RealType (Z3.int x) | (var, x) <- xs] <>
-    mconcat [Z3.declareConstEq var Z3.RealType (Z3.int y) | (var, y) <- ys] <>
-    Z3.declareConstEq "x" Z3.RealType (Z3.int goal) <>
+    Z3.declareConst "a" Z3.RealSort <>
+    Z3.declareConst "b" Z3.RealSort <>
+    Z3.declareConst "c" Z3.RealSort <>
+    mconcat [Z3.declareConstEq var (Z3.int x :: Z3.Expr 'Z3.RealSort) | (var, x) <- xs] <>
+    mconcat [Z3.declareConstEq var (Z3.int y :: Z3.Expr 'Z3.RealSort) | (var, y) <- ys] <>
+    Z3.declareConstEq "x" (Z3.int goal :: Z3.Expr 'Z3.RealSort) <>
     mconcat [
         Z3.assert $ q x Z3..= Z3.var y
     | (x, y) <- zip (map fst xs) (map fst ys)] <>
@@ -57,6 +58,7 @@ solveQuadratic pts goal =
   where
     xs = [("x" <> show i, x) | (i, x) <- zip [0 :: Int ..] $ map fst pts]
     ys = [("y" <> show i, y) | (i, y) <- zip [0 :: Int ..] $ map snd pts]
+    q :: Z3.Var -> Z3.Expr 'Z3.RealSort
     q x = (Z3..+)
         [ (Z3..*) [Z3.var "a", Z3.var x, Z3.var x]
         , (Z3..*) [Z3.var "b", Z3.var x]

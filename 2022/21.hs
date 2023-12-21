@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds #-}
 import           AdventOfCode.Main
 import           AdventOfCode.NanoParser as NP
 import qualified AdventOfCode.Z3         as Z3
@@ -43,7 +44,7 @@ data ExtendedExpr
 
 monkeysToZ3 :: M.Map String ExtendedExpr -> String -> Z3.Program
 monkeysToZ3 monkeys query = mconcat $
-    [Z3.declareConst k Z3.IntType | (k, _) <- M.toList monkeys] ++
+    [Z3.declareConst k Z3.IntSort | (k, _) <- M.toList monkeys] ++
     (do
         (k, expr) <- M.toList monkeys
         (lhs, rhs) <- case expr of
@@ -53,6 +54,7 @@ monkeysToZ3 monkeys query = mconcat $
         pure $ Z3.assert $ lhs Z3..= rhs) <>
     [Z3.checkSat, Z3.eval (Z3.var query)]
   where
+    exprToZ3 :: MonkeyExpr -> Z3.Expr 'Z3.IntSort
     exprToZ3 (Lit x)         = Z3.int x
     exprToZ3 (Var v)         = Z3.var v
     exprToZ3 (BinOp x Add y) = (Z3..+) [exprToZ3 x, exprToZ3 y]

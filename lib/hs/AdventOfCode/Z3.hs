@@ -1,8 +1,10 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeFamilies #-}
 module AdventOfCode.Z3
-    ( Program
-    , Type (..)
+    ( Sort (..)
     , Var
-    , Expr (..)
+    , Expr
+    , Program
 
     , var
     , int
@@ -27,69 +29,93 @@ module AdventOfCode.Z3
 
 import           System.Directory (getTemporaryDirectory)
 import           System.FilePath  ((<.>), (</>))
+import Data.Proxy (Proxy (..))
 import           System.Process   (readProcess)
 
-type Program = [Expr]
+data Sort = BoolSort | IntSort | RealSort | UnknownSort
 
-data Type = IntType | RealType
+class KnownSort (s :: Sort) where
+    knownSort :: Proxy s -> Sort
+
+instance KnownSort 'BoolSort where knownSort _ = BoolSort
+instance KnownSort 'IntSort  where knownSort _ = IntSort
+instance KnownSort 'RealSort where knownSort _ = RealSort
 
 type Var = String
 
-data Expr
-    = AppExpr Expr [Expr]
-    | VarExpr Var
-    | IntExpr Int
-    | TypeExpr Type
+data Expr (k :: Sort) where
+    AppExpr :: Expr f -> [Expr 'UnknownSort] -> Expr a
+    VarExpr :: Var -> Expr a
+    IntExpr :: Int -> Expr a
+    SortExpr :: Sort -> Expr a
 
-var :: Var -> Expr
+cast :: Expr a -> Expr b
+cast (AppExpr f args) = AppExpr f args
+cast (VarExpr v)      = VarExpr v
+cast (IntExpr x)      = IntExpr x
+cast (SortExpr s)     = SortExpr s
+
+type Program = [Expr 'UnknownSort]
+
+class IsNum (k :: Sort)
+instance IsNum 'IntSort
+instance IsNum 'RealSort
+
+var :: Var -> Expr a
 var = VarExpr
 
-int :: Int -> Expr
+int :: IsNum n => Int -> Expr n
 int = IntExpr
 
-assert :: Expr -> Program
-assert x = [AppExpr (var "assert") [x]]
+assert :: Expr 'BoolSort -> Program
+assert x = [AppExpr (var "assert") [cast x]]
 
 checkSat :: Program
 checkSat = [AppExpr (var "check-sat") []]
 
-declareConst :: Var -> Type -> Program
+declareConst :: Var -> Sort -> Program
 declareConst v ty =
-    [AppExpr (var "declare-const") [var v, TypeExpr ty]]
+    [AppExpr (var "declare-const") [var v, SortExpr ty]]
 
-declareConstEq :: Var -> Type -> Expr -> Program
-declareConstEq v ty x = declareConst v ty <> assert ((.=) (var v) x)
+declareConstEq :: forall s. KnownSort s => Var -> Expr s -> Program
+declareConstEq v x =
+    declareConst v (knownSort proxy) <> assert (var v .= x)
+  where
+    proxy = Proxy :: Proxy s
 
-eval :: Expr -> Program
-eval x = [AppExpr (var "eval") [x]]
+eval :: Expr a -> Program
+eval x = [AppExpr (var "eval") [cast x]]
 
-toInt :: Expr -> Expr
-toInt x = AppExpr (var "to_int") [x]
+toInt :: IsNum n => Expr n -> Expr 'IntSort
+toInt x = AppExpr (var "to_int") [cast x]
 
-(.=) :: Expr -> Expr -> Expr
-(.=) x y = AppExpr (var "=") [x, y]
+(.=) :: Expr a -> Expr a -> Expr 'BoolSort
+(.=) x y = AppExpr (var "=") [cast x, cast y]
 
-(.+) :: [Expr] -> Expr
-(.+) args = AppExpr (var "+") args
+(.+) :: IsNum n => [Expr n] -> Expr n
+(.+) args = AppExpr (var "+") (map cast args)
 
-(.-) :: [Expr] -> Expr
-(.-) args = AppExpr (var "-") args
+(.-) :: IsNum n => [Expr n] -> Expr n
+(.-) args = AppExpr (var "-") (map cast args)
 
-(.*) :: [Expr] -> Expr
-(.*) args = AppExpr (var "*") args
+(.*) :: IsNum n => [Expr n] -> Expr n
+(.*) args = AppExpr (var "*") (map cast args)
 
-(./) :: [Expr] -> Expr
-(./) args = AppExpr (var "/") args
+(./) :: IsNum n => [Expr n] -> Expr n
+(./) args = AppExpr (var "/") (map cast args)
+
+renderExpr :: Expr a -> String
+renderExpr (AppExpr f args) = "(" <> renderExpr f <>
+    concat [" " ++ renderExpr a | a <- args] <> ")"
+renderExpr (VarExpr v) = v
+renderExpr (IntExpr x) = show x
+renderExpr (SortExpr BoolSort) = "Bool"
+renderExpr (SortExpr IntSort) = "Int"
+renderExpr (SortExpr RealSort) = "Real"
+renderExpr (SortExpr UnknownSort) = "Unknown"
 
 render :: Program -> String
-render = unlines . map renderExpr
-  where
-    renderExpr (AppExpr f args) = "(" <> renderExpr f <>
-        concat [" " ++ renderExpr a | a <- args] <> ")"
-    renderExpr (VarExpr v) = v
-    renderExpr (IntExpr x) = show x
-    renderExpr (TypeExpr IntType) = "Int"
-    renderExpr (TypeExpr RealType) = "Real"
+render = unlines . foldMap (pure . renderExpr)
 
 run :: String -> Program -> IO String
 run name z3 = do
