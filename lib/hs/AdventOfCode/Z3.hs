@@ -17,8 +17,9 @@ module AdventOfCode.Z3
 
     , (.=)
     , (.+)
+    , (.-)
     , (.*)
-
+    , (./)
 
     , render
     , run
@@ -30,7 +31,7 @@ import           System.Process   (readProcess)
 
 type Program = [Expr]
 
-data Type = RealType
+data Type = IntType | RealType
 
 type Var = String
 
@@ -71,8 +72,14 @@ toInt x = AppExpr (var "to_int") [x]
 (.+) :: [Expr] -> Expr
 (.+) args = AppExpr (var "+") args
 
+(.-) :: [Expr] -> Expr
+(.-) args = AppExpr (var "-") args
+
 (.*) :: [Expr] -> Expr
 (.*) args = AppExpr (var "*") args
+
+(./) :: [Expr] -> Expr
+(./) args = AppExpr (var "/") args
 
 render :: Program -> String
 render = unlines . map renderExpr
@@ -81,6 +88,7 @@ render = unlines . map renderExpr
         concat [" " ++ renderExpr a | a <- args] <> ")"
     renderExpr (VarExpr v) = v
     renderExpr (IntExpr x) = show x
+    renderExpr (TypeExpr IntType) = "Int"
     renderExpr (TypeExpr RealType) = "Real"
 
 run :: String -> Program -> IO String

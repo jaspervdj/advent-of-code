@@ -1,10 +1,8 @@
 import           AdventOfCode.Main
 import           AdventOfCode.NanoParser as NP
+import qualified AdventOfCode.Z3         as Z3
 import           Control.Applicative     (optional, (<|>))
 import qualified Data.Map                as M
-import           System.Directory        (getTemporaryDirectory)
-import           System.FilePath         ((</>))
-import           System.Process          (readProcess)
 
 data BinOp = Add | Sub | Mul | Div deriving (Show)
 
@@ -43,35 +41,24 @@ data ExtendedExpr
     | AssertEqual MonkeyExpr MonkeyExpr
     deriving (Show)
 
-monkeysToZ3 :: M.Map String ExtendedExpr -> String -> String
-monkeysToZ3 monkeys query = unlines $
-    ["(declare-const " ++ k ++ " Int)" | (k, _) <- M.toList monkeys] ++
+monkeysToZ3 :: M.Map String ExtendedExpr -> String -> Z3.Program
+monkeysToZ3 monkeys query = mconcat $
+    [Z3.declareConst k Z3.IntType | (k, _) <- M.toList monkeys] ++
     (do
         (k, expr) <- M.toList monkeys
         (lhs, rhs) <- case expr of
                 AssertEqual x y -> [(exprToZ3 x, exprToZ3 y)]
                 Unknown         -> []
-                MonkeyExpr e    -> [(k, exprToZ3 e)]
-        pure $ "(assert (= " ++ lhs ++ " " ++ rhs ++ "))") ++
-    ["(check-sat)", "(eval " ++ query ++ ")"]
+                MonkeyExpr e    -> [(Z3.var k, exprToZ3 e)]
+        pure $ Z3.assert $ lhs Z3..= rhs) <>
+    [Z3.checkSat, Z3.eval (Z3.var query)]
   where
-    exprToZ3 (Lit x) = show x
-    exprToZ3 (Var v) = v
-    exprToZ3 (BinOp x op y) =
-        "(" ++ binopToZ3 op ++ " " ++ exprToZ3 x ++ " " ++ exprToZ3 y ++ ")"
-
-    binopToZ3 Add = "+"
-    binopToZ3 Sub = "-"
-    binopToZ3 Mul = "*"
-    binopToZ3 Div = "/"
-
-runZ3 :: String -> IO String
-runZ3 z3 = do
-    tmpDir <- getTemporaryDirectory
-    let tmpPath = tmpDir </> "aoc-2022-21.z3"
-    writeFile tmpPath z3
-    output <- readProcess "z3" [tmpPath] ""
-    pure . last $ lines output
+    exprToZ3 (Lit x)         = Z3.int x
+    exprToZ3 (Var v)         = Z3.var v
+    exprToZ3 (BinOp x Add y) = (Z3..+) [exprToZ3 x, exprToZ3 y]
+    exprToZ3 (BinOp x Sub y) = (Z3..-) [exprToZ3 x, exprToZ3 y]
+    exprToZ3 (BinOp x Mul y) = (Z3..*) [exprToZ3 x, exprToZ3 y]
+    exprToZ3 (BinOp x Div y) = (Z3../) [exprToZ3 x, exprToZ3 y]
 
 main :: IO ()
 main = defaultMain $ \h -> do
@@ -82,4 +69,4 @@ main = defaultMain $ \h -> do
             ("humn", _)           -> Unknown
             _                     -> MonkeyExpr e) monkeys0
         part2 = monkeysToZ3 monkeys1 "humn"
-    pure (runZ3 part1 >>= putStrLn, runZ3 part2 >>= putStrLn)
+    pure (Z3.run "part1" part1 >>= putStrLn, Z3.run "part2" part2 >>= putStrLn)
