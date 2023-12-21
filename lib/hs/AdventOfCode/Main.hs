@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 module AdventOfCode.Main
     ( defaultMain
+    , ioMain
     , pureMain
     , simpleMain
     ) where
@@ -75,14 +76,23 @@ instance Solution [Char] where
     printSolution = putStrLn
 
 -- | 'pureMain' avoids using 'IO' and rather uses 'Either' for error handling.
+ioMain
+    :: (Solution a, Solution b)
+    => (String -> IO (IO a, IO b))
+    -> IO ()
+ioMain f = defaultMain $ \handle -> do
+    str <- IO.hGetContents handle
+    parts <- f str
+    return $ bimap (>>= printSolution) (>>= printSolution) parts
+
+-- | 'pureMain' avoids using 'IO' and rather uses 'Either' for error handling.
 pureMain
     :: (Solution a, Solution b)
     => (String -> Either String (Either String a, Either String b))
     -> IO ()
-pureMain f = defaultMain $ \handle -> do
-    str <- IO.hGetContents handle
+pureMain f = ioMain $ \str -> do
     parts <- either fail pure $ f str
-    return $ bimap (either fail printSolution) (either fail printSolution) parts
+    return $ bimap (either fail pure) (either fail pure) parts
 
 -- | 'simpleMain' can be used in case there's no errors alltogether.
 simpleMain
