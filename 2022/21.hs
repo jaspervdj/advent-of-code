@@ -1,4 +1,5 @@
-{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE OverloadedStrings #-}
 import           AdventOfCode.Main
 import           AdventOfCode.NanoParser as NP
 import qualified AdventOfCode.Z3         as Z3
@@ -42,25 +43,28 @@ data ExtendedExpr
     | AssertEqual MonkeyExpr MonkeyExpr
     deriving (Show)
 
-monkeysToZ3 :: M.Map String ExtendedExpr -> String -> Z3.Program
+monkeysToZ3 :: M.Map String ExtendedExpr -> Z3.Var 'Z3.IntSort -> Z3.Program
 monkeysToZ3 monkeys query = mconcat $
-    [Z3.declareConst k Z3.IntSort | (k, _) <- M.toList monkeys] ++
+    [Z3.declareConst (mvar k) | (k, _) <- M.toList monkeys] ++
     (do
         (k, expr) <- M.toList monkeys
         (lhs, rhs) <- case expr of
                 AssertEqual x y -> [(exprToZ3 x, exprToZ3 y)]
                 Unknown         -> []
-                MonkeyExpr e    -> [(Z3.var k, exprToZ3 e)]
-        pure $ Z3.assert $ lhs Z3..= rhs) <>
+                MonkeyExpr e    -> [(Z3.var (mvar k), exprToZ3 e)]
+        pure $ Z3.assert $ lhs Z3.== rhs) <>
     [Z3.checkSat, Z3.eval (Z3.var query)]
   where
     exprToZ3 :: MonkeyExpr -> Z3.Expr 'Z3.IntSort
     exprToZ3 (Lit x)         = Z3.int x
-    exprToZ3 (Var v)         = Z3.var v
-    exprToZ3 (BinOp x Add y) = (Z3..+) [exprToZ3 x, exprToZ3 y]
-    exprToZ3 (BinOp x Sub y) = (Z3..-) [exprToZ3 x, exprToZ3 y]
-    exprToZ3 (BinOp x Mul y) = (Z3..*) [exprToZ3 x, exprToZ3 y]
-    exprToZ3 (BinOp x Div y) = (Z3../) [exprToZ3 x, exprToZ3 y]
+    exprToZ3 (Var v)         = Z3.var (mvar v)
+    exprToZ3 (BinOp x Add y) = exprToZ3 x Z3.+ exprToZ3 y
+    exprToZ3 (BinOp x Sub y) = exprToZ3 x Z3.- exprToZ3 y
+    exprToZ3 (BinOp x Mul y) = exprToZ3 x Z3.* exprToZ3 y
+    exprToZ3 (BinOp x Div y) = exprToZ3 x Z3./ exprToZ3 y
+
+    mvar :: String -> Z3.Var 'Z3.IntSort
+    mvar = Z3.mkVar
 
 main :: IO ()
 main = defaultMain $ \h -> do

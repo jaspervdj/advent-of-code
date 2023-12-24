@@ -98,6 +98,7 @@ let
     buildScheme = {year, day, suffix ? ""}: pkgs.stdenv.mkDerivation rec {
         name = "${year}-${day}${suffix}";
         srcs = [./${year} ./lib/scm];
+        nativeBuildInputs = [pkgs.openssl];
         sourceRoot = ".";
         buildPhase = ''
             ${pkgs.gambit}/bin/gsc -exe -o ${name} ${year}/${day}.scm
@@ -341,5 +342,6 @@ in  rec {
         d21 = buildHaskell {year = "2023"; day = "21"; bin = [pkgs.z3_4_12];};
         d22 = buildHaskell {year = "2023"; day = "22";};
         d23 = buildHaskell {year = "2023"; day = "23";};
+        d24 = buildHaskell {year = "2023"; day = "24"; bin = [pkgs.z3_4_12];};
     };
 }
