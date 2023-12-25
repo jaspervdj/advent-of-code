@@ -1,4 +1,4 @@
-import           AdventOfCode.Dijkstra   (Bfs (..), bfs)
+import qualified AdventOfCode.Dijkstra   as Dijkstra
 import           AdventOfCode.Main
 import qualified AdventOfCode.NanoParser as NP
 import           Data.List               (foldl', sortOn)
@@ -21,6 +21,10 @@ insert (Edge x y) =
 delete :: Ord a => Edge a -> Graph a -> Graph a
 delete (Edge x y) = M.adjust (S.delete y) x . M.adjust (S.delete x) y
 
+bfs :: Ord a => a -> Graph a -> [[a]]
+bfs start graph = map snd . M.toList . Dijkstra.bfsDistances $ Dijkstra.bfs
+    (\x -> maybe [] S.toList $ M.lookup x graph) (const False) start
+
 parseGraph :: NP.Parser Char (Graph String)
 parseGraph = fmap mkGraph $ flip NP.sepBy1 NP.newline $ (,)
     <$> (node <* NP.char ':')
@@ -37,11 +41,8 @@ parseGraph = fmap mkGraph $ flip NP.sepBy1 NP.newline $ (,)
 popularity :: Ord a => Graph a -> M.Map (Edge a) Int
 popularity graph = M.fromListWith (+) $ do
     (start, _) <- M.toList graph
-    (_, distances) <- M.toList $ bfsDistances $ bfs
-        (\x -> maybe [] S.toList $ M.lookup x graph)
-        (const False)
-        start
-    edge <- zipWith mkEdge distances (drop 1 distances)
+    paths <- bfs start graph
+    edge <- zipWith mkEdge paths (drop 1 paths)
     pure (edge, 1)
 
 main :: IO ()
@@ -53,8 +54,5 @@ main = pureMain $ \str -> do
     let pop = take 3 $ sortOn (Down . snd) $ M.toList $ popularity graph
         cut = foldl' (\acc e -> delete e acc) graph $ map fst pop
         graphSize = M.size graph
-        cutSize = M.size $ bfsDistances $ bfs
-            (\x -> maybe [] S.toList $ M.lookup x cut)
-            (const False)
-            start
+        cutSize = length $ bfs start cut
     pure (pure (cutSize * (graphSize - cutSize)), pure "fin")
