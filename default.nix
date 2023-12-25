@@ -343,5 +343,6 @@ in  rec {
         d22 = buildHaskell {year = "2023"; day = "22";};
         d23 = buildHaskell {year = "2023"; day = "23";};
         d24 = buildHaskell {year = "2023"; day = "24"; bin = [pkgs.z3_4_12];};
+        d25 = buildHaskell {year = "2023"; day = "25";};
     };
 }
