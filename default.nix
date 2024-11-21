@@ -1,5 +1,5 @@
 {
-    pkgs ? import (builtins.fetchTarball "https://github.com/nixos/nixpkgs/archive/e72502b9387d5a71597d8926a8ce6ce05507a239.tar.gz") { },
+    pkgs ? import <nixpkgs> { },
     ghc ? "ghc947"
 }:
 let
@@ -90,7 +90,8 @@ let
         name = "${year}-${day}${suffix}";
         src = ./${year};
         buildPhase = ''
-            ${pkgs.ocaml}/bin/ocamlopt -o ${name} ${day}.ml
+            cp ${day}.ml main.ml  # Avoid bad source file name error
+            ${pkgs.ocaml}/bin/ocamlopt -o ${name} main.ml
         '';
         installPhase = "mkdir $out; cp ${name} $out";
     };

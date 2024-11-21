@@ -9,20 +9,17 @@ let is_valid_passphrase passphrase =
             else go (StringSet.add w acc) words1 in
     go StringSet.empty (String.split_on_char ' ' passphrase);;
 
-let count_valid_passphrases stream =
+let count_valid_passphrases channel =
     let rec go acc0 =
-        match Stream.peek stream with
-        | None -> acc0
-        | Some passphrase ->
-            Stream.junk stream;
+        try
+            let passphrase = input_line channel in
             let acc1 =
                 if is_valid_passphrase passphrase then acc0 + 1
                 else acc0 in
-            go acc1 in
+            go acc1
+        with
+            End_of_file -> acc0 in
     go 0;;
 
-let line_stream_of_channel channel = Stream.from
-      (fun _ -> try Some (input_line channel) with End_of_file -> None);;
-
-print_int (count_valid_passphrases (line_stream_of_channel stdin));;
+print_int (count_valid_passphrases stdin);
 print_string "\n";;
