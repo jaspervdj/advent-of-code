@@ -359,7 +359,28 @@
         flat = builtins.concatMap
           (pkgs.lib.attrsets.mapAttrsToList (k: v: v))
           (pkgs.lib.attrsets.mapAttrsToList (k: v: v) solutions);
+
+        shellApp = name: script:
+          let drv = pkgs.writeShellScriptBin name script;
+          in {
+            type = "app";
+            program = "${drv}/bin/${name}";
+          };
+
       in {
+        apps = {
+          run = shellApp "run" (builtins.concatStringsSep "\n" (map
+            (solution:
+              let yd = builtins.split "-" solution.name;
+                  y = builtins.elemAt yd 0;
+                  d = builtins.elemAt yd 2;
+              in ''
+                set -o errexit -o pipefail -o nounset
+                echo "Running ${solution.name}..."
+                ${solution}/${solution.name} <inputs/${y}/${d}.txt
+              '')
+            flat));
+        };
         devShells = {
           default = pkgs.mkShell {
             packages = [
