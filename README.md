@@ -5,5 +5,5 @@ some are fast.  Some are written in Haskell, others are not.
 
 ## Building
 
-To build a specific solution, use `nix-build -A y${YYYY}.d${DD}`, e.g.
-`nix-build -A y2022.d21`.  To build all solutions, use `nix-build -A all`.
+To build a specific solution, use `nix build .#y${YYYY}.d${DD}`, e.g.
+`nix build .#y2022.d21`.  To build all solutions, use `nix build`.
