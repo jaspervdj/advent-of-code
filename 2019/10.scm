@@ -38,14 +38,16 @@
 
 (define (transpose ls) (letrec*
     ((row (lambda (cols acc remain) (cond
-        ((null? cols) (values (reverse acc) (reverse remain)))
+        ((null? cols) (cons (reverse acc) (reverse remain)))
         ((null? (car cols)) (row (cdr cols) acc remain))
         (else (row
             (cdr cols)
             (cons (car (car cols)) acc)
             (cons (cdr (car cols)) remain))))))
-     (loop (lambda (cols acc) (let-values
-        (((r remain) (row cols '() '())))
+     (loop (lambda (cols acc) (let*
+        ((out (row cols '() '()))
+         (r (car out))
+         (remain (cdr out)))
         (if
             (null? r)
             (reverse acc)

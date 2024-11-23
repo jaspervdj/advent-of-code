@@ -81,31 +81,50 @@ struct rope {
     }
 };
 
-int main(int argc, char **argv) {
-    if (argc != 4) {
-        std::cerr << "Usage: " << argv[0] << " " << " [DAY] [PART] [INPUT]" << std::endl;
-        return 1;
+std::vector<std::pair<char, int>> parse_commands(std::istream &input) {
+    std::vector<std::pair<char, int>> commands;
+    char command;
+    int count;
+    while (input >> command >> count) {
+        commands.push_back(std::pair(command, count));
     }
+    return commands;
+}
 
-    size_t rope_size = 2;
-    if (std::string(argv[2]) == "2") {
-        rope_size = 10;
-    }
-
+int solve(std::vector<std::pair<char, int>> commands, size_t rope_size) {
     std::unordered_set<pos, pos_hash, pos_equal> visited;
     rope rope(rope_size);
 
-    std::ifstream infile(argv[3]);
-    char command;
-    int count;
-
-    while (infile >> command >> count) {
+    for (auto it = std::begin(commands); it != std::end(commands); ++it) {
+        char command = it->first;
+        int count = it->second;
         for (int i = 0; i < count; i++) {
             rope.step(command);
             visited.insert(rope.tail());
         }
     }
 
-    std::cout << visited.size() << std::endl;
+    return visited.size();
+}
+
+int main(int argc, char **argv) {
+    std::vector<std::pair<char, int>> commands;
+    bool run_part_1 = true;
+    bool run_part_2 = true;
+
+    if (argc == 1) {
+        commands = parse_commands(std::cin);
+    } else if (argc == 4) {
+        std::ifstream input(argv[3]);
+        commands = parse_commands(input);
+        run_part_1 = std::string(argv[2]) == "1";
+        run_part_2 = std::string(argv[2]) == "2";
+    } else {
+        std::cerr << "Usage: " << argv[0] << " [DAY] [PART] [INPUT]" << std::endl;
+        return 1;
+    }
+
+    if (run_part_1) std::cout << solve(commands, 2) << std::endl;
+    if (run_part_2) std::cout << solve(commands, 10) << std::endl;
     return 0;
 }

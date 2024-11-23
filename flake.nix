@@ -377,7 +377,8 @@
               in ''
                 set -o errexit -o pipefail -o nounset
                 echo "Running ${solution.name}..."
-                ${solution}/${solution.name} <inputs/${y}/${d}.txt
+                time ${solution}/${solution.name} <inputs/${y}/${d}.txt
+                echo
               '')
             flat));
         };

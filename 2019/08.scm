@@ -1,8 +1,9 @@
 (define (split-every l n) (if
     (null? l)
     '()
-    (let-values
-        (((front back) (split-at l n)))
+    (let*
+        ((front (take l n))
+         (back (drop l n)))
         (cons front (split-every back n)))))
 
 (define (mininum-on lt f l) (if

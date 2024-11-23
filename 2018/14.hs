@@ -3,7 +3,7 @@ import           Control.Monad               (foldM, forM)
 import           Control.Monad.Extra         (ifM)
 import           Control.Monad.Primitive     (PrimMonad (..))
 import           Control.Monad.ST            (runST)
-import           Data.Char                   (digitToInt, intToDigit)
+import           Data.Char                   (digitToInt, isDigit, intToDigit)
 import qualified Data.Vector.Unboxed         as VU
 import qualified Data.Vector.Unboxed.Mutable as VUM
 
@@ -83,4 +83,4 @@ main = do
     s <- generateRecipes (n + 10)
     scores <- forM [n .. n + 9] $ \i -> VUM.read (sScores s) i
     putStrLn $ map intToDigit scores
-    print $ runST $ generateUntilPattern $ map digitToInt input
+    print $ runST $ generateUntilPattern $ map digitToInt $ filter isDigit input
