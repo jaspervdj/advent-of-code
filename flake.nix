@@ -357,6 +357,7 @@
           y2024 = {
             d01 = buildHaskell {year = "2024"; day = "01";};
             d02 = buildHaskell {year = "2024"; day = "02";};
+            d03 = buildHaskell {year = "2024"; day = "03";};
           };
         };
 
@@ -389,6 +390,7 @@
         devShells = {
           default = pkgs.mkShell {
             packages = [
+              pkgs.stylish-haskell
               (haskell.ghc.withPackages
                 (p: inputs.self.packages.${system}.default.buildInputs))
             ];
