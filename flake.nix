@@ -358,6 +358,7 @@
             d01 = buildHaskell {year = "2024"; day = "01";};
             d02 = buildHaskell {year = "2024"; day = "02";};
             d03 = buildHaskell {year = "2024"; day = "03";};
+            d04 = buildHaskell {year = "2024"; day = "04";};
           };
         };
 
@@ -391,8 +392,9 @@
           default = pkgs.mkShell {
             packages = [
               pkgs.stylish-haskell
+              # TODO: reuse packages from above?
               (haskell.ghc.withPackages
-                (p: inputs.self.packages.${system}.default.buildInputs))
+                (p: [ p.hashable p.unordered-containers p.vector ]))
             ];
           };
         };
