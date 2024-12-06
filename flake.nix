@@ -360,6 +360,7 @@
             d03 = buildHaskell {year = "2024"; day = "03";};
             d04 = buildHaskell {year = "2024"; day = "04";};
             d05 = buildHaskell {year = "2024"; day = "05";};
+            d06 = buildHaskell {year = "2024"; day = "06";};
           };
         };
 
