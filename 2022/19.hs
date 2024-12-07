@@ -3,6 +3,7 @@ import           AdventOfCode.BranchAndBound
 import           AdventOfCode.Main
 import qualified AdventOfCode.NanoParser     as NP
 import           Control.Applicative         ((<|>))
+import           Data.Foldable               (toList)
 import qualified Data.Map                    as M
 import           Data.Maybe                  (fromMaybe, mapMaybe)
 import qualified Data.Vector                 as V
@@ -57,11 +58,11 @@ byResourceIndex (ByResource br) (Resource i) = br V.! i
 data Blueprint = Blueprint Int (ByResource Resources) deriving (Show)
 
 parseBlueprints :: NP.Parser Char [Blueprint]
-parseBlueprints = NP.many1 blueprint
+parseBlueprints = toList <$> NP.many1 blueprint
   where
     blueprint = Blueprint
         <$> (NP.string "Blueprint " *> NP.decimal <* NP.char ':' <* NP.spaces)
-        <*> (byResourceFromList <$> NP.many1 (robot <* NP.spaces))
+        <*> (byResourceFromList . toList <$> NP.many1 (robot <* NP.spaces))
     robot = (,)
         <$> (NP.string "Each " *> resource <* NP.string " robot costs ")
         <*> (cost <* NP.char '.')

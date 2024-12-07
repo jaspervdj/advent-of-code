@@ -3,6 +3,7 @@ module Main where
 import qualified AdventOfCode.Grid       as G
 import qualified AdventOfCode.NanoParser as NP
 import           Control.Applicative     ((<|>))
+import           Data.Foldable           (toList)
 import           Data.Functor            (($>))
 import           Data.List               (scanl')
 import qualified Data.Map                as Map
@@ -12,7 +13,7 @@ import qualified System.IO               as IO
 type Wire = [(G.Dir, Int)]
 
 parseWires :: NP.Parser Char [Wire]
-parseWires = NP.many1 $
+parseWires = fmap toList $ NP.many1 $
     NP.sepBy1 ((,) <$> parseDir <*> NP.decimal) (NP.char ',') <* NP.spaces
   where
     parseDir =

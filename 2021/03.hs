@@ -3,6 +3,7 @@ module Main where
 import           AdventOfCode.Main       (pureMain)
 import qualified AdventOfCode.NanoParser as P
 import           Control.Applicative
+import           Data.Foldable           (toList)
 import           Data.Maybe              (fromMaybe)
 import qualified Data.Vector             as V
 
@@ -12,7 +13,7 @@ binaryToInt :: Binary -> Int
 binaryToInt = V.foldl' (\a x -> a * 2 + if x then 1 else 0) 0
 
 parseBinary :: P.Parser Char Binary
-parseBinary = fmap V.fromList $
+parseBinary = fmap (V.fromList . toList) $
     P.many1 $ (False <$ P.char '0') <|> (True <$ P.char '1')
 
 parseBinaries :: P.Parser Char (V.Vector Binary)

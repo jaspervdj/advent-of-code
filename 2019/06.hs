@@ -6,6 +6,7 @@ module Main where
 import qualified AdventOfCode.NanoParser as NP
 import           Control.Applicative     ((<|>))
 import           Data.Bifunctor          (second)
+import           Data.Foldable           (toList)
 import qualified Data.Map                as Map
 import           Data.Semigroup          (Min (..))
 import qualified Data.Set                as Set
@@ -14,9 +15,9 @@ import qualified System.IO               as IO
 type Orbit a = (a, a)
 
 parseOrbits :: NP.Parser Char [Orbit String]
-parseOrbits = NP.many1 $ (,)
-    <$> NP.many1 (NP.alpha <|> NP.digit) <* NP.char ')'
-    <*> NP.many1 (NP.alpha <|> NP.digit) <* NP.spaces
+parseOrbits = fmap toList $ NP.many1 $ (,)
+    <$> (toList <$> NP.many1 (NP.alpha <|> NP.digit) <* NP.char ')')
+    <*> (toList <$> NP.many1 (NP.alpha <|> NP.digit) <* NP.spaces)
 
 data OrbitMap a = OrbitMap
     { omEdges :: Map.Map a (Set.Set a)

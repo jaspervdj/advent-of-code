@@ -2,6 +2,7 @@ import           AdventOfCode.Main
 import qualified AdventOfCode.NanoParser as NP
 import           Control.Monad           (guard)
 import           Data.Char               (isAlpha)
+import           Data.Foldable           (toList)
 import qualified Data.List               as L
 import qualified Data.Vector             as V
 
@@ -22,7 +23,7 @@ data Input = Input
 
 parseConstraint :: NP.Parser Char Constraint
 parseConstraint = Constraint
-    <$> (NP.many1 idchar <* NP.char ':' <* NP.spaces)
+    <$> (toList <$> NP.many1 idchar <* NP.char ':' <* NP.spaces)
     <*> (NP.decimal <* NP.char '-')
     <*> (NP.decimal <* NP.spaces <* NP.string "or" <* NP.spaces)
     <*> (NP.decimal <* NP.char '-')

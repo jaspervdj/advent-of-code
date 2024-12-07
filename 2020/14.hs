@@ -5,6 +5,7 @@ import           AdventOfCode.Main
 import qualified AdventOfCode.NanoParser as P
 import           Control.Applicative     ((<|>))
 import           Data.Bits               (shiftL, testBit)
+import           Data.Foldable           (toList)
 import           Data.List               (foldl')
 import           Data.Monoid             (Sum (..))
 import           Data.Word               (Word64)
@@ -76,7 +77,7 @@ binaryToWord = foldl' (\acc x -> (acc `shiftL` 1) + if x then 1 else 0) 0
 parseProgram :: P.Parser Char Program
 parseProgram = P.sepBy (setMask <|> setMem) (P.char '\n')
   where
-    setMask = SetMask . mkMask <$> (P.string "mask = " *> P.many1 mc)
+    setMask = SetMask . mkMask . toList <$> (P.string "mask = " *> P.many1 mc)
     setMem = SetMem
         <$> (P.string "mem[" *> P.decimal <* P.string "] = ")
         <*> P.decimal

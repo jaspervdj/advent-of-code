@@ -3,6 +3,7 @@ import qualified AdventOfCode.NanoParser as NP
 import qualified AdventOfCode.Ranges     as R
 import           Control.Applicative     (many, (<|>))
 import           Control.Monad           (guard)
+import           Data.Foldable           (toList)
 import qualified Data.Map                as M
 import           Data.Maybe              (fromMaybe)
 
@@ -34,7 +35,7 @@ data Input = Input Workflows [Part Int] deriving (Show)
 --------------------------------------------------------------------------------
 
 parseIdentifier :: NP.Parser Char Identifier
-parseIdentifier = NP.many1 NP.alpha
+parseIdentifier = toList <$> NP.many1 NP.alpha
 
 parseAttribute :: NP.Parser Char Attribute
 parseAttribute =
@@ -77,8 +78,8 @@ parsePart = fmap M.fromList $
 
 parseInput :: NP.Parser Char Input
 parseInput = Input
-    <$> (toMap <$> NP.many1 (parseWorkflow <* NP.spaces))
-    <*> NP.many1 (parsePart <* NP.spaces)
+    <$> (toMap . toList <$> NP.many1 (parseWorkflow <* NP.spaces))
+    <*> (toList <$> NP.many1 (parsePart <* NP.spaces))
   where
     toMap ws = M.fromList [(ident, w) | w@(Workflow ident _ _) <- ws]
 

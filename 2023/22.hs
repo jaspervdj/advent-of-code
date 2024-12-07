@@ -2,6 +2,7 @@ import           AdventOfCode.Main
 import qualified AdventOfCode.NanoParser as NP
 import           AdventOfCode.V3         (V3 (..), (.-.))
 import           Control.Monad           (guard)
+import           Data.Foldable           (toList)
 import           Data.List               (sortOn)
 import           Data.List.Extra         (select)
 import qualified Data.Set                as S
@@ -9,7 +10,7 @@ import qualified Data.Set                as S
 type Brick = S.Set (V3 Int)
 
 parseBricks :: NP.Parser Char [Brick]
-parseBricks = NP.many1 $
+parseBricks = fmap toList $ NP.many1 $
     makeBrick <$> (parseV3 <* NP.char '~') <*> (parseV3 <* NP.spaces)
   where
     parseV3 = V3

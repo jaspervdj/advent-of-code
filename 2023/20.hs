@@ -4,6 +4,7 @@ import qualified AdventOfCode.Queue      as Q
 import           Control.Applicative     ((<|>))
 import           Control.Monad           (when)
 import           Control.Monad.Except    (throwError)
+import           Data.Foldable           (toList)
 import           Data.List               (foldl', foldl1')
 import qualified Data.Map                as M
 
@@ -12,10 +13,10 @@ data ModuleType = Broadcast | FlipFlop | Conjunction deriving (Show)
 type Spec = M.Map Identifier (ModuleType, [Identifier])
 
 parseSpec :: NP.Parser Char Spec
-parseSpec = fmap M.fromList $ NP.many1 $
+parseSpec = fmap (M.fromList . toList) $ NP.many1 $
     (\((t, i), cs) -> (i, (t, cs))) <$> modul
   where
-    ident = NP.many1 NP.alpha
+    ident = toList <$> NP.many1 NP.alpha
     tok p = p <* NP.spaces
 
     modul = (,)

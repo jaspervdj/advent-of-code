@@ -1,6 +1,7 @@
 module Main where
 
 import qualified AdventOfCode.NanoParser as NP
+import           Data.Foldable           (toList)
 import qualified Data.Map                as Map
 import qualified System.IO               as IO
 
@@ -14,7 +15,7 @@ parseSue = (,)
     <*> (Map.fromList <$> NP.sepBy item (NP.char ',' <* NP.spaces))
   where
     item = (,)
-        <$> (NP.many1 NP.alpha <* NP.char ':' <* NP.spaces)
+        <$> (toList <$> NP.many1 NP.alpha <* NP.char ':' <* NP.spaces)
         <*> (NP.decimal <* NP.spaces)
 
 matchesExact :: Analysis -> Analysis -> Bool
@@ -45,6 +46,6 @@ tickerTape = Map.fromList
 
 main :: IO ()
 main = do
-    sues <- NP.hRunParser IO.stdin (NP.many1 parseSue)
+    sues <- toList <$> NP.hRunParser IO.stdin (NP.many1 parseSue)
     print . fst . head . filter (matchesExact tickerTape . snd) $ sues
     print . fst . head . filter (matchesRange tickerTape . snd) $ sues

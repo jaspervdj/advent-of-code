@@ -2,6 +2,7 @@
 import           AdventOfCode.Main
 import qualified AdventOfCode.NanoParser as NP
 import           Control.Applicative     ((<|>))
+import           Data.Foldable           (toList)
 import           Data.List               (foldl', transpose)
 import qualified Data.Map                as M
 import           Data.Maybe              (catMaybes)
@@ -37,7 +38,8 @@ parseInput = makeInput
 
     space = NP.char ' '
 
-    parseRows = NP.many1 $ parseRow <* NP.horizontalSpaces <* NP.newline
+    parseRows = fmap toList $ NP.many1 $
+        parseRow <* NP.horizontalSpaces <* NP.newline
     parseRow  = NP.sepBy1 parseItem space
     parseItem =
         (Nothing <$ space <* space <* space) <|>

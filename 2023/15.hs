@@ -2,6 +2,7 @@ import           AdventOfCode.Main
 import qualified AdventOfCode.NanoParser as NP
 import           Control.Applicative     ((<|>))
 import           Data.Char               (ord)
+import           Data.Foldable           (toList)
 import qualified Data.IntMap             as IM
 import           Data.List               (foldl')
 
@@ -15,7 +16,7 @@ parseOperations :: NP.Parser Char [Step]
 parseOperations = NP.sepBy1 parseOperation (NP.char ',')
   where
     parseOperation = Step
-        <$> NP.many1 NP.alpha
+        <$> (toList <$> NP.many1 NP.alpha)
         <*> ((Del <$ NP.char '-') <|> (NP.char '=' *> (Ins <$> NP.decimal)))
 
 type Boxes = IM.IntMap [(String, Int)]

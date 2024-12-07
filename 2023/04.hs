@@ -1,16 +1,19 @@
 {-# LANGUAGE BangPatterns #-}
 import           AdventOfCode.Main
 import qualified AdventOfCode.NanoParser as NP
+import           Data.Foldable           (toList)
 import           Data.Monoid             (Sum (..))
 import qualified Data.Set                as S
 
 data Card = Card Int (S.Set Int) [Int] deriving (Show)
 
 parseCards :: NP.Parser Char [Card]
-parseCards = NP.many1 $ Card
+parseCards = fmap toList $ NP.many1 $ Card
     <$> (NP.string "Card" *> NP.spaces *> NP.decimal <* NP.char ':')
-    <*> (S.fromList <$> (NP.spaces *> NP.many1 (NP.decimal <* NP.spaces)))
-    <*> (NP.char '|' *> NP.spaces *> NP.many1 (NP.decimal <* NP.spaces))
+    <*> (S.fromList <$> (NP.spaces *> numbers))
+    <*> (NP.char '|' *> NP.spaces *> numbers)
+  where
+    numbers = toList <$> NP.many1 (NP.decimal <* NP.spaces)
 
 cardMatches :: Card -> Int
 cardMatches (Card _ winning have) = length $ filter (`S.member` winning) have

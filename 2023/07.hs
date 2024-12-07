@@ -2,6 +2,7 @@ import           AdventOfCode.Main
 import qualified AdventOfCode.NanoParser as NP
 import           Control.Applicative     ((<|>))
 import           Data.Bifunctor          (first)
+import           Data.Foldable           (toList)
 import           Data.List               (group, maximumBy, sort, sortOn)
 import           Data.Ord                (comparing)
 
@@ -27,8 +28,9 @@ parseCard =
     (CA <$ NP.char 'A')
 
 parseInput :: NP.Parser Char [(Hand, Int)]
-parseInput = NP.many1 $
-    (,) <$> (NP.many1 parseCard <* NP.spaces) <*> (NP.decimal <* NP.spaces)
+parseInput = fmap toList $ NP.many1 $ (,)
+    <$> (toList <$> NP.many1 parseCard <* NP.spaces)
+    <*> (NP.decimal <* NP.spaces)
 
 data Score
     = HighCard

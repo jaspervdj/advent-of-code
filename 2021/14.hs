@@ -4,7 +4,7 @@ module Main where
 
 import           AdventOfCode.Main       (pureMain)
 import qualified AdventOfCode.NanoParser as P
-import           Data.Foldable           (foldl')
+import           Data.Foldable           (foldl', toList)
 import qualified Data.Map                as M
 import           Data.Monoid             (Endo (..))
 import           Data.Semigroup          (stimes)
@@ -58,7 +58,7 @@ solve rules polymer n =
 -- Input parser
 parseInput :: P.Parser Char (String, Rules Char)
 parseInput = (,)
-    <$> P.many1 P.upper <* P.spaces
+    <$> (toList <$> P.many1 P.upper) <* P.spaces
     <*> (foldl' insertRule M.empty <$> P.many1 parseRule)
   where
     insertRule acc (x, y, z) = M.insert (Pair x y) z acc

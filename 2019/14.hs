@@ -10,6 +10,7 @@ import           Control.Monad.Except      (throwError)
 import           Control.Monad.Reader      (ReaderT, asks, runReaderT)
 import           Control.Monad.State       (StateT, execStateT, modify, state)
 import           Data.Either               (isRight)
+import           Data.Foldable             (toList)
 import           Data.Functor              (($>))
 import qualified Data.Map                  as Map
 import           Data.Maybe                (fromMaybe)
@@ -20,14 +21,14 @@ type RecipeBook a = Map.Map a (Recipe a)
 type Inventory  a = Map.Map a Int
 
 parseRecipeBook :: NP.Parser Char [Recipe String]
-parseRecipeBook = NP.many1 $ Recipe
+parseRecipeBook = fmap toList $ NP.many1 $ Recipe
     <$> NP.sepBy1 quantity (NP.char ',' <* NP.spaces)
     <*  NP.string "=>" <* NP.spaces
     <*> quantity
   where
     quantity = (,)
         <$> NP.decimal <* NP.spaces
-        <*> NP.many1 NP.alpha <* NP.spaces
+        <*> (toList <$> NP.many1 NP.alpha <* NP.spaces)
 
 makeRecipeBook :: Ord a => [Recipe a] -> RecipeBook a
 makeRecipeBook rs = Map.fromList [(to, r) | r@(Recipe _ (_, to)) <- rs]

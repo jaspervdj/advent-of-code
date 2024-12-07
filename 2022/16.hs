@@ -4,6 +4,7 @@ import qualified AdventOfCode.Dijkstra       as Dijkstra
 import           AdventOfCode.Main
 import qualified AdventOfCode.NanoParser     as NP
 import           Control.Applicative         ((<|>))
+import           Data.Foldable               (toList)
 import qualified Data.Map                    as M
 
 type ValveId = String
@@ -16,9 +17,9 @@ parseCaves = M.fromList <$> NP.sepBy1 valve NP.newline
     valve = (\k f t -> (k, (f, t)))
         <$> (NP.string "Valve " *> valveId)
         <*> (NP.string " has flow rate=" *> NP.decimal <* NP.string ";")
-        <*> (NP.many1 (() <$ NP.lower <|> NP.char ' ') *> tunnels)
+        <*> (toList <$> NP.many1 (() <$ NP.lower <|> NP.char ' ') *> tunnels)
     tunnels = NP.sepBy1 valveId (NP.string ", ")
-    valveId = NP.many1 NP.upper
+    valveId = toList <$> NP.many1 NP.upper
 
 type Distances = M.Map (ValveId, ValveId) Int
 

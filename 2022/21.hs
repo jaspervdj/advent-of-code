@@ -4,6 +4,7 @@ import           AdventOfCode.Main
 import           AdventOfCode.NanoParser as NP
 import qualified AdventOfCode.Z3         as Z3
 import           Control.Applicative     (optional, (<|>))
+import           Data.Foldable           (toList)
 import qualified Data.Map                as M
 
 data BinOp = Add | Sub | Mul | Div deriving (Show)
@@ -29,7 +30,7 @@ parseMonkeys = M.fromList <$> NP.sepBy1 monkey NP.newline
 
     token p = p <* NP.horizontalSpaces
     term    = token $ (Var <$> var) <|> (Lit <$> NP.signedDecimal)
-    var     = NP.many1 NP.lower
+    var     = toList <$> NP.many1 NP.lower
     binop   = token $
         (Add <$ NP.char '+') <|>
         (Sub <$ NP.char '-') <|>

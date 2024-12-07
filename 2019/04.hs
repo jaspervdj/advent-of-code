@@ -2,6 +2,7 @@
 module Main where
 
 import qualified AdventOfCode.NanoParser as NP
+import           Data.Foldable           (toList)
 import           Data.List               (group)
 import           Data.List.Extra         (lexicographicSuccessor)
 import qualified System.IO               as IO
@@ -25,8 +26,8 @@ neverDecrease _            = True
 
 parseRange :: NP.Parser Char ([Digit], [Digit])
 parseRange = (,)
-    <$> NP.many1 (Digit <$> NP.digit) <* NP.char '-'
-    <*> NP.many1 (Digit <$> NP.digit)
+    <$> (toList <$> NP.many1 (Digit <$> NP.digit) <* NP.char '-')
+    <*> (toList <$> NP.many1 (Digit <$> NP.digit))
 
 main :: IO ()
 main = do

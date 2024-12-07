@@ -4,6 +4,7 @@ import qualified AdventOfCode.NanoParser as P
 import           Control.Applicative     ((<|>))
 import           Control.Monad           (guard)
 import           Data.Char               (isDigit, isSpace)
+import           Data.Foldable           (toList)
 import qualified Data.Map                as Map
 import           Data.Maybe              (fromMaybe)
 import           Data.Monoid             (All (..))
@@ -17,8 +18,8 @@ parsePassports = P.sepBy (Map.fromList <$> P.sepBy1 entry sep) (P.string "\n\n")
   where
     sep    = P.char ' ' <|> P.char '\n'
     entry  = (,) <$> (key <* P.char ':') <*> value
-    key    = P.many1 P.alpha
-    value  = P.many1 $ P.satisfy "value char" (not . isSpace)
+    key    = fmap toList $ P.many1 P.alpha
+    value  = fmap toList $ P.many1 $ P.satisfy "value char" (not . isSpace)
 
 type Validator = Map.Map String (String -> Bool)
 

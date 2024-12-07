@@ -1,6 +1,7 @@
 import           AdventOfCode.Main
 import qualified AdventOfCode.NanoParser as NP
 import           Control.Applicative     ((<|>))
+import           Data.Foldable           (toList)
 import           Data.List               (intercalate, tails)
 import qualified Data.Map                as M
 
@@ -8,8 +9,8 @@ data Tile = Operational | Damaged | Unknown deriving (Eq, Ord, Show)
 data Row = Row [Tile] [Int] deriving (Eq, Ord, Show)
 
 parseInput :: NP.Parser Char [Row]
-parseInput = NP.many1 $ Row
-    <$> (NP.many1 mbTile <* NP.spaces)
+parseInput = fmap toList $ NP.many1 $ Row
+    <$> (toList <$> NP.many1 mbTile <* NP.spaces)
     <*> (NP.sepBy NP.decimal (NP.char ',') <* NP.spaces)
   where
     mbTile =

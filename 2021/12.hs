@@ -5,7 +5,7 @@ module Main where
 import           AdventOfCode.Main       (pureMain)
 import qualified AdventOfCode.NanoParser as P
 import           Data.Char               (isLower, isUpper)
-import           Data.Foldable           (foldl')
+import           Data.Foldable           (foldl', toList)
 import qualified Data.Map                as M
 import qualified Data.Set                as S
 
@@ -46,7 +46,7 @@ paths visitMany visitTwice start end graph =
 
 main :: IO ()
 main = pureMain $ \input -> do
-    caves <- P.runParser (parseGraph (P.many1 P.alpha)) input
+    caves <- P.runParser (parseGraph (toList <$> P.many1 P.alpha)) input
     let part1 = length $ paths isBig (const False) "start" "end" caves
         part2 = length $ paths isBig isSmall "start" "end" caves
     pure (pure part1, pure part2)

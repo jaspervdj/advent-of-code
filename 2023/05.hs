@@ -1,6 +1,7 @@
 import           AdventOfCode.Main
 import qualified AdventOfCode.NanoParser as NP
 import qualified AdventOfCode.Ranges     as R
+import           Data.Foldable           (toList)
 import           Data.List               (foldl')
 
 data Input    = Input [(Int, Int)] [Mapping]     deriving (Show)
@@ -11,7 +12,8 @@ mkRange :: Int -> Int -> R.Ranges Int
 mkRange lo len = R.range lo (lo + len - 1)
 
 parseInput :: NP.Parser Char Input
-parseInput = Input <$> parseSeeds <*> NP.many1 parseMapping
+parseInput =
+    Input <$> (toList <$> parseSeeds) <*> (toList <$> NP.many1 parseMapping)
   where
     parseSeeds    = NP.string "seeds:" *> NP.spaces *> NP.many1 parsePair
     parsePair     = (,) <$> num <*> num
@@ -19,10 +21,10 @@ parseInput = Input <$> parseSeeds <*> NP.many1 parseMapping
     parseMapping  = Mapping
         <$> ident <* NP.string "-to-"
         <*> ident <* NP.spaces <* NP.string "map:" <* NP.spaces
-        <*> NP.many1 parseRangeMap
+        <*> (toList <$> NP.many1 parseRangeMap)
 
     num   = NP.decimal <* NP.spaces
-    ident = NP.many1 NP.alpha
+    ident = toList <$> NP.many1 NP.alpha
 
 mapInt :: Mapping -> Int -> Int
 mapInt (Mapping _ _ ranges0) x = go ranges0

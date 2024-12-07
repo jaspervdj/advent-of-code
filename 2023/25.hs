@@ -1,6 +1,7 @@
 import qualified AdventOfCode.Dijkstra   as Dijkstra
 import           AdventOfCode.Main
 import qualified AdventOfCode.NanoParser as NP
+import           Data.Foldable           (toList)
 import           Data.List               (foldl', sortOn)
 import qualified Data.Map                as M
 import           Data.Ord                (Down (..))
@@ -28,9 +29,9 @@ bfs start graph = map snd . M.toList . Dijkstra.bfsDistances $ Dijkstra.bfs
 parseGraph :: NP.Parser Char (Graph String)
 parseGraph = fmap mkGraph $ flip NP.sepBy1 NP.newline $ (,)
     <$> (node <* NP.char ':')
-    <*> NP.many1 (NP.char ' ' *> node)
+    <*> (toList <$> NP.many1 (NP.char ' ' *> node))
   where
-    node      = NP.many1 NP.alpha
+    node      = toList <$> NP.many1 NP.alpha
     mkGraph l = foldl'
         (\acc e -> insert e acc)
         M.empty

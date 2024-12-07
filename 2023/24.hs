@@ -7,13 +7,14 @@ import           AdventOfCode.V2.Box     (Box (..))
 import qualified AdventOfCode.V2.Box     as Box
 import           AdventOfCode.V3         (V3 (..))
 import qualified AdventOfCode.Z3         as Z3
+import           Data.Foldable           (toList)
 import           Data.Maybe              (maybeToList)
 import qualified Data.Vector             as V
 
 data Hailstone = Hailstone (V3 Int) (V3 Int) deriving (Show)
 
 parseHailStones :: NP.Parser Char [Hailstone]
-parseHailStones = NP.many1 $
+parseHailStones = fmap toList $ NP.many1 $
     Hailstone <$> (parseV3 <* tok (NP.char '@')) <*> parseV3
   where
     tok p = p <* NP.spaces

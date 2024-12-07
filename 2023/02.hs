@@ -1,6 +1,6 @@
 import           AdventOfCode.Main
 import qualified AdventOfCode.NanoParser as NP
-import           Data.Foldable           (foldl')
+import           Data.Foldable           (foldl', toList)
 import qualified Data.Map                as M
 import           Data.Maybe              (fromMaybe)
 import           Data.Monoid             (All (..))
@@ -16,8 +16,9 @@ parseGameRecords = NP.sepBy1 gameRecord NP.newline
         <$> (NP.string "Game " *> NP.decimal <* NP.string ": ")
         <*> NP.sepBy1 grab (NP.string "; ")
 
-    grab = fmap M.fromList $ NP.sepBy1
-        (flip (,) <$> NP.decimal <*> (NP.spaces *> NP.many1 NP.alpha))
+    color = toList <$> NP.many1 NP.alpha
+    grab  = fmap M.fromList $ NP.sepBy1
+        (flip (,) <$> NP.decimal <*> (NP.spaces *> color))
         (NP.string ", ")
 
 contains :: Ord k => M.Map k Int -> M.Map k Int -> Bool

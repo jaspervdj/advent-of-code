@@ -7,10 +7,10 @@ import qualified AdventOfCode.NanoParser as NP
 import           Control.Applicative     (many, optional, (<|>))
 import           Control.Monad           (guard)
 import           Data.Char               (isDigit)
+import           Data.Foldable           (toList)
 import           Data.Functor            (($>))
 import           Data.Functor.Fix
-import           Data.Maybe              (catMaybes, mapMaybe)
-import           Data.Maybe              (fromMaybe)
+import           Data.Maybe              (catMaybes, fromMaybe, mapMaybe)
 
 data Json a
     = Int Int
@@ -27,7 +27,7 @@ parseJson = fmap Fix $
     (Object <$> object parseJson)
   where
     string   = NP.char '"' *> many notQuote <* NP.char '"'
-    int      = sign <*> (read <$> NP.many1 digit)
+    int      = sign <*> (read . toList <$> NP.many1 digit)
     array  p = NP.char '[' *> NP.sepBy p (NP.char ',') <* NP.char ']'
     object p = NP.char '{' *> NP.sepBy (item p) (NP.char ',') <* NP.char '}'
     item   p = (,) <$> string <* NP.char ':' <*> p

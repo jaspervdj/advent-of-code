@@ -6,6 +6,7 @@ import qualified AdventOfCode.NanoParser as P
 import           AdventOfCode.V2         (V2 (..))
 import           Control.Applicative     ((<|>))
 import           Data.Coerce             (coerce)
+import           Data.Foldable           (toList)
 import qualified Data.Map                as M
 import           Data.Monoid             (Dual (..), Endo (..))
 import qualified Data.Set                as S
@@ -14,7 +15,9 @@ type Fold  = Dual (Endo (V2 Int))
 type Sheet = S.Set (V2 Int)
 
 parseInput :: P.Parser Char (Sheet, [Fold])
-parseInput = (,) <$> (S.fromList <$> P.many1 v2) <*> P.many1 fold
+parseInput = (,)
+    <$> (S.fromList . toList <$> P.many1 v2)
+    <*> (toList <$> P.many1 fold)
   where
     v2   = V2 <$> (P.decimal <* P.char ',') <*> (P.decimal <* P.spaces)
     fold = P.string "fold along " *> xy <* P.spaces

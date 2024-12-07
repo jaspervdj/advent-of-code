@@ -5,7 +5,7 @@ import qualified AdventOfCode.NanoParser as P
 import           Control.Applicative     (many)
 import           Control.Monad           (forM, guard)
 import           Data.Char               (toUpper)
-import           Data.Foldable           (foldl')
+import           Data.Foldable           (foldl', toList)
 import           Data.Foldable.Extra     (minimaBy)
 import qualified Data.Map                as M
 import           Data.Ord                (comparing)
@@ -21,7 +21,7 @@ parseSegment = P.satisfyMaybe "abcdefg" (\c -> readMaybe [toUpper c])
 type Pattern = S.Set Segment
 
 parsePattern :: P.Parser Char Pattern
-parsePattern = S.fromList <$> P.many1 parseSegment
+parsePattern = S.fromList . toList <$> P.many1 parseSegment
 
 -- | Original configuration
 display :: [(Pattern, Int)]
@@ -42,8 +42,8 @@ data Input = Input [Pattern] [Pattern] deriving (Show)
 
 parseInputs :: P.Parser Char [Input]
 parseInputs = many $ Input
-    <$> (P.many1 (tok parsePattern) <* tok (P.char '|'))
-    <*> (P.many1 (tok parsePattern) <* P.spaces)
+    <$> (toList <$> P.many1 (tok parsePattern) <* tok (P.char '|'))
+    <*> (toList <$> P.many1 (tok parsePattern) <* P.spaces)
   where
     tok p = p <* P.horizontalSpaces
 

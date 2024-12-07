@@ -53,8 +53,8 @@ parseMonkey = Monkey
 type Monkeys = M.Map MonkeyId Monkey
 
 parseMonkeys :: NP.Parser Char Monkeys
-parseMonkeys =
-    M.fromList . fmap (\m -> (monkeyId m, m)) <$> NP.many1 parseMonkey
+parseMonkeys = M.fromList . F.toList . fmap (\m -> (monkeyId m, m)) <$>
+    NP.many1 parseMonkey
 
 inspect :: (Int -> Int) -> Int -> Monkey -> Monkeys -> Monkeys
 inspect manageWorryLevel item0 me monkeys = M.adjust

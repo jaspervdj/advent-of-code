@@ -5,18 +5,21 @@ import           AdventOfCode.V2         (V2 (..))
 import           Control.Applicative     ((<|>))
 import           Control.Monad           (when)
 import           Control.Monad.Except    (throwError)
+import           Data.Foldable           (toList)
 import           Numeric                 (readHex)
 
 data Dig = Dig G.Dir Int String deriving (Show)
 
 parseDigs :: NP.Parser Char [Dig]
-parseDigs = NP.many1 $ Dig <$> tok dir <*> tok NP.decimal <*> tok color
+parseDigs = fmap toList $ NP.many1 $
+    Dig <$> tok dir <*> tok NP.decimal <*> tok color
   where
     tok    p = (p <* NP.spaces)
     parens p = NP.char '(' *> p <* NP.char ')'
 
-    color = parens $ NP.char '#' *> NP.many1 (NP.alpha <|> NP.digit)
-    dir   =
+    color = fmap toList $ parens $
+        NP.char '#' *> NP.many1 (NP.alpha <|> NP.digit)
+    dir =
         (G.U <$ NP.char 'U') <|>
         (G.R <$ NP.char 'R') <|>
         (G.D <$ NP.char 'D') <|>

@@ -30,8 +30,10 @@ module AdventOfCode.NanoParser
 import           Control.Applicative (Alternative (..), optional)
 import           Control.Monad       (void)
 import qualified Data.Char           as Char
+import           Data.Foldable       (toList)
 import           Data.Functor        (($>))
 import           Data.List           (foldl', intercalate)
+import           Data.List.NonEmpty  (NonEmpty (..))
 import           Data.Maybe          (fromMaybe)
 import qualified System.IO           as IO
 
@@ -81,8 +83,8 @@ string :: (Eq t, Show t) => [t] -> Parser t ()
 string []       = pure ()
 string (x : xs) = char x *> string xs
 
-many1 :: Parser t a -> Parser t [a]
-many1 p = (:) <$> p <*> many p
+many1 :: Parser t a -> Parser t (NonEmpty a)
+many1 p = (:|) <$> p <*> many p
 
 sepBy :: Parser t a -> Parser t b -> Parser t [a]
 sepBy p s = sepBy1 p s <|> pure []
@@ -117,7 +119,7 @@ horizontalSpaces = void . many $ satisfy "horizontal whitespace" $ \c ->
     Char.isSpace c && c /= '\n' && c /= '\r'
 
 decimal :: (Integral a, Read a) => Parser Char a
-decimal = read <$> many1 digit
+decimal = read . toList <$> many1 digit
 
 signedDecimal :: Parser Char Int
 signedDecimal = fmap (fromMaybe id) (optional (char '-' $> negate)) <*> decimal

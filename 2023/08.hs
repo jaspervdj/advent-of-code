@@ -2,6 +2,7 @@
 import           AdventOfCode.Main
 import qualified AdventOfCode.NanoParser as NP
 import           Control.Applicative     ((<|>))
+import           Data.Foldable           (toList)
 import           Data.List               (findIndex)
 import qualified Data.Map                as M
 import           Data.Maybe              (fromJust)
@@ -12,11 +13,11 @@ data Input a = Input [Instr a] (M.Map a (Node a))
 
 parseInput :: NP.Parser Char (Input String)
 parseInput = Input
-    <$> NP.many1 instruction <* NP.spaces
-    <*> (M.fromList <$> NP.many1 node)
+    <$> (toList <$> NP.many1 instruction <* NP.spaces)
+    <*> (M.fromList . toList <$> NP.many1 node)
   where
     instruction = (fst <$ NP.char 'L') <|> (snd <$ NP.char 'R')
-    ident       = NP.many1 NP.alpha <* NP.spaces
+    ident       = toList <$> NP.many1 NP.alpha <* NP.spaces
     tok c       = NP.char c *> NP.spaces
     node        = (,)
         <$> ident <* tok '=' <* tok '('
