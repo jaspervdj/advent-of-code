@@ -1,10 +1,6 @@
 import           AdventOfCode.Main       (pureMain)
 import qualified AdventOfCode.NanoParser as NP
-import           Data.List               (sortOn)
 import           Data.List.NonEmpty      (NonEmpty (..))
-import qualified Data.Map                as M
-import           Data.Maybe              (isNothing, listToMaybe, mapMaybe)
-import           Debug.Trace
 
 data Equation = Equation Integer (NonEmpty Integer) deriving (Show)
 
