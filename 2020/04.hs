@@ -14,11 +14,13 @@ import           Text.Read               (readMaybe)
 type Passport = Map.Map String String
 
 parsePassports :: P.Parser Char [Passport]
-parsePassports = P.sepBy (Map.fromList <$> P.sepBy1 entry sep) (P.string "\n\n")
+parsePassports = P.sepBy
+    (Map.fromList . toList <$> P.sepBy1 entry sep)
+    (P.string "\n\n")
   where
     sep    = P.char ' ' <|> P.char '\n'
     entry  = (,) <$> (key <* P.char ':') <*> value
-    key    = fmap toList $ P.many1 P.alpha
+    key    = toList <$> P.many1 P.alpha
     value  = fmap toList $ P.many1 $ P.satisfy "value char" (not . isSpace)
 
 type Validator = Map.Map String (String -> Bool)

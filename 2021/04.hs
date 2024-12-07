@@ -4,18 +4,20 @@ import qualified AdventOfCode.Grid       as G
 import           AdventOfCode.Main       (pureMain)
 import qualified AdventOfCode.NanoParser as P
 import           AdventOfCode.V2         (V2 (..))
+import           Data.Foldable           (toList)
 import           Data.List               (partition)
 import qualified Data.Map                as M
 import qualified Data.Set                as S
 
 parseInput :: P.Parser Char ([Int], [G.Grid Int])
 parseInput = (,)
-    <$> (P.sepBy1 P.decimal (P.char ',') <* eol <* eol)
-    <*> (P.sepBy1 parseBoard eol)
+    <$> (sep P.decimal (P.char ',') <* eol <* eol)
+    <*> (sep parseBoard eol)
   where
+    sep p s        = toList <$> P.sepBy1 p s
     eol            = P.horizontalSpaces <* P.newline
-    parseBoard     = G.fromList <$> P.sepBy1 parseBoardLine eol <* eol
-    parseBoardLine = P.horizontalSpaces *> P.sepBy1 P.decimal P.horizontalSpaces
+    parseBoard     = G.fromList <$> sep parseBoardLine eol <* eol
+    parseBoardLine = P.horizontalSpaces *> sep P.decimal P.horizontalSpaces
 
 data Line = Row !Int | Col !Int deriving (Eq, Ord)
 

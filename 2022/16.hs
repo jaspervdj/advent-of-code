@@ -12,13 +12,13 @@ type ValveId = String
 type Caves = M.Map ValveId (Int, [ValveId])
 
 parseCaves :: NP.Parser Char Caves
-parseCaves = M.fromList <$> NP.sepBy1 valve NP.newline
+parseCaves = M.fromList . toList <$> NP.sepBy1 valve NP.newline
   where
     valve = (\k f t -> (k, (f, t)))
         <$> (NP.string "Valve " *> valveId)
         <*> (NP.string " has flow rate=" *> NP.decimal <* NP.string ";")
         <*> (toList <$> NP.many1 (() <$ NP.lower <|> NP.char ' ') *> tunnels)
-    tunnels = NP.sepBy1 valveId (NP.string ", ")
+    tunnels = toList <$> NP.sepBy1 valveId (NP.string ", ")
     valveId = toList <$> NP.many1 NP.upper
 
 type Distances = M.Map (ValveId, ValveId) Int

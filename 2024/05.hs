@@ -1,6 +1,7 @@
 import           AdventOfCode.Main       (pureMain)
 import qualified AdventOfCode.NanoParser as NP
 import           Control.Applicative     (many)
+import           Data.Foldable           (toList)
 import           Data.List               (sortOn)
 import qualified Data.Map                as M
 import           Data.Maybe              (isNothing, listToMaybe, mapMaybe)
@@ -13,7 +14,7 @@ parseInput :: NP.Parser Char Input
 parseInput = Input <$> many constr <*> many update
   where
     constr = Before <$> NP.decimal <* NP.char '|' <*> NP.decimal <* NP.spaces
-    update = NP.sepBy1 NP.decimal (NP.char ',') <* NP.spaces
+    update = toList <$> NP.sepBy1 NP.decimal (NP.char ',') <* NP.spaces
 
 middlePage :: Update -> Int
 middlePage u = u !! (length u `div` 2)

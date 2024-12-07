@@ -40,15 +40,15 @@ parseInput = makeInput
 
     parseRows = fmap toList $ NP.many1 $
         parseRow <* NP.horizontalSpaces <* NP.newline
-    parseRow  = NP.sepBy1 parseItem space
+    parseRow  = toList <$> NP.sepBy1 parseItem space
     parseItem =
         (Nothing <$ space <* space <* space) <|>
         (Just <$> (NP.char '[' *> NP.anyChar <* NP.char ']'))
 
-    parseLabels =
+    parseLabels = fmap toList $
         NP.sepBy1 (space *> NP.decimal <* space) space <* NP.newline
 
-    parseMoves = NP.sepBy1 parseMove NP.newline
+    parseMoves = toList <$> NP.sepBy1 parseMove NP.newline
     parseMove  = (,,)
         <$> (NP.string "move " *> NP.decimal)
         <*> (NP.string " from " *> NP.decimal)

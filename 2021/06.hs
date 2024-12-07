@@ -1,7 +1,6 @@
-module Main where
-
 import           AdventOfCode.Main       (pureMain)
 import qualified AdventOfCode.NanoParser as P
+import           Data.Foldable           (toList)
 import qualified Data.Map                as M
 import           Data.Monoid             (Sum (..))
 
@@ -32,7 +31,7 @@ stepPopulation = M.foldMapWithKey
 
 main :: IO ()
 main = pureMain $ \input -> do
-    fishes <- P.runParser (P.decimal `P.sepBy1` P.char ',') input
+    fishes <- toList <$> P.runParser (P.decimal `P.sepBy1` P.char ',') input
     let part1 = length $ iterate (concatMap stepFish) fishes !! 80
         part2 = size $ iterate stepPopulation (foldMap singleton fishes) !! 256
     pure (pure part1, pure part2)

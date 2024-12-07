@@ -27,6 +27,7 @@ module AdventOfCode.IntCode
 import qualified AdventOfCode.NanoParser as NP
 import qualified AdventOfCode.NanoTest   as NT
 import           Data.Char               (chr, ord)
+import           Data.Foldable           (toList)
 import qualified Data.IntMap             as IM
 import           Data.Maybe              (fromMaybe, maybeToList)
 import qualified System.IO               as IO
@@ -42,7 +43,8 @@ data Interrupt
 newtype Program = Program (IM.IntMap Int) deriving (Semigroup, Show)
 
 parseProgram :: NP.Parser Char Program
-parseProgram = makeProgram <$> NP.sepBy1 (NP.signedDecimal) (NP.char ',')
+parseProgram = makeProgram . toList <$>
+    NP.sepBy1 (NP.signedDecimal) (NP.char ',')
 
 makeProgram :: [Int] -> Program
 makeProgram = Program . IM.fromList . zip [0 ..]

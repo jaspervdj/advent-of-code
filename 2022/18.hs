@@ -1,18 +1,19 @@
-import           Control.Monad           (guard)
-import qualified AdventOfCode.Dijkstra   as Dijkstra
+import qualified AdventOfCode.Dijkstra    as Dijkstra
 import           AdventOfCode.Main
-import qualified AdventOfCode.NanoParser as NP
-import           AdventOfCode.V3         (V3 (..))
-import qualified AdventOfCode.V3         as V3
-import           Data.List               (foldl1')
-import qualified Data.Map                as M
-import qualified Data.Set                as S
+import qualified AdventOfCode.NanoParser  as NP
+import           AdventOfCode.V3          (V3 (..))
+import qualified AdventOfCode.V3          as V3
+import           Control.Monad            (guard)
+import           Data.Foldable            (toList)
+import           Data.List.NonEmpty.Extra (NonEmpty, foldl1')
+import qualified Data.Map                 as M
+import qualified Data.Set                 as S
 
-newtype Voxel = Voxel (V3 Int) deriving (Eq, Ord)
+newtype Voxel = Voxel {unVoxel :: V3 Int} deriving (Eq, Ord)
 newtype Face  = Face  (V3 Int) deriving (Eq, Ord)
 
-parseInput :: NP.Parser Char [Voxel]
-parseInput = fmap (map Voxel) $ v3 `NP.sepBy1` NP.newline
+parseInput :: NP.Parser Char (NonEmpty Voxel)
+parseInput = fmap (fmap Voxel) $ v3 `NP.sepBy1` NP.newline
   where
     v3 = V3
         <$> NP.signedDecimal
@@ -39,16 +40,16 @@ voxelNeighbours (Voxel (V3 x y z)) = map Voxel
     , V3  x       y      (z + 1)
     ]
 
-part1 :: [Voxel] -> Int
+part1 :: NonEmpty Voxel -> Int
 part1 cubes = M.size . M.filter (== 1) $
-    M.fromListWith (+) [(p, 1 :: Int) | c <- cubes, p <- voxelFaces c]
+    M.fromListWith (+) [(p, 1 :: Int) | c <- toList cubes, p <- voxelFaces c]
 
-part2 :: [Voxel] -> Int
+part2 :: NonEmpty Voxel -> Int
 part2 voxels = S.size $
     (S.fromList $ steam  >>= voxelFaces) `S.intersection`
-    (S.fromList $ voxels >>= voxelFaces)
+    (S.fromList $ toList voxels >>= voxelFaces)
   where
-    droplet = S.fromList voxels
+    droplet = S.fromList $ toList voxels
     steam   = M.keys . Dijkstra.bfsDistances $ Dijkstra.bfs
         (\voxel -> do
             neighbour@(Voxel (V3 x y z)) <- voxelNeighbours voxel
@@ -61,8 +62,8 @@ part2 voxels = S.size $
         (const False)
         (Voxel (V3 minX minY (minZ - 1)))
 
-    V3 minX minY minZ = foldl1' (V3.zipWith min) [v | Voxel v <- voxels]
-    V3 maxX maxY maxZ = foldl1' (V3.zipWith max) [v | Voxel v <- voxels]
+    V3 minX minY minZ = foldl1' (V3.zipWith min) $ fmap unVoxel voxels
+    V3 maxX maxY maxZ = foldl1' (V3.zipWith max) $ fmap unVoxel voxels
 
 main :: IO ()
 main = pureMain $ \input -> do

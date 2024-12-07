@@ -6,11 +6,12 @@ import           Control.Applicative     ((<|>))
 import           Data.Foldable           (toList)
 import           Data.Functor            (($>))
 import           Data.List               (scanl')
+import           Data.List.NonEmpty      (NonEmpty)
 import qualified Data.Map                as Map
 import           Data.Tuple              (swap)
 import qualified System.IO               as IO
 
-type Wire = [(G.Dir, Int)]
+type Wire = NonEmpty (G.Dir, Int)
 
 parseWires :: NP.Parser Char [Wire]
 parseWires = fmap toList $ NP.many1 $

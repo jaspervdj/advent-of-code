@@ -4,6 +4,7 @@ module Main where
 import           AdventOfCode.Main       (pureMain)
 import qualified AdventOfCode.NanoParser as P
 import           Control.Applicative     ((<|>))
+import           Data.Foldable           (toList)
 
 data T = I Int | P T T deriving (Eq)
 
@@ -81,5 +82,6 @@ main :: IO ()
 main = pureMain $ \input -> do
     ts <- P.runParser (P.sepBy1 parseT P.spaces) input
     let part1 = foldl1 add ts
-        part2 = maximum [magnitude $ add x y | x <- ts, y <- ts, x /= y]
+        part2 = maximum
+            [magnitude $ add x y | x <- toList ts, y <- toList ts, x /= y]
     pure (pure (magnitude part1), pure part2)

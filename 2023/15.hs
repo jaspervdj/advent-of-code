@@ -13,7 +13,7 @@ data Step      = Step String Operation deriving (Show)
 data Operation = Del | Ins Int deriving (Show)
 
 parseOperations :: NP.Parser Char [Step]
-parseOperations = NP.sepBy1 parseOperation (NP.char ',')
+parseOperations = toList <$> NP.sepBy1 parseOperation (NP.char ',')
   where
     parseOperation = Step
         <$> (toList <$> NP.many1 NP.alpha)

@@ -12,13 +12,14 @@ import           Control.Monad.State       (StateT, execStateT, modify, state)
 import           Data.Either               (isRight)
 import           Data.Foldable             (toList)
 import           Data.Functor              (($>))
+import           Data.List.NonEmpty        (NonEmpty)
 import qualified Data.Map                  as Map
 import           Data.Maybe                (fromMaybe)
 import qualified System.IO                 as IO
 
-data Recipe     a = Recipe [(Int, a)] (Int, a) deriving (Foldable, Show)
+data Recipe a = Recipe (NonEmpty (Int, a)) (Int, a) deriving (Foldable, Show)
 type RecipeBook a = Map.Map a (Recipe a)
-type Inventory  a = Map.Map a Int
+type Inventory a = Map.Map a Int
 
 parseRecipeBook :: NP.Parser Char [Recipe String]
 parseRecipeBook = fmap toList $ NP.many1 $ Recipe

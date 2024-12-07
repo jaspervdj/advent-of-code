@@ -48,7 +48,7 @@ parseMonkey = Monkey
     term = (Old <$ NP.string "old") <|> (Lit <$> NP.decimal)
     operator = (Multiply Old <$ NP.char '*') <|> (Add Old <$ NP.char '+')
 
-    items = Seq.fromList <$> NP.sepBy1 NP.decimal (NP.string ", ")
+    items = Seq.fromList . F.toList <$> NP.sepBy1 NP.decimal (NP.string ", ")
 
 type Monkeys = M.Map MonkeyId Monkey
 

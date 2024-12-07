@@ -6,11 +6,12 @@ import           Control.Monad           (when)
 import           Control.Monad.Except    (throwError)
 import           Data.Foldable           (toList)
 import           Data.List               (foldl', foldl1')
+import           Data.List.NonEmpty      (NonEmpty)
 import qualified Data.Map                as M
 
 type Identifier = String
 data ModuleType = Broadcast | FlipFlop | Conjunction deriving (Show)
-type Spec = M.Map Identifier (ModuleType, [Identifier])
+type Spec = M.Map Identifier (ModuleType, NonEmpty Identifier)
 
 parseSpec :: NP.Parser Char Spec
 parseSpec = fmap (M.fromList . toList) $ NP.many1 $
@@ -69,7 +70,8 @@ send spec logEvent event = go (Q.singleton event)
             let (module1, mbOut) = module0 (src, pulse)
                 outs             = case mbOut of
                     Nothing -> []
-                    Just o  -> [(dst, o, n) | n <- snd $ spec M.! dst] in
+                    Just o  ->
+                        [(dst, o, n) | n <- toList . snd $ spec M.! dst] in
             (M.insert dst module1 modules, outs)
 
 button :: Event

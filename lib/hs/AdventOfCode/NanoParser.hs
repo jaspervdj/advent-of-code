@@ -87,10 +87,10 @@ many1 :: Parser t a -> Parser t (NonEmpty a)
 many1 p = (:|) <$> p <*> many p
 
 sepBy :: Parser t a -> Parser t b -> Parser t [a]
-sepBy p s = sepBy1 p s <|> pure []
+sepBy p s = (toList <$> sepBy1 p s) <|> pure []
 
-sepBy1 :: Parser t a -> Parser t b -> Parser t [a]
-sepBy1 p s = (:) <$> p <*> many (s *> p)
+sepBy1 :: Parser t a -> Parser t b -> Parser t (NonEmpty a)
+sepBy1 p s = (:|) <$> p <*> many (s *> p)
 
 -- | Parse a left-associative chain of terms and operators.
 chainl1 :: Parser t a -> Parser t (a -> a -> a) -> Parser t a

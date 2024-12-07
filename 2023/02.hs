@@ -10,14 +10,14 @@ type Grab       = M.Map Color Int
 data GameRecord = GameRecord Int [Grab] deriving (Show)
 
 parseGameRecords :: NP.Parser Char [GameRecord]
-parseGameRecords = NP.sepBy1 gameRecord NP.newline
+parseGameRecords = toList <$> NP.sepBy1 gameRecord NP.newline
   where
     gameRecord = GameRecord
         <$> (NP.string "Game " *> NP.decimal <* NP.string ": ")
-        <*> NP.sepBy1 grab (NP.string "; ")
+        <*> (toList <$> NP.sepBy1 grab (NP.string "; "))
 
     color = toList <$> NP.many1 NP.alpha
-    grab  = fmap M.fromList $ NP.sepBy1
+    grab  = fmap (M.fromList . toList) $ NP.sepBy1
         (flip (,) <$> NP.decimal <*> (NP.spaces *> color))
         (NP.string ", ")
 

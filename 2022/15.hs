@@ -1,7 +1,7 @@
 import           AdventOfCode.Main
 import qualified AdventOfCode.NanoParser as NP
 import qualified AdventOfCode.Ranges     as R
-import           Data.List               (foldl')
+import           Data.Foldable           (foldl', toList)
 import           Data.Maybe              (mapMaybe)
 
 --------------------------------------------------------------------------------
@@ -16,7 +16,7 @@ manhattan (Pos x0 y0) (Pos x1 y1) = abs (x1 - x0) + abs (y1 - y0)
 data Sensor = Sensor !Pos !Pos
 
 parseSensors :: NP.Parser Char [Sensor]
-parseSensors = NP.sepBy1 pair NP.newline
+parseSensors = toList <$> NP.sepBy1 pair NP.newline
   where
     pair = Sensor
         <$> (NP.string "Sensor at " *> pos)

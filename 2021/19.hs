@@ -4,7 +4,7 @@ import           AdventOfCode.Main       (pureMain)
 import           AdventOfCode.NanoParser as P
 import           AdventOfCode.V3         (V3 (..), manhattan, (.+.), (.-.))
 import           Control.Monad           (guard)
-import           Data.Foldable           (foldl')
+import           Data.Foldable           (foldl', toList)
 import           Data.List.Extra         (select)
 import           Data.Maybe              (listToMaybe, maybeToList)
 import qualified Data.Set                as S
@@ -40,7 +40,7 @@ parseScan :: P.Parser Char Scanner
 parseScan = Scanner
     <$> (P.string "--- scanner " *> P.decimal <*
             P.spaces <* P.string "---" <* P.spaces)
-    <*> (S.fromList <$> P.sepBy1 parseV3 P.spaces)
+    <*> (S.fromList . toList <$> P.sepBy1 parseV3 P.spaces)
   where
     parseV3 = V3
         <$> (P.signedDecimal <* P.char ',')
@@ -84,7 +84,7 @@ merges xs  = step xs >>= merges
 
 main :: IO ()
 main = pureMain $ \input -> do
-    scanners <- P.runParser (P.sepBy1 parseScan P.spaces) input
+    scanners <- toList <$> P.runParser (P.sepBy1 parseScan P.spaces) input
     Scan bs ss <- maybe (Left "Unable to merge all scanners") Right $
         merges (scannerToScan <$> scanners)
     let part1 = S.size bs

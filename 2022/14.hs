@@ -5,7 +5,7 @@ import qualified AdventOfCode.NanoParser as NP
 import           AdventOfCode.V2         (V2 (..))
 import qualified AdventOfCode.V2         as V2
 import qualified AdventOfCode.V2.Box     as Box
-import           Data.List               (find, foldl')
+import           Data.Foldable           (find, foldl', toList)
 import qualified Data.Map                as M
 import           Data.Maybe              (isNothing)
 import qualified Data.Set                as S
@@ -13,9 +13,9 @@ import qualified Data.Set                as S
 type StraightLines = [[G.Pos]]
 
 parseStraightLines :: NP.Parser Char StraightLines
-parseStraightLines = line `NP.sepBy1` NP.newline
+parseStraightLines = toList <$> line `NP.sepBy1` NP.newline
   where
-    line  = point `NP.sepBy1` NP.string " -> "
+    line  = fmap toList $ point `NP.sepBy1` NP.string " -> "
     point = V2 <$> NP.signedDecimal <*> (NP.char ',' *> NP.signedDecimal)
 
 drawStraightLines :: StraightLines -> Either String (S.Set G.Pos)

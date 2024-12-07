@@ -1,8 +1,8 @@
 import qualified AdventOfCode.Dijkstra   as Dijkstra
 import           AdventOfCode.Main
 import qualified AdventOfCode.NanoParser as NP
-import           Data.Foldable           (toList)
-import           Data.List               (foldl', sortOn)
+import           Data.Foldable           (foldl', toList)
+import           Data.List               (sortOn)
 import qualified Data.Map                as M
 import           Data.Ord                (Down (..))
 import qualified Data.Set                as S
@@ -35,7 +35,7 @@ parseGraph = fmap mkGraph $ flip NP.sepBy1 NP.newline $ (,)
     mkGraph l = foldl'
         (\acc e -> insert e acc)
         M.empty
-        [mkEdge x y | (x, ys) <- l, y <- ys]
+        [mkEdge x y | (x, ys) <- toList l, y <- ys]
 
 -- | Starts a BFS from every single node in the graph, and count how many times
 -- we took each edge accross all BFSs.

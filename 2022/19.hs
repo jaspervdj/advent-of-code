@@ -66,7 +66,7 @@ parseBlueprints = toList <$> NP.many1 blueprint
     robot = (,)
         <$> (NP.string "Each " *> resource <* NP.string " robot costs ")
         <*> (cost <* NP.char '.')
-    cost = fmap resourcesFromList $ NP.sepBy1
+    cost = fmap (resourcesFromList . toList) $ NP.sepBy1
         ((\i r -> (r, i)) <$> (NP.decimal <* NP.char ' ') <*> resource)
         (NP.string " and ")
     resource =

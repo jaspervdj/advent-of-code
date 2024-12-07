@@ -3,6 +3,8 @@ module Main where
 
 import           AdventOfCode.Main       (pureMain)
 import qualified AdventOfCode.NanoParser as P
+import           Data.Foldable           (toList)
+import           Data.List.NonEmpty      (NonEmpty)
 import qualified Data.Map                as M
 
 type Position = Int
@@ -10,8 +12,8 @@ type Fuel = Int
 type Crabs = M.Map Position [Int]  -- Tracks steps taken for each crab.
 type Consumption = Int -> Fuel
 
-makeCrabs :: [Position] -> Crabs
-makeCrabs = M.fromListWith (++) . flip zip (repeat [0])
+makeCrabs :: NonEmpty Position -> Crabs
+makeCrabs = M.fromListWith (++) . flip zip (repeat [0]) . toList
 
 -- Move the leftmost crabs one step to the right, or vice versa.
 stepRight, stepLeft :: Consumption -> Crabs -> Maybe (Crabs, Fuel)

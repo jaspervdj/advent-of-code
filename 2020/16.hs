@@ -4,6 +4,8 @@ import           Control.Monad           (guard)
 import           Data.Char               (isAlpha)
 import           Data.Foldable           (toList)
 import qualified Data.List               as L
+import           Data.List.NonEmpty      (NonEmpty)
+import qualified Data.List.NonEmpty      as NE
 import qualified Data.Vector             as V
 
 --------------------------------------------------------------------------------
@@ -11,12 +13,12 @@ import qualified Data.Vector             as V
 data Constraint = Constraint String Int Int Int Int
     deriving (Eq, Show)
 
-type Ticket = [Int]
+type Ticket = NonEmpty Int
 
 data Input = Input
-    { inputConstraints   :: [Constraint]
+    { inputConstraints   :: NonEmpty Constraint
     , inputYourTicket    :: Ticket
-    , inputNearbyTickets :: [Ticket]
+    , inputNearbyTickets :: NonEmpty Ticket
     } deriving (Show)
 
 --------------------------------------------------------------------------------
@@ -50,7 +52,7 @@ orderConstraints :: [Ticket] -> [Constraint] -> Maybe [Constraint]
 orderConstraints tickets constraints0 =
     solve (V.replicate (length constraints0) Nothing) constraints0
   where
-    values = L.transpose tickets
+    values = L.transpose $ map toList tickets
 
     solve solved [] = sequence $ V.toList solved
     solve solved constraints
@@ -74,9 +76,9 @@ main = pureMain $ \inputstr -> do
 
     let part1 :: [(Ticket, [Int])]  -- Tickets and definitely invalid numbers.
         part1 = do
-            ticket <- inputNearbyTickets input
+            ticket <- toList $ inputNearbyTickets input
             let invalids = do
-                    x <- ticket
+                    x <- toList ticket
                     guard . not . any (check x) $ inputConstraints input
                     pure x
             pure (ticket, invalids)
@@ -88,9 +90,9 @@ main = pureMain $ \inputstr -> do
         ( pure . sum $ concatMap snd part1
         , do
             order <- maybe (Left "no solution") Right $
-                orderConstraints tickets (inputConstraints input)
+                orderConstraints tickets $ toList $ inputConstraints input
             pure . product $ do
                 (i, Constraint name _ _ _ _) <- zip [0 ..] order
                 guard $ "departure" `L.isPrefixOf` name
-                pure $ inputYourTicket input !! i
+                pure $ inputYourTicket input NE.!! i
         )

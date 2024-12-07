@@ -18,7 +18,7 @@ data MonkeyExpr
 type Monkeys = M.Map String MonkeyExpr
 
 parseMonkeys :: NP.Parser Char Monkeys
-parseMonkeys = M.fromList <$> NP.sepBy1 monkey NP.newline
+parseMonkeys = M.fromList . toList <$> NP.sepBy1 monkey NP.newline
   where
     monkey = (,) <$> (var <* NP.char ':' <* NP.spaces) <*> expr
 
