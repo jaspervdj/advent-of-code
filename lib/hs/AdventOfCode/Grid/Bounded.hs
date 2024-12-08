@@ -23,6 +23,7 @@ module AdventOfCode.Grid.Bounded
     , lookup
     , index
     , (!)
+    , member
     , toString
     , toList
     ) where
@@ -73,15 +74,19 @@ mapWithKey f Grid {..} = generate gridWidth gridHeight $ \(V2 x y) ->
 {-# INLINABLE mapWithKey #-}
 
 lookup :: G.Pos -> Grid a -> Maybe a
-lookup (V2 x y) Grid {..}
-    | x < 0 || x >= gridWidth || y < 0 || y >= gridHeight = Nothing
-    | otherwise                                           = Just $
-        V.unsafeIndex gridData (y * gridWidth + x)
+lookup v@(V2 x y) g@Grid {..}
+    | member v g = Just $ V.unsafeIndex gridData (y * gridWidth + x)
+    | otherwise  = Nothing
 
 index :: G.Pos -> Grid a -> a
 index v g = fromMaybe
     (error $ "AdventOfCode.Grid.Bounded.index: out of bounds: " ++ show v)
     (lookup v g)
+
+member :: G.Pos -> Grid a -> Bool
+member (V2 x y) Grid {..} =
+    x >= 0 && x < gridWidth && y >= 0 && y < gridHeight
+{-# INLINABLE member #-}
 
 (!) :: Grid a -> G.Pos -> a
 g ! v = index v g
