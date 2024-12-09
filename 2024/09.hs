@@ -1,18 +1,29 @@
 -- I wanted to write this in C, but I couldn't really be bothered, so this is
 -- Haskell that tries to do it the way I would do it in C.
 
+{-# LANGUAGE TypeFamilies #-}
+
 import           AdventOfCode.Main           (simpleMain)
 import           Control.Monad.Primitive     (PrimMonad (..), PrimState (..))
 import           Control.Monad.ST            (runST)
 import           Data.Char                   (digitToInt, isDigit)
 import           Data.Foldable               (for_)
 import           Data.Int                    (Int64)
+import qualified Data.Vector.Generic         as VG
+import qualified Data.Vector.Generic.Mutable as VGM
+import qualified Data.Vector.Unboxed         as VU
 import qualified Data.Vector.Unboxed.Mutable as VUM
 
-type FileID = Int
+newtype FileID = FileID {unFileID :: Int} deriving (Eq)
+
+newtype instance VUM.MVector s FileID = MV_Int (VUM.MVector s Int)
+newtype instance VU.Vector     FileID = V_Int  (VU.Vector     Int)
+deriving instance VGM.MVector VUM.MVector FileID
+deriving instance VG.Vector   VU.Vector   FileID
+instance VU.Unbox FileID
 
 noFileID :: FileID
-noFileID = -1
+noFileID = FileID (-1)
 
 type DiskMap = [Int]
 
@@ -41,9 +52,9 @@ diskMapToDisk diskMap = do
             VUM.set (VUM.slice l l v) (0, 0)
             go isFile pos fid (len : lens) d {dFiles = v}
         | isFile = do
-            VUM.set (VUM.slice pos len (dBlocks d)) fid
+            VUM.set (VUM.slice pos len (dBlocks d)) (FileID fid)
             VUM.write (dFiles d) fid (pos, len)
-            go False (pos + len) (fid + 1) lens d {dMaxFileID = fid}
+            go False (pos + len) (fid + 1) lens d {dMaxFileID = FileID fid}
         | otherwise = do
             go True (pos + len) fid lens d
 
@@ -87,8 +98,9 @@ findFreeSpace startIndex stopIndex len d = go startIndex
 compact2 :: PrimMonad m => Disk (PrimState m) -> m ()
 compact2 disk = do
     starts <- VUM.replicate 10 0  -- Max length is 9
-    for_ [dMaxFileID disk, dMaxFileID disk - 1 .. 0] $ \fid -> do
-        (pos, len) <- VUM.read (dFiles disk) fid
+    let fids = map FileID [0 .. unFileID (dMaxFileID disk)]
+    for_ (reverse fids) $ \fid -> do
+        (pos, len) <- VUM.read (dFiles disk) (unFileID fid)
         start <- VUM.read starts len
         mbNewPos <- findFreeSpace start pos len disk
         for_ mbNewPos $ \newPos -> do
@@ -103,7 +115,7 @@ checksum disk = go 0 0
         | i >= VUM.length (dBlocks disk) = pure acc
         | otherwise                      = do
             fid <- VUM.read (dBlocks disk) i
-            let increment = if fid == noFileID then 0 else fid * i
+            let increment = if fid == noFileID then 0 else unFileID fid * i
             go (acc + fromIntegral increment) (i + 1)
 
 main :: IO ()
