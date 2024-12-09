@@ -8,6 +8,7 @@ module AdventOfCode.Main
     ) where
 
 import           Data.Bifunctor     (bimap)
+import           Data.Int           (Int64)
 import           Data.Word          (Word64)
 import           System.Environment (getArgs, getProgName)
 import qualified System.IO          as IO
@@ -64,6 +65,9 @@ instance Solution () where
     printSolution _ = pure ()
 
 instance Solution Int where
+    printSolution = print
+
+instance Solution Int64 where
     printSolution = print
 
 instance Solution Integer where
