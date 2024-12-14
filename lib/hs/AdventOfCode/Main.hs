@@ -79,7 +79,6 @@ instance Solution Word64 where
 instance Solution [Char] where
     printSolution = putStrLn
 
--- | 'pureMain' avoids using 'IO' and rather uses 'Either' for error handling.
 ioMain
     :: (Solution a, Solution b)
     => (String -> IO (IO a, IO b))

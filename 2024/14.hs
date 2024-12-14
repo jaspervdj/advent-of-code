@@ -1,14 +1,11 @@
-import qualified AdventOfCode.Grid.Bounded as G
-import           AdventOfCode.Main         (pureMain)
-import qualified AdventOfCode.NanoParser   as NP
-import           AdventOfCode.V2           (V2 (..), (.*), (.+.))
-import           Control.Applicative       (many)
-import           Data.Foldable             (for_)
-import qualified Data.Map                  as M
-import           Data.Maybe                (fromMaybe, listToMaybe, maybeToList)
-import qualified Data.Vector               as V
-import qualified Data.Vector.Mutable       as VM
-import           Debug.Trace               (traceM)
+import qualified AdventOfCode.Grid       as G
+import           AdventOfCode.Main       (ioMain)
+import qualified AdventOfCode.NanoParser as NP
+import           AdventOfCode.V2         (V2 (..), (.*), (.+.))
+import           Control.Applicative     (many)
+import qualified Data.Map                as M
+import           Data.Maybe              (fromMaybe, listToMaybe, maybeToList)
+import qualified System.IO               as IO
 
 data Robot = Robot
     { rPos :: V2 Int
@@ -50,36 +47,27 @@ byQuadrant area robots = M.fromListWith (++) $ do
     q <- maybeToList $ quadrant area (rPos robot)
     pure (q, [robot])
 
-toGrid :: Area -> [Robot] -> G.Grid Bool
-toGrid (Area w h) robots = G.Grid
-    { G.gridWidth = w
-    , G.gridHeight = h
-    , G.gridData = V.create $ do
-        v <- VM.replicate (w * h) False
-        for_ robots $ \(Robot (V2 x y) _) -> VM.write v (idx x y) True
-        pure v
-    }
-  where
-    idx x y = y * w + x
+toGrid :: [Robot] -> G.Grid Int
+toGrid robots = M.fromListWith (+) [(rPos r, 1) | r <- robots]
 
 -- Sum of the number of neighbours a robot has, over all robots.
-coziness :: G.Grid Bool -> Int
-coziness grid = length
-    [ ()
-    | (p, True) <- G.toList grid
-    , n <- G.neighbours p
-    , G.lookup n grid == Just True
+coziness :: G.Grid Int -> Int
+coziness grid = sum
+    [ n * m
+    | (p, n) <- M.toList grid
+    , q <- G.neighbours p
+    , m <- maybeToList $ M.lookup q grid
     ]
 
 main :: IO ()
-main = pureMain $ \input -> do
-    robots <- NP.runParser (many parseRobot) input
+main = ioMain $ \input -> do
+    robots <- either fail pure $ NP.runParser (many parseRobot) input
     let area = Area 101 103
         part1 = product $ fmap length $ byQuadrant area $ move area 100 robots
         threshold = length robots  -- Sort of arbitrary
         part2 = fromMaybe 0 $ listToMaybe $ dropWhile
-            (\s -> coziness (toGrid area $ move area s robots) < threshold)
+            (\s -> coziness (toGrid $ move area s robots) < threshold)
             [1 ..]
-        picture = G.toString $ fmap (\r -> if r then '#' else '.') $
-            toGrid area $ move area part2 robots
-    pure (pure part1, traceM picture >> pure part2)
+        picture = G.toString $ fmap (\r -> if r > 0 then '#' else '.') $
+            toGrid $ move area part2 robots
+    pure (pure part1, IO.hPutStr IO.stderr picture >> pure part2)
