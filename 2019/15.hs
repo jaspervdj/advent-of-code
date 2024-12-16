@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 module Main where
 
-import           AdventOfCode.Dijkstra   (Dijkstra (..), dijkstra)
+import qualified AdventOfCode.Dijkstra   as Dijkstra
 import qualified AdventOfCode.Grid       as G
 import           AdventOfCode.IntCode
 import qualified AdventOfCode.NanoParser as NP
@@ -10,6 +10,7 @@ import           Data.Foldable.Extra     (minimumOn)
 import qualified Data.List               as L
 import qualified Data.Map                as Map
 import           Data.Maybe              (fromMaybe, maybeToList)
+import qualified Data.Set                as S
 import qualified System.IO               as IO
 
 data Tile = Frontier | Floor | Wall | Goal deriving (Eq, Ord, Show)
@@ -49,13 +50,17 @@ toClosestFrontier grid pos
     | null byDistance = Nothing
     | otherwise       = Just $ snd $ minimumOn fst byDistance
   where
-    distances  = dijkstraDistances $ dijkstra (accessible grid) isGoal pos
-    isGoal p   = Map.lookup p grid == Just Frontier
+    dijkstra = Dijkstra.dijkstra Dijkstra.Options
+        { Dijkstra.neighbours = accessible grid
+        , Dijkstra.find       = Dijkstra.FindOne isGoal
+        , Dijkstra.start      = S.singleton pos
+        }
+    isGoal p = Map.lookup p grid == Just Frontier
     byDistance =
         [ (dist, v2ToDir $ step V2..-. pos)
-        | (q, (dist, path)) <- Map.toList distances
+        | (q, (dist, _)) <- Map.toList (Dijkstra.back dijkstra)
         , Map.lookup q grid == Just Frontier
-        , step <- take 1 $ drop 1 (reverse $ q : path)
+        , step <- take 1 $ drop 1 $ Dijkstra.backtrack q dijkstra
         ]
 
 data State = State
@@ -97,10 +102,17 @@ main = do
     program <- NP.hRunParser IO.stdin parseProgram
     let grid     = exploration program
         isGoal p = Map.lookup p grid == Just Goal
-        mbGoal   = dijkstraGoal $ dijkstra (accessible grid) isGoal G.origin
-    (goal, part1, _) <- maybe (fail "No goal found") pure mbGoal
+        mbGoal   = Dijkstra.goal $ Dijkstra.dijkstra Dijkstra.Options
+            { Dijkstra.neighbours = accessible grid
+            , Dijkstra.find       = Dijkstra.FindOne isGoal
+            , Dijkstra.start      = S.singleton G.origin
+            }
+    (part1, goals) <- maybe (fail "No goal found") pure mbGoal
     G.printGrid IO.stdout $ fmap tileToChar grid
     print part1
 
-    let fill = dijkstraDistances $ dijkstra (accessible grid) (const False) goal
+    let fill = Dijkstra.back $ Dijkstra.dijkstra Dijkstra.defaultOptions
+            { Dijkstra.neighbours = accessible grid
+            , Dijkstra.start      = goals
+            }
     print . maximum . map (fst . snd) $ Map.toList fill

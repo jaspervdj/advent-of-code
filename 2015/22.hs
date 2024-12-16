@@ -2,10 +2,11 @@
 {-# LANGUAGE RecordWildCards #-}
 module Main where
 
-import           AdventOfCode.Dijkstra (dijkstra, dijkstraGoal)
+import qualified AdventOfCode.Dijkstra as Dijkstra
 import           Control.Monad         ((<=<))
 import           Data.Either           (isLeft)
 import           Data.Maybe            (maybeToList)
+import qualified Data.Set              as S
 
 data Wizard = Wizard
     { wHitpoints :: !Int
@@ -125,8 +126,16 @@ main = do
         isGoal = isLeft
         state0 = Right (makeWizard 50 500, Boss 51 9)
 
-        Just (_, mana1, _) = dijkstraGoal $ dijkstra neighbours1 isGoal state0
-        Just (_, mana2, _) = dijkstraGoal $ dijkstra neighbours2 isGoal state0
+        Just (mana1, _) = Dijkstra.goal $ Dijkstra.dijkstra Dijkstra.Options
+                { Dijkstra.neighbours = neighbours1
+                , Dijkstra.find       = Dijkstra.FindOne isGoal
+                , Dijkstra.start      = S.singleton state0
+                }
+        Just (mana2, _) = Dijkstra.goal $ Dijkstra.dijkstra Dijkstra.Options
+                { Dijkstra.neighbours = neighbours2
+                , Dijkstra.find       = Dijkstra.FindOne isGoal
+                , Dijkstra.start      = S.singleton state0
+                }
 
     print mana1
     print mana2

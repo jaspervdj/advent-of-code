@@ -3,7 +3,7 @@ module Main
     ( main
     ) where
 
-import           AdventOfCode.Dijkstra (Dijkstra (..), dijkstra)
+import qualified AdventOfCode.Dijkstra as Dijkstra
 import qualified AdventOfCode.Grid     as G
 import qualified AdventOfCode.V2       as V2
 import qualified AdventOfCode.V2.Box   as Box
@@ -12,6 +12,7 @@ import           Data.Char             (isAlpha)
 import qualified Data.List             as L
 import qualified Data.Map              as Map
 import           Data.Maybe            (fromMaybe, maybeToList)
+import qualified Data.Set              as S
 import qualified System.IO             as IO
 
 data Portal
@@ -76,13 +77,16 @@ mkMaze grid =
         (portal, start) <- Map.toList portals
         let distances =
                 [ (d, p)
-                | (v, (d, _)) <- Map.toList $ dijkstraDistances $
-                    dijkstra neighbours goal (Left start)
+                | (v, (d, _)) <- Map.toList $ Dijkstra.back $ Dijkstra.dijkstra
+                    Dijkstra.Options
+                        { Dijkstra.neighbours = neighbours
+                        , Dijkstra.find       = Dijkstra.NoFind
+                        , Dijkstra.start      = S.singleton (Left start)
+                        }
                 , p <- case v of Left _ -> []; Right pid -> [pid]
                 ]
         pure (portal, distances)
 
-    goal                  = const False
     neighbours (Right _)  = []
     neighbours (Left pos) = do
         neighbour <- G.neighbours pos
@@ -94,8 +98,11 @@ mkMaze grid =
 
 shortestPath :: Maze -> Maybe Int
 shortestPath (Maze _ _ portalDistances) = do
-    let distances = dijkstraDistances $
-            dijkstra neighbours (const False) (Outer 'A' 'A')
+    let distances = Dijkstra.back $ Dijkstra.dijkstra Dijkstra.Options
+            { Dijkstra.neighbours = neighbours
+            , Dijkstra.find       = Dijkstra.NoFind
+            , Dijkstra.start      = S.singleton (Outer 'A' 'A')
+            }
     pred . fst <$> Map.lookup (Outer 'Z' 'Z') distances
   where
     neighbours :: Portal -> [(Int, Portal)]
@@ -107,7 +114,11 @@ shortestPath (Maze _ _ portalDistances) = do
 
 recursiveShortestPath :: Maze -> Maybe Int
 recursiveShortestPath (Maze _ _ portalDistances) = do
-    (_, d, _) <- dijkstraGoal $ dijkstra neighbours (== goal) (0, Outer 'A' 'A')
+    (d, _) <- Dijkstra.goal $ Dijkstra.dijkstra Dijkstra.Options
+        { Dijkstra.neighbours = neighbours
+        , Dijkstra.find       = Dijkstra.FindOne (== goal)
+        , Dijkstra.start      = S.singleton (0, Outer 'A' 'A')
+        }
     pure d
   where
     goal                = (0 :: Int, Outer 'Z' 'Z')

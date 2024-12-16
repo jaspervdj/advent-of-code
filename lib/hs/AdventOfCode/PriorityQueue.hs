@@ -2,6 +2,7 @@ module AdventOfCode.PriorityQueue
     ( PriorityQueue
     , empty
     , singleton
+    , fromList
     , push
     , pop
     ) where
@@ -58,6 +59,9 @@ empty = PriorityQueue []
 
 singleton :: p -> v -> PriorityQueue p v
 singleton p v = PriorityQueue [treeSingleton p v]
+
+fromList :: Ord p => [(p, v)] -> PriorityQueue p v
+fromList = L.foldl' (\acc (p, v) -> push p v acc) empty
 
 push :: Ord p => p -> v -> PriorityQueue p v -> PriorityQueue p v
 push p v (PriorityQueue f) = PriorityQueue (forestInsert (treeSingleton p v) f)

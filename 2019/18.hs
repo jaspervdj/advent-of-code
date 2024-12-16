@@ -3,7 +3,7 @@ module Main
     ( main
     ) where
 
-import           AdventOfCode.Dijkstra
+import qualified AdventOfCode.Dijkstra as Dijkstra
 import qualified AdventOfCode.Grid     as G
 import qualified AdventOfCode.V2       as V2
 import           Data.Char             (isAlpha, isLower, toLower)
@@ -37,7 +37,11 @@ data SearchState = SearchState
 
 collectAllKeys :: Maze -> Maybe Int
 collectAllKeys maze = do
-    (_, dist, _) <- dijkstraGoal $ dijkstra neighbours goal start
+    (dist, _) <- Dijkstra.goal $ Dijkstra.dijkstra Dijkstra.Options
+        { Dijkstra.neighbours = neighbours
+        , Dijkstra.find       = Dijkstra.FindOne goal
+        , Dijkstra.start      = Set.fromList [start]
+        }
     pure dist
   where
     neighbours :: SearchState -> [(Int, SearchState)]
@@ -71,12 +75,13 @@ collectAllKeys maze = do
         -- A nested dijkstra so we only look at interesting positions (those
         -- that have keys).
         mapMaybe (\((p, mbK), (d, _)) -> mbK >>= \k -> pure (d, p, k)) .
-        Map.toList $ dijkstraDistances $ dijkstra
-            (\case
+        Map.toList $ Dijkstra.back $ Dijkstra.dijkstra Dijkstra.Options
+            { Dijkstra.neighbours = (\case
                 (_, Just _)  -> []
                 (p, Nothing) -> map ((,) 1) (moves keys p))
-            (const False)
-            (pos, Nothing)
+            , Dijkstra.find = Dijkstra.NoFind
+            , Dijkstra.start = Set.singleton (pos, Nothing)
+            }
 
 parallelize :: Maze -> Maybe Maze
 parallelize maze = case [p | (p, Start) <- Map.toList maze] of

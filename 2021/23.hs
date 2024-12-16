@@ -7,6 +7,7 @@ import           Control.Monad         (guard)
 import           Data.Char             (isUpper)
 import           Data.List             (transpose)
 import           Data.Maybe            (isJust, isNothing)
+import qualified Data.Set              as S
 import qualified Data.Vector           as V
 
 type Amphipod = Char
@@ -74,11 +75,16 @@ done (hw, rms) =
 
 solve :: Int -> State -> Int
 solve roomSize state =
-    case Dijkstra.dijkstraGoal (Dijkstra.dijkstra neighbours done state) of
-        Nothing        -> 0
-        Just (_, d, _) -> d
+    case Dijkstra.goal (Dijkstra.dijkstra opts) of
+        Nothing     -> 0
+        Just (d, _) -> d
   where
-    neighbours = \s -> V.toList (push roomSize s) <> V.toList (pop roomSize s)
+    opts = Dijkstra.Options
+        { Dijkstra.neighbours = \s ->
+            V.toList (push roomSize s) <> V.toList (pop roomSize s)
+        , Dijkstra.find = Dijkstra.FindOne done
+        , Dijkstra.start = S.singleton state
+        }
 
 main :: IO ()
 main = simpleMain $ \input1 ->

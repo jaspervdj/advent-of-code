@@ -370,6 +370,7 @@
             d13 = buildHaskell {year = "2024"; day = "13";};
             d14 = buildHaskell {year = "2024"; day = "14";};
             d15 = buildHaskell {year = "2024"; day = "15";};
+            d16 = buildHaskell {year = "2024"; day = "16";};
           };
         };
 
@@ -393,8 +394,10 @@
                   d = builtins.elemAt yd 2;
               in ''
                 set -o errexit -o pipefail -o nounset
+                mkdir -p outputs/
                 echo "Running ${solution.name}..."
-                time ${solution}/${solution.name} <inputs/${y}/${d}.txt
+                time ${solution}/${solution.name} <inputs/${y}/${d}.txt | \
+                    tee outputs/${solution.name}.txt
                 echo
               '')
             flat));

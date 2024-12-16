@@ -4,6 +4,7 @@ import           AdventOfCode.Main
 import           AdventOfCode.V2           (V2 (..))
 import           Data.Char                 (digitToInt, isDigit)
 import           Data.Maybe                (maybeToList)
+import qualified Data.Set                  as S
 
 parseGrid :: String -> Either String (G.Grid Int)
 parseGrid str = G.fromString str >>= traverse parseCell
@@ -31,15 +32,16 @@ main = pureMain $ \str -> do
     grid <- parseGrid str
     let dest = V2 (G.gridWidth grid - 1) (G.gridHeight grid - 1)
 
-        solve turning = Dijkstra.dijkstraGoal $ Dijkstra.dijkstra
-            (neighbours turning grid)
-            (\crucible -> case crucible of
+        solve turning = Dijkstra.goal $ Dijkstra.dijkstra Dijkstra.Options
+            { Dijkstra.neighbours = neighbours turning grid
+            , Dijkstra.find = Dijkstra.FindOne (\crucible -> case crucible of
                 Rolling pos _ _ -> pos == dest
                 _               -> False)
-            Init
+            , Dijkstra.start = S.singleton Init
+            }
         heat solution = case solution of
-            Just (_, h, _) -> pure h
-            _              -> Left $ "no solution"
+            Just (h, _) -> pure h
+            _           -> Left $ "no solution"
 
         turning1 n dir = [G.turnLeft dir, G.turnRight dir] ++ [dir | n < 3]
         turning2 n dir
