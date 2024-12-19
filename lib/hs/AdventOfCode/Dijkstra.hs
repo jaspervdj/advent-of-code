@@ -37,7 +37,7 @@ bfs neighbours goal start = go Map.empty (Map.singleton start [start])
         | otherwise       = go visited' fringe'
       where
         goals    = filter (goal . fst) $ Map.toList fringe
-        visited' = Map.unionWith const visited fringe
+        visited' = fringe `Map.union` visited
         fringe'  = Map.fromList $ do
             (n, path) <- Map.toList fringe
             nb <- neighbours n
