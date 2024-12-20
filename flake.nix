@@ -11,12 +11,11 @@
       let
         pkgs = inputs.nixpkgs.legacyPackages.${system};
         haskell = pkgs.haskell.packages.ghc98;
+        ghcWithPackages = haskell.ghcWithPackages
+          (p: [ p.hashable p.unordered-containers p.vector ]);
 
         buildHaskell = { year, day, bin ? [ ] }:
-          let
-            ghcWithPackages = haskell.ghcWithPackages
-              (p: [ p.hashable p.unordered-containers p.vector ]);
-          in pkgs.stdenv.mkDerivation rec {
+          pkgs.stdenv.mkDerivation rec {
             name = "${year}-${day}";
             srcs = [
               (builtins.filterSource
@@ -410,9 +409,7 @@
           default = pkgs.mkShell {
             packages = [
               pkgs.stylish-haskell
-              # TODO: reuse packages from above?
-              (haskell.ghc.withPackages
-                (p: [ p.hashable p.unordered-containers p.vector ]))
+              ghcWithPackages
             ];
           };
         };
