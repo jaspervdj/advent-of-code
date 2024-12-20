@@ -1,11 +1,12 @@
 {-# LANGUAGE TypeFamilies #-}
+import qualified AdventOfCode.Bfs            as Bfs
 import           AdventOfCode.BranchAndBound
-import qualified AdventOfCode.Dijkstra       as Dijkstra
 import           AdventOfCode.Main
 import qualified AdventOfCode.NanoParser     as NP
 import           Control.Applicative         ((<|>))
 import           Data.Foldable               (toList)
 import qualified Data.Map                    as M
+import qualified Data.Set                    as S
 
 type ValveId = String
 
@@ -26,9 +27,11 @@ type Distances = M.Map (ValveId, ValveId) Int
 makeDistances :: Caves -> Distances
 makeDistances input = M.fromList $ do
     (v0, _) <- M.toList input
-    (d, path) <- M.toList . Dijkstra.bfsDistances $
-        Dijkstra.bfs (snd . (input M.!)) (const False) v0
-    pure ((v0, d), pred (length path))
+    (d, len) <- M.toList $ Bfs.distances $ Bfs.bfs Bfs.defaultOptions
+        { Bfs.neighbours = snd . (input M.!)
+        , Bfs.start      = S.singleton v0
+        }
+    pure ((v0, d), len)
 
 type Minute = Int
 

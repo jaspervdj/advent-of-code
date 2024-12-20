@@ -1,9 +1,10 @@
-import           AdventOfCode.Dijkstra (Bfs (..), bfs)
-import qualified AdventOfCode.Grid     as G
+import qualified AdventOfCode.Bfs    as Bfs
+import qualified AdventOfCode.Grid   as G
 import           AdventOfCode.Main
-import           AdventOfCode.V2       (V2 (..))
-import qualified AdventOfCode.V2.Box   as Box
-import qualified Data.Map              as M
+import           AdventOfCode.V2     (V2 (..))
+import qualified AdventOfCode.V2.Box as Box
+import qualified Data.Map            as M
+import qualified Data.Set            as S
 
 neighbours :: G.Grid Char -> G.Pos -> [G.Pos]
 neighbours grid pos = case M.lookup pos grid of
@@ -78,8 +79,12 @@ main = simpleMain $ \str ->
         (startPos, startTok) = findStart gridS
         grid                 = M.insert startPos startTok gridS
 
-        distances = bfsDistances $ bfs (neighbours grid) (const False) startPos
-        part1     = maximum (fmap length distances) - 1
+        distances = Bfs.distances $ Bfs.bfs Bfs.defaultOptions
+            { Bfs.neighbours = neighbours grid
+            , Bfs.start      = S.singleton startPos
+            }
+
+        part1 = maximum distances
 
         relevant = M.filterWithKey (\k _ -> k `M.member` distances) grid
         part2    = evenodd relevant in

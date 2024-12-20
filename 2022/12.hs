@@ -1,9 +1,10 @@
-import qualified AdventOfCode.Dijkstra     as Dijkstra
+import qualified AdventOfCode.Bfs          as Bfs
 import qualified AdventOfCode.Grid.Bounded as G
 import           AdventOfCode.Main
 import           Control.Monad             (guard)
 import           Data.Char                 (ord)
 import           Data.Maybe                (maybeToList)
+import qualified Data.Set                  as S
 
 data Hills = Hills
     { hillsGrid  :: G.Grid Int
@@ -34,9 +35,12 @@ shortest
     -> G.Pos
     -> G.Grid Int
     -> Int
-shortest canClimb isEnd start grid =
-    maybe 0 (pred . length . snd) . Dijkstra.bfsGoal $
-    Dijkstra.bfs neighbours isEnd start
+shortest canClimb isEnd start grid = maybe 0 snd $ Bfs.goal $
+    Bfs.bfs Bfs.defaultOptions
+        { Bfs.neighbours = neighbours
+        , Bfs.find       = isEnd
+        , Bfs.start      = S.singleton start
+        }
   where
     neighbours pos = do
         let height = grid G.! pos

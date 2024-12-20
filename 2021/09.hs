@@ -1,14 +1,15 @@
 {-# LANGUAGE LambdaCase #-}
-import           AdventOfCode.Dijkstra (Bfs (..), bfs)
-import qualified AdventOfCode.Grid     as G
-import           AdventOfCode.Main     (pureMain)
-import           Control.Monad         (guard)
-import           Data.Char             (digitToInt, isDigit)
-import           Data.List             (sortOn)
-import qualified Data.Map              as M
-import           Data.Maybe            (maybeToList)
-import           Data.Ord              (Down (..))
-import           Data.Traversable      (for)
+import qualified AdventOfCode.Bfs  as Bfs
+import qualified AdventOfCode.Grid as G
+import           AdventOfCode.Main (pureMain)
+import           Control.Monad     (guard)
+import           Data.Char         (digitToInt, isDigit)
+import           Data.List         (sortOn)
+import qualified Data.Map          as M
+import           Data.Maybe        (maybeToList)
+import           Data.Ord          (Down (..))
+import qualified Data.Set          as S
+import           Data.Traversable  (for)
 
 -- Find low points
 lowPoints :: Ord a => G.Grid a -> [(G.Pos, a)]
@@ -22,7 +23,10 @@ lowPoints grid = do
 
 -- Extend basin starting from low point
 basin :: Ord a => G.Grid a -> G.Pos -> [G.Pos]
-basin grid = M.keys . bfsDistances . bfs neighbours (const False)
+basin grid start = Bfs.reachable $ Bfs.bfs Bfs.defaultOptions
+    { Bfs.neighbours = neighbours
+    , Bfs.start      = S.singleton start
+    }
   where
     neighbours :: G.Pos -> [G.Pos]
     neighbours pos = do

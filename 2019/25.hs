@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveFunctor   #-}
 {-# LANGUAGE LambdaCase      #-}
 {-# LANGUAGE RecordWildCards #-}
-import           AdventOfCode.Dijkstra   (bfs, bfsGoal)
+import qualified AdventOfCode.Bfs as Bfs
 import           AdventOfCode.IntCode
 import           AdventOfCode.Main
 import qualified AdventOfCode.NanoParser as NP
@@ -138,17 +138,19 @@ findPath
 findPath start goal = do
     edges <- gets explorerEdges
     pure $ do
-        path <- bfsGoal $ bfs
-            (\case
-                Ann _ Nothing  -> []
-                Ann _ (Just r) ->
-                    [ Ann (Just (r', d)) nb
-                    | ((r', d), nb) <- Map.toList edges
-                    , r' == r
-                    ])
-            (\(Ann _ rn) -> goal rn)
-            (Ann Nothing $ Just start)
-        traverse (\(Ann p _) -> p) . drop 1 . reverse $ snd path
+        let bfs = Bfs.bfs Bfs.defaultOptions
+                { Bfs.neighbours = \case
+                    Ann _ Nothing  -> []
+                    Ann _ (Just r) ->
+                        [ Ann (Just (r', d)) nb
+                        | ((r', d), nb) <- Map.toList edges
+                        , r' == r
+                        ]
+                , Bfs.find = \(Ann _ rn) -> goal rn
+                , Bfs.start = Set.singleton $ Ann Nothing $ Just start
+                }
+        (end, _) <- Bfs.goal bfs
+        traverse (\(Ann p _) -> p) . drop 1 $ Bfs.backtrack end bfs
 
 walkPath :: [(RoomName, Door)] -> StateT Explorer Bot ()
 walkPath [] = pure ()

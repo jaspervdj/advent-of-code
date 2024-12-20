@@ -1,4 +1,4 @@
-import           AdventOfCode.Dijkstra     (Bfs (..), bfs)
+import qualified AdventOfCode.Bfs          as Bfs
 import qualified AdventOfCode.Grid.Bounded as G
 import           AdventOfCode.Main         (pureMain)
 import           AdventOfCode.V2           (V2 (..), (.+.))
@@ -55,14 +55,23 @@ main = pureMain $ \str -> do
                 Just blizzard -> not blizzard
             pure (time', pos')
 
-        part1 = pred . length . maybe [] snd . bfsGoal $
-            bfs neighbourStates ((== dest) . snd) (0, start)
+        part1 = maybe 0 snd $ Bfs.goal $ Bfs.bfs Bfs.defaultOptions
+            { Bfs.neighbours = neighbourStates
+            , Bfs.find       = (== dest) . snd
+            , Bfs.start      = Set.singleton (0, start)
+            }
 
-        part2a = pred . length . maybe [] snd . bfsGoal $
-            bfs neighbourStates ((== start) . snd) (part1, dest)
+        part2a = maybe 0 snd $ Bfs.goal $ Bfs.bfs Bfs.defaultOptions
+            { Bfs.neighbours = neighbourStates
+            , Bfs.find       = (== start) . snd
+            , Bfs.start      = Set.singleton (part1, dest)
+            }
 
-        part2b = pred . length . maybe [] snd . bfsGoal $
-            bfs neighbourStates ((== dest) . snd) (part1 + part2a, start)
+        part2b = maybe 0 snd $ Bfs.goal $ Bfs.bfs Bfs.defaultOptions
+            { Bfs.neighbours = neighbourStates
+            , Bfs.find       = (== dest) . snd
+            , Bfs.start      = Set.singleton (part1 + part2a, start)
+            }
 
         part2 = part1 + part2a + part2b
 

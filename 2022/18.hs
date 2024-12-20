@@ -1,4 +1,4 @@
-import qualified AdventOfCode.Dijkstra    as Dijkstra
+import qualified AdventOfCode.Bfs         as Bfs
 import           AdventOfCode.Main
 import qualified AdventOfCode.NanoParser  as NP
 import           AdventOfCode.V3          (V3 (..))
@@ -50,17 +50,17 @@ part2 voxels = S.size $
     (S.fromList $ toList voxels >>= voxelFaces)
   where
     droplet = S.fromList $ toList voxels
-    steam   = M.keys . Dijkstra.bfsDistances $ Dijkstra.bfs
-        (\voxel -> do
+    steam   = Bfs.reachable $ Bfs.bfs Bfs.defaultOptions
+        { Bfs.start      = S.singleton $ Voxel (V3 minX minY (minZ - 1))
+        , Bfs.neighbours = \voxel -> do
             neighbour@(Voxel (V3 x y z)) <- voxelNeighbours voxel
             guard . not $ S.member neighbour droplet
             guard $
                 x >= minX - 1 && x <= maxX + 1 &&
                 y >= minY - 1 && y <= maxY + 1 &&
                 z >= minZ - 1 && z <= maxZ + 1
-            pure neighbour)
-        (const False)
-        (Voxel (V3 minX minY (minZ - 1)))
+            pure neighbour
+        }
 
     V3 minX minY minZ = foldl1' (V3.zipWith min) $ fmap unVoxel voxels
     V3 maxX maxY maxZ = foldl1' (V3.zipWith max) $ fmap unVoxel voxels

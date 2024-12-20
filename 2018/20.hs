@@ -1,11 +1,13 @@
-import qualified AdventOfCode.Grid          as G
-import qualified AdventOfCode.Grid.Dijkstra as Dijkstra
-import qualified AdventOfCode.NanoParser    as NP
-import           AdventOfCode.V2            (zero)
-import           Control.Applicative        (many, (<|>))
-import qualified Data.List                  as L
-import qualified Data.Map                   as M
-import qualified Data.Set                   as S
+import qualified AdventOfCode.Dijkstra   as Dijkstra
+import qualified AdventOfCode.Grid       as G
+import qualified AdventOfCode.NanoParser as NP
+import           AdventOfCode.V2         (zero)
+import           Control.Applicative     (many, (<|>))
+import           Control.Monad           (guard)
+import qualified Data.List               as L
+import qualified Data.Map                as M
+import           Data.Maybe              (isJust, maybeToList)
+import qualified Data.Set                as S
 
 --------------------------------------------------------------------------------
 -- Regex its parser
@@ -64,9 +66,17 @@ gridFromDoors = L.foldl' insertDoor M.empty
 main :: IO ()
 main = do
     Right regex <- NP.runParser (parseRegex parseDir) <$> getContents
-    let grid                   = gridFromDoors $ walks regex
-        accessible (_, ds) d _ = d `S.member` ds
-        distances              = Dijkstra.dijkstra accessible [zero] grid
+    let grid      = gridFromDoors $ walks regex
+        distances = fmap fst $ Dijkstra.back $ Dijkstra.dijkstra
+            Dijkstra.defaultOptions
+                { Dijkstra.start = S.singleton zero
+                , Dijkstra.neighbours = \p -> do
+                    ds <- maybeToList $ M.lookup p grid
+                    d <- S.toList ds
+                    let q = G.move 1 d p
+                    guard $ isJust $ M.lookup q grid
+                    pure (1, q)
+                }
 
     -- Part 1
     print $ L.maximum $ map snd $ M.toList distances

@@ -1,15 +1,17 @@
 {-# LANGUAGE RecordWildCards #-}
-import qualified AdventOfCode.Grid          as G
-import qualified AdventOfCode.Grid.Dijkstra as Dijkstra
+import qualified AdventOfCode.Dijkstra as Dijkstra
+import qualified AdventOfCode.Grid     as G
 import           AdventOfCode.V2
-import           Data.Foldable.Extra        (minimaBy)
-import qualified Data.List                  as L
-import qualified Data.Map                   as M
-import           Data.Maybe                 (isJust, isNothing, listToMaybe,
-                                             maybeToList)
-import           Data.Ord                   (comparing)
-import           Prelude                    hiding (round)
-import qualified System.IO                  as IO
+import           Control.Monad         (guard)
+import           Data.Foldable.Extra   (minimaBy)
+import qualified Data.List             as L
+import qualified Data.Map              as M
+import           Data.Maybe            (isJust, isNothing, listToMaybe,
+                                        maybeToList)
+import           Data.Ord              (comparing)
+import qualified Data.Set              as S
+import           Prelude               hiding (round)
+import qualified System.IO             as IO
 
 data Terrain = Cavern | Wall deriving (Eq, Ord, Show)
 
@@ -108,7 +110,11 @@ move (pos, combatant) battle
 
     -- There is a target we can go towards.
     | (t : _) <- goals =
-        let distToGoal = Dijkstra.dijkstra accessible [t] (bTerrain battle)
+        let distToGoal = Dijkstra.distances $ Dijkstra.dijkstra
+                Dijkstra.defaultOptions
+                    { Dijkstra.neighbours = neighbours
+                    , Dijkstra.start      = S.singleton t
+                    }
             next =
                 map fst $ readingOrder fst $
                 minimaBy (comparing snd) $
@@ -128,10 +134,16 @@ move (pos, combatant) battle
     -- Nowhere to move.
     | otherwise = ((pos, combatant), battle)
   where
-    accessible _ _ (p, terrain) =
-        terrain == Cavern && not (p `M.member` (bCombatants battle))
+    neighbours p = do
+        q <- G.neighbours p
+        terrain <- maybeToList $ M.lookup q (bTerrain battle)
+        guard $ terrain == Cavern && not (q `M.member` bCombatants battle)
+        pure (1, q)
 
-    distToMe = Dijkstra.dijkstra accessible [pos] (bTerrain battle)
+    distToMe = Dijkstra.distances $ Dijkstra.dijkstra Dijkstra.defaultOptions
+        { Dijkstra.neighbours = neighbours
+        , Dijkstra.start      = S.singleton pos
+        }
 
     -- The closest targets.
     goals =

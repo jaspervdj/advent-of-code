@@ -1,5 +1,5 @@
+import qualified AdventOfCode.Bfs          as Bfs
 import qualified AdventOfCode.BinarySearch as BinarySearch
-import qualified AdventOfCode.Dijkstra     as Dijkstra
 import qualified AdventOfCode.Grid.Bounded as G
 import           AdventOfCode.Main         (pureMain)
 import qualified AdventOfCode.NanoParser   as NP
@@ -8,6 +8,7 @@ import           Control.Applicative       (many)
 import           Control.Monad             (guard)
 import qualified Data.Map                  as M
 import           Data.Maybe                (fromMaybe)
+import qualified Data.Set                  as S
 
 parsePositions :: NP.Parser Char [V2 Int]
 parsePositions = many $
@@ -30,14 +31,14 @@ positionsToGrid n positions =
 -- access a coordinate where a snowflake falls at some given time.  Return
 -- the length of the route.
 route :: (Time -> Bool) -> G.Grid Time -> Maybe Int
-route accessible grid = fmap (pred . length . snd) $ Dijkstra.bfsGoal $
-    Dijkstra.bfs
-        (\p -> do
-            q <- G.neighbours p
-            guard $ maybe False accessible $ G.lookup q grid
-            pure q)
-        ((== V2 (G.gridWidth grid - 1) (G.gridHeight grid - 1)))
-        (V2 0 0)
+route accessible grid = fmap snd $ Bfs.goal $ Bfs.bfs Bfs.defaultOptions
+    { Bfs.start = S.singleton $ V2 0 0
+    , Bfs.find = (== V2 (G.gridWidth grid - 1) (G.gridHeight grid - 1))
+    , Bfs.neighbours = \p -> do
+        q <- G.neighbours p
+        guard $ maybe False accessible $ G.lookup q grid
+        pure q
+    }
 
 main :: IO ()
 main = pureMain $ \str -> do

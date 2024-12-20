@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 module Main where
 
-import           AdventOfCode.Dijkstra   (bfs, bfsGoal)
+import qualified AdventOfCode.Bfs        as Bfs
 import qualified AdventOfCode.NanoParser as P
 import           Control.Applicative     ((<|>))
 import           Data.List               (find)
@@ -63,8 +63,14 @@ data Vertex = Vertex !Int !Bool deriving (Eq, Ord, Show)
 
 controlFlow :: Program -> Maybe Int
 controlFlow program = do
-    (_, path) <- bfsGoal $ bfs neighbours goal (Vertex 0 False)
-    Vertex i _ <- find (\(Vertex _ s) -> not s) path
+    let bfs = Bfs.bfs Bfs.defaultOptions
+            { Bfs.neighbours = neighbours
+            , Bfs.find       = goal
+            , Bfs.start      = Set.singleton $ Vertex 0 False
+            }
+    (end, _) <- Bfs.goal bfs
+    Vertex i _ <- find (\(Vertex _ s) -> not s) $
+        reverse $ Bfs.backtrack end bfs
     pure i
   where
     valid, goal :: Vertex -> Bool

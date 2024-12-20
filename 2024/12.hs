@@ -1,8 +1,8 @@
-import           AdventOfCode.Dijkstra (Bfs (..), bfs)
-import qualified AdventOfCode.Grid     as G
-import           AdventOfCode.Main     (simpleMain)
-import qualified Data.Map              as M
-import qualified Data.Set              as S
+import qualified AdventOfCode.Bfs  as Bfs
+import qualified AdventOfCode.Grid as G
+import           AdventOfCode.Main (simpleMain)
+import qualified Data.Map          as M
+import qualified Data.Set          as S
 
 regions :: Eq a => G.Grid a -> [(a, S.Set G.Pos)]
 regions grid0 = case M.minViewWithKey grid0 of
@@ -11,10 +11,11 @@ regions grid0 = case M.minViewWithKey grid0 of
         (val, region) :
         regions (M.filterWithKey (\k _ -> not (k `S.member` region)) grid1)
       where
-        region = M.keysSet $ bfsDistances $ bfs
-            (\p -> [n | n <- G.neighbours p, M.lookup n grid1 == Just val])
-            (const False)
-            pos
+        region = M.keysSet $ Bfs.distances $ Bfs.bfs Bfs.defaultOptions
+            { Bfs.start      = S.singleton pos
+            , Bfs.neighbours = \p ->
+                [n | n <- G.neighbours p, M.lookup n grid1 == Just val]
+            }
 
 perimeter :: S.Set G.Pos -> Int
 perimeter region = length

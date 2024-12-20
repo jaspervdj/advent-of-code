@@ -1,13 +1,11 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module AdventOfCode.Dijkstra
-    ( Bfs (..)
-    , bfs
-
-    , Find (..)
+    ( Find (..)
     , Options (..)
     , defaultOptions
     , Result (..)
     , dijkstra
+    , distances
     , backtrack
     ) where
 
@@ -18,31 +16,6 @@ import qualified Data.List                  as L
 import qualified Data.Map                   as Map
 import           Data.Maybe                 (fromMaybe, listToMaybe)
 import qualified Data.Set                   as S
-
-data Bfs v = Bfs
-    { bfsDistances :: Map.Map v [v]
-    , bfsGoal      :: Maybe (v, [v])
-    }
-
-bfs :: Ord v
-    => (v -> [v])   -- ^ Neighbours
-    -> (v -> Bool)  -- ^ Is this a goal?
-    -> v            -- ^ Start
-    -> Bfs v
-bfs neighbours goal start = go Map.empty (Map.singleton start [start])
-  where
-    go visited fringe
-        | Map.null fringe = Bfs visited Nothing
-        | g : _ <- goals  = Bfs visited' (Just g)
-        | otherwise       = go visited' fringe'
-      where
-        goals    = filter (goal . fst) $ Map.toList fringe
-        visited' = fringe `Map.union` visited
-        fringe'  = Map.fromList $ do
-            (n, path) <- Map.toList fringe
-            nb <- neighbours n
-            guard . not $ nb `Map.member` visited'
-            pure (nb, nb : path)
 
 data Find v
     = FindAll (v -> Bool)
@@ -63,35 +36,37 @@ defaultOptions = Options
     }
 
 data Result v = Result
-    { options :: Options v
-    , goal    :: Maybe (Int, S.Set v)
-    , back    :: Map.Map v (Int, S.Set v)
+    { goal :: Maybe (Int, S.Set v)
+    , back :: Map.Map v (Int, S.Set v)
     }
 
 dijkstra :: forall v. Ord v => Options v -> Result v
 dijkstra opts = go
     (PQ.fromList [(0, (v, Nothing)) | v <- toList $ start opts])
     Nothing
-    Map.empty
+    (Map.fromList [(v, (0, S.empty)) | v <- toList $ start opts])
   where
     go  :: PQ.PriorityQueue Int (v, Maybe v)
         -> Maybe (Int, S.Set v)
         -> Map.Map v (Int, S.Set v)
         -> Result v
     go fringe0 mbBest0 bt0 = case PQ.pop fringe0 of
-        _ | Just _ <- mbBest0, FindOne _ <- find opts -> Result opts mbBest0 bt0
-        Nothing -> Result opts mbBest0 bt0
-        -- Stop if fineOneBest
+        _ | Just _ <- mbBest0, FindOne _ <- find opts -> Result mbBest0 bt0
+        Nothing -> Result mbBest0 bt0
         Just (cdist, (current, mbPrev), fringe1)
-            | FindOne _ <- find opts, current `Map.member` bt0 ->
+            | not (current `S.member` start opts)
+            , FindOne _ <- find opts
+            , current `Map.member` bt0 ->
                 go fringe1 mbBest0 bt0
-            | NoFind <- find opts, current `Map.member` bt0 ->
+            | not (current `S.member` start opts)
+            , NoFind <- find opts
+            , current `Map.member` bt0 ->
                 go fringe1 mbBest0 bt0
             | maybe False (\(d, _) -> cdist > d) (Map.lookup current bt0) ->
                 go fringe1 mbBest0 bt0
             | maybe False ((< cdist) . fst) mbBest0 -> case find opts of
                 NoFind -> go fringe1 mbBest0 bt0  -- Continue looking always
-                _      -> Result opts mbBest0 bt0
+                _      -> Result mbBest0 bt0
             | otherwise ->
                 let interesting = do
                         (d, neighbour) <- neighbours opts current
@@ -127,11 +102,13 @@ dijkstra opts = go
             | c1 > c2   = (c2, p2)
             | otherwise = (c1, p1 <> p2)
 
-backtrack :: forall v. (Show v, Ord v) => v -> Result v -> [v]
-backtrack end (Result opts _ b) = go [end] end
+distances :: Result v -> Map.Map v Int
+distances = fmap fst . back
+
+backtrack :: forall v. Ord v => v -> Result v -> [v]
+backtrack end (Result _ b) = go [end] end
   where
     go :: [v] -> v -> [v]
-    go acc node | node `S.member` start opts = acc
     go acc node = fromMaybe acc $ do
         (_, prev) <- Map.lookup node b
         p <- listToMaybe $ S.toList prev

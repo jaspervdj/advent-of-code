@@ -1,4 +1,4 @@
-import qualified AdventOfCode.Dijkstra   as Dijkstra
+import qualified AdventOfCode.Bfs        as Bfs
 import           AdventOfCode.Main
 import qualified AdventOfCode.NanoParser as NP
 import           Data.Foldable           (foldl', toList)
@@ -23,8 +23,12 @@ delete :: Ord a => Edge a -> Graph a -> Graph a
 delete (Edge x y) = M.adjust (S.delete y) x . M.adjust (S.delete x) y
 
 bfs :: Ord a => a -> Graph a -> [[a]]
-bfs start graph = map snd . M.toList . Dijkstra.bfsDistances $ Dijkstra.bfs
-    (\x -> maybe [] S.toList $ M.lookup x graph) (const False) start
+bfs start graph = [Bfs.backtrack x result | x <- Bfs.reachable result]
+  where
+    result = Bfs.bfs Bfs.defaultOptions
+        { Bfs.neighbours = \x -> maybe [] S.toList $ M.lookup x graph
+        , Bfs.start      = S.singleton start
+        }
 
 parseGraph :: NP.Parser Char (Graph String)
 parseGraph = fmap mkGraph $ flip NP.sepBy1 NP.newline $ (,)
