@@ -374,6 +374,7 @@
             d18 = buildHaskell {year = "2024"; day = "18";};
             d19 = buildHaskell {year = "2024"; day = "19";};
             d20 = buildHaskell {year = "2024"; day = "20";};
+            d21 = buildHaskell {year = "2024"; day = "21";};
             d22 = buildHaskell {year = "2024"; day = "22";};
           };
         };
