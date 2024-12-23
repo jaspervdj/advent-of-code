@@ -12,7 +12,7 @@
         pkgs = inputs.nixpkgs.legacyPackages.${system};
         haskell = pkgs.haskell.packages.ghc98;
         ghcWithPackages = haskell.ghcWithPackages
-          (p: [ p.hashable p.unordered-containers p.vector ]);
+          (p: [ p.hashable p.random p.unordered-containers p.vector ]);
 
         buildHaskell = { year, day, bin ? [ ] }:
           pkgs.stdenv.mkDerivation rec {
@@ -376,6 +376,7 @@
             d20 = buildHaskell {year = "2024"; day = "20";};
             d21 = buildHaskell {year = "2024"; day = "21";};
             d22 = buildHaskell {year = "2024"; day = "22";};
+            d23 = buildHaskell {year = "2024"; day = "23";};
           };
         };
 
