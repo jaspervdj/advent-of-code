@@ -14,6 +14,7 @@ module AdventOfCode.NanoParser
     , chainl1
 
     , alpha
+    , alphaNum
     , newline
     , digit
     , lower
@@ -98,6 +99,9 @@ chainl1 t op = foldl' (\x (f, y) -> f x y) <$> t <*> many ((,) <$> op <*> t)
 
 alpha :: Parser Char Char
 alpha = satisfy "alpha" Char.isAlpha
+
+alphaNum :: Parser Char Char
+alphaNum = satisfy "alphaNum" (\c -> Char.isAlpha c || Char.isDigit c)
 
 newline :: Parser Char ()
 newline = char '\n' <|> (char '\r' *> char '\n')
