@@ -380,6 +380,9 @@
             d24 = buildHaskell {year = "2024"; day = "24";};
             d25 = buildHaskell {year = "2024"; day = "25";};
           };
+          y2025 = {
+            d01 = buildHaskell {year = "2025"; day = "01";};
+          };
         };
 
         flat = builtins.concatMap
