@@ -1,28 +1,28 @@
-import           AdventOfCode.Main (simpleMain)
-import Data.Char (isSpace, isDigit)
-import Data.List (transpose, groupBy)
+import           AdventOfCode.Main       (pureMain)
+import qualified AdventOfCode.NanoParser as NP
+import           Control.Applicative     (many, (<|>))
+import           Data.List               (transpose)
 
-charToOp :: Char -> [Int] -> Int
-charToOp '*' = product
-charToOp '+' = sum
-charToOp c   = error $ "unknown operator: " ++ show c
+parseOp :: NP.Parser Char ([Int] -> Int)
+parseOp = (NP.char '*' *> pure product) <|> (NP.char '+' *> pure sum)
 
-part1 :: String -> Int
-part1 = sum . map solve . transpose . map words . lines
+part1 :: String -> Either String Int
+part1 str = do
+    (nums, ops) <- NP.runParser problem str
+    pure $ sum $ zipWith ($) ops (transpose nums)
   where
-    solve col = charToOp (last (last col)) (map read (init col))
+    problem = (,) <$> many (line NP.decimal <* NP.newline) <*> line parseOp
+    line p  = NP.horizontalSpaces *> many (p <* NP.horizontalSpaces)
 
-part2 :: String -> Int
-part2 = sum . map solve . splitOnSpaces . transpose . map reverse . lines
+part2 :: String -> Either String Int
+part2 str = do
+    problems <- NP.runParser (many problem) $ concat $
+        transpose $ map reverse $ lines str
+    pure $ sum [op nums | (nums, op) <- problems]
   where
-    splitOnSpaces =
-        filter (not . all (all isSpace)) .
-        groupBy (\x y -> not $ all isSpace x || all isSpace y)
-
-    solve problem =
-        charToOp (last (last problem)) $
-        map read $
-        map (filter isDigit) problem
+    problem = (,)
+        <$> (NP.spaces *> many (NP.decimal <* NP.spaces))
+        <*> (parseOp <* NP.spaces)
 
 main :: IO ()
-main = simpleMain $ \str -> (part1 str, part2 str)
+main = pureMain $ \str -> pure (part1 str, part2 str)
