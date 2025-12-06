@@ -386,6 +386,7 @@
             d03 = buildHaskell {year = "2025"; day = "03";};
             d04 = buildHaskell {year = "2025"; day = "04";};
             d05 = buildHaskell {year = "2025"; day = "05";};
+            d06 = buildHaskell {year = "2025"; day = "06";};
           };
         };
 
