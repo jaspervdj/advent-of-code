@@ -36,8 +36,8 @@ clockwise points = (> 0) $ sum $ do
 -- | Converts a list of corner tiles that form a (completely axis aligned, not
 -- self intersecting) polygon to the exact lines that form the polygon (going
 -- on the outside of all the tiles).
-toExact :: V.Vector (V2 Int) -> Either String (V.Vector (V2 Int))
-toExact points0 = traverse point $ V.zip3
+perimeter :: V.Vector (V2 Int) -> Either String (V.Vector (V2 Int))
+perimeter points0 = traverse point $ V.zip3
     (V.drop (len - 1) points <> V.take (len - 1) points)
     points
     (V.drop 1 points <> V.take 1 points)
@@ -65,16 +65,29 @@ toBoxes points = V.zipWith toBox points (V.drop 1 points <> V.take 1 points)
 main :: IO ()
 main = pureMain $ \str -> do
     points <- NP.runParser parsePoints str
-    let part1 = case biggestAreas points of
+    let areas = biggestAreas points
+        part1 = case areas of
             []           -> Left "no areas"
             ((a, _) : _) -> pure a
         part2 = do
-            boxes <- toBoxes . fmap (.* 2) <$> toExact points
+            -- We scale up the perimeter by a factor of two.  This will allow
+            -- us to create points that lay in the centers of the tiles.
+            --
+            -- We convert the perimeter to bounding boxes.  Each line of the
+            -- perimeter will create one bounding box, with either width or
+            -- height set to zero, but that's still a valid bounding box.
+            boxes <- toBoxes . fmap (.* 2) <$> perimeter points
+
+            -- We can now test if a box connecting the centers of the tiles
+            -- fits inside by checking for any intersection with the perimeter's
+            -- bounding boxes.
             let fits (p, q) =
-                    let box = Box.fromV2 (p .* 2 .+. V2 1 1) <>
-                              Box.fromV2 (q .* 2 .+. V2 1 1) in
+                    let pCenter = p .* 2 .+. V2 1 1
+                        qCenter = q .* 2 .+. V2 1 1
+                        box     = Box.fromV2 pCenter <> Box.fromV2 qCenter in
                     V.all (not . Box.collides box) boxes
-            case filter (fits . snd) (biggestAreas points) of
+
+            case filter (fits . snd) areas of
                 []           -> Left "no areas"
                 ((a, _) : _) -> pure a
     pure (part1, part2)
