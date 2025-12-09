@@ -6,6 +6,7 @@ module AdventOfCode.V2.Box
     , height
     , area
     , inside
+    , collides
     ) where
 
 import           AdventOfCode.V2
@@ -13,7 +14,7 @@ import           AdventOfCode.V2
 data Box a = Box
     { bTopLeft     :: !(V2 a)
     , bBottomRight :: !(V2 a)
-    } deriving (Eq, Foldable, Show)
+    } deriving (Eq, Foldable, Functor, Show)
 
 instance Ord a => Semigroup (Box a) where
     Box (V2 lx1 ty1) (V2 rx1 by1) <> Box (V2 lx2 ty2) (V2 rx2 by2) =
@@ -32,3 +33,13 @@ area b = width b * height b
 inside :: Ord a => V2 a -> Box a -> Bool
 inside (V2 x y) (Box (V2 x0 y0) (V2 x1 y1)) =
     x >= x0 && x <= x1 && y >= y0 && y <= y1
+
+-- | Note that this is called "collides" rather than intersect because we also
+-- return true if the boxes touch exactly.
+collides :: Ord a => Box a -> Box a -> Bool
+collides (Box (V2 lx1 ty1) (V2 rx1 by1)) (Box (V2 lx2 ty2) (V2 rx2 by2))
+    | lx1 > rx2 = False
+    | rx1 < lx2 = False
+    | ty1 > by2 = False
+    | by1 < ty2 = False
+    | otherwise = True
