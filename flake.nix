@@ -390,6 +390,7 @@
             d07 = buildHaskell {year = "2025"; day = "07";};
             d08 = buildHaskell {year = "2025"; day = "08";};
             d09 = buildHaskell {year = "2025"; day = "09";};
+            d10 = buildHaskell {year = "2025"; day = "10"; bin = [pkgs.z3_4_12];};
           };
         };
 
@@ -424,8 +425,9 @@
         devShells = {
           default = pkgs.mkShell {
             packages = [
-              pkgs.stylish-haskell
               ghcWithPackages
+              pkgs.stylish-haskell
+              pkgs.z3
             ];
           };
         };

@@ -31,6 +31,8 @@ module AdventOfCode.Z3
     , div
 
     , (==)
+    , (>=)
+
     , (+)
     , (-)
     , (*)
@@ -52,7 +54,7 @@ module AdventOfCode.Z3
     ) where
 
 import           Data.Proxy       (Proxy (..))
-import           Prelude          hiding (div, (*), (+), (-), (/), (==), not)
+import           Prelude          hiding (div, (*), (+), (-), (/), (==), (>=), not)
 import Data.String (IsString (..))
 import           System.Directory (getTemporaryDirectory)
 import           System.FilePath  ((<.>), (</>))
@@ -157,6 +159,10 @@ div args = AppExpr (var "/") (map cast args)
 (==) :: Expr a -> Expr a -> Expr 'BoolSort
 (==) x y = AppExpr (var "=") [cast x, cast y]
 infix 4 ==
+
+(>=) :: IsArith n => Expr n -> Expr n -> Expr 'BoolSort
+(>=) x y = AppExpr (var ">=") [cast x, cast y]
+infix 4 >=
 
 (+) :: IsArith n => Expr n -> Expr n -> Expr n
 (+) x y = add [x, y]
